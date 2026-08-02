@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #faf6f0;
+  --beige: #efe4d6;
+  --nude: #d9c4ac;
+  --taupe: #8b6f52;
+  --charcoal: #2b2420;
+  --gold: #a9825a;
+}
+
+@theme inline {
+  --color-cream: var(--cream);
+  --color-beige: var(--beige);
+  --color-nude: var(--nude);
+  --color-taupe: var(--taupe);
+  --color-charcoal: var(--charcoal);
+  --color-gold: var(--gold);
+  --font-sans: var(--font-sans-kr);
+  --font-serif: var(--font-serif-kr);
+}
+
+body {
+  background: var(--cream);
+  color: var(--charcoal);
+}
