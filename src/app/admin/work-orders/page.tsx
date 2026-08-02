@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { Profile, WorkOrder } from "@/lib/types";
+import type { Customer, Profile, WorkOrder } from "@/lib/types";
 import { createWorkOrder } from "./actions";
 
 const STATUS_LABEL: Record<WorkOrder["status"], string> = {
@@ -9,7 +9,10 @@ const STATUS_LABEL: Record<WorkOrder["status"], string> = {
   completed: "완료",
 };
 
-type WorkOrderRow = WorkOrder & { profiles: Pick<Profile, "full_name"> | null };
+type WorkOrderRow = WorkOrder & {
+  profiles: Pick<Profile, "full_name"> | null;
+  customers: Pick<Customer, "id" | "name"> | null;
+};
 
 export default async function WorkOrdersPage() {
   const supabase = await createClient();
@@ -27,7 +30,7 @@ export default async function WorkOrdersPage() {
 
   const { data: orders } = await supabase
     .from("work_orders")
-    .select("*, profiles!work_orders_assignee_id_fkey(full_name)")
+    .select("*, profiles!work_orders_assignee_id_fkey(full_name), customers(id, name)")
     .order("work_date", { ascending: false, nullsFirst: false })
     .returns<WorkOrderRow[]>();
 
@@ -38,6 +41,10 @@ export default async function WorkOrdersPage() {
         .eq("status", "approved")
         .order("full_name")
         .returns<Pick<Profile, "id" | "full_name">[]>()
+    : { data: null };
+
+  const { data: customers } = canCreate
+    ? await supabase.from("customers").select("id, name").order("name").returns<Pick<Customer, "id" | "name">[]>()
     : { data: null };
 
   return (
@@ -65,7 +72,13 @@ export default async function WorkOrdersPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-charcoal/70">
-                    {order.client_name ?? "-"}
+                    {order.customers ? (
+                      <Link href={`/admin/customers/${order.customers.id}`} className="hover:text-gold">
+                        {order.customers.name}
+                      </Link>
+                    ) : (
+                      (order.client_name ?? "-")
+                    )}
                     {order.site_address ? ` · ${order.site_address}` : ""}
                   </td>
                   <td className="px-4 py-3 text-charcoal/70">{order.work_date ?? "-"}</td>
@@ -115,8 +128,26 @@ export default async function WorkOrdersPage() {
             </div>
 
             <div className="flex flex-col gap-2">
+              <label htmlFor="customer_id" className="text-xs tracking-wide text-charcoal/70">
+                등록 고객 (선택)
+              </label>
+              <select
+                id="customer_id"
+                name="customer_id"
+                className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold"
+              >
+                <option value="">고객관리에 등록된 고객 아님</option>
+                {customers?.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <label htmlFor="client_name" className="text-xs tracking-wide text-charcoal/70">
-                고객명
+                고객명 (등록 고객이 없을 때만 입력)
               </label>
               <input
                 id="client_name"

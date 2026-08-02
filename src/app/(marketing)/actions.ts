@@ -3,6 +3,11 @@
 import { createClient } from "@/utils/supabase/server";
 
 export async function submitInquiry(formData: FormData) {
+  // 허니팟: 사람 눈에는 안 보이는 필드라 봇만 채워서 제출함. 채워져 있으면 조용히 성공 처리하고 무시한다.
+  if (String(formData.get("website") ?? "").trim()) {
+    return { success: true };
+  }
+
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();

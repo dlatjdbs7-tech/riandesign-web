@@ -19,6 +19,7 @@ export async function createWorkOrder(formData: FormData) {
 
   await supabase.from("work_orders").insert({
     title,
+    customer_id: String(formData.get("customer_id") ?? "") || null,
     client_name: String(formData.get("client_name") ?? "").trim() || null,
     site_address: String(formData.get("site_address") ?? "").trim() || null,
     work_date: workDate,

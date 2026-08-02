@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, Profile } from "@/lib/types";
 import { createCustomer, deleteCustomer } from "./actions";
@@ -38,7 +39,11 @@ export default async function CustomersPage() {
             <tbody>
               {customers?.map((c) => (
                 <tr key={c.id} className="border-b border-nude/30 last:border-0">
-                  <td className="px-4 py-3">{c.name}</td>
+                  <td className="px-4 py-3">
+                    <Link href={`/admin/customers/${c.id}`} className="hover:text-gold">
+                      {c.name}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-charcoal/70">{c.phone ?? "-"}</td>
                   <td className="px-4 py-3 text-charcoal/70">{c.address ?? "-"}</td>
                   {canManage && (

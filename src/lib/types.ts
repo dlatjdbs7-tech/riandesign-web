@@ -45,6 +45,7 @@ export type WorkOrder = {
   title: string;
   client_name: string | null;
   site_address: string | null;
+  customer_id: string | null;
   work_date: string | null;
   description: string | null;
   assignee_id: string | null;

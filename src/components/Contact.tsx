@@ -42,6 +42,15 @@ export default function Contact() {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute left-[-9999px] h-0 w-0 opacity-0"
+            />
+
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <label htmlFor="name" className="text-xs tracking-wide text-cream/70">
