@@ -17,7 +17,7 @@ const notoSerifKr = Noto_Serif_KR({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://riandesign.example.com"),
+  metadataBase: new URL("https://reandesign.co.kr"),
   title: {
     default: "리안디자인 | 대전 하이엔드 인테리어",
     template: "%s | 리안디자인",

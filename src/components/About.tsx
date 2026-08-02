@@ -4,7 +4,7 @@ export default function About() {
   return (
     <section id="about" className="mx-auto max-w-6xl px-6 py-24 sm:px-10">
       <div className="grid gap-12 sm:grid-cols-2 sm:items-center sm:gap-16">
-        <PlaceholderBlock label="RIAN DESIGN" className="aspect-[4/5] w-full rounded-sm" />
+        <PlaceholderBlock label="REAN DESIGN" className="aspect-[4/5] w-full rounded-sm" />
 
         <div className="flex flex-col gap-6">
           <p className="text-xs tracking-[0.4em] text-taupe">ABOUT US</p>

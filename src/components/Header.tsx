@@ -19,7 +19,7 @@ export default function Header() {
           href="#top"
           className="font-serif text-xl font-semibold tracking-[0.2em] text-charcoal"
         >
-          RIAN DESIGN
+          REAN DESIGN
         </a>
 
         <nav aria-label="주요 메뉴" className="hidden gap-10 sm:flex">
