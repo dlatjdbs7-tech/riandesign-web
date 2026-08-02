@@ -37,3 +37,27 @@ export type AttendanceRecord = {
   check_out_lng: number | null;
   created_at: string;
 };
+
+export type WorkOrderStatus = "pending" | "in_progress" | "completed";
+
+export type WorkOrder = {
+  id: string;
+  title: string;
+  client_name: string | null;
+  site_address: string | null;
+  work_date: string | null;
+  description: string | null;
+  assignee_id: string | null;
+  status: WorkOrderStatus;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type WorkLog = {
+  id: string;
+  work_order_id: string | null;
+  author_id: string;
+  log_date: string;
+  content: string;
+  created_at: string;
+};

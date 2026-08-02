@@ -42,6 +42,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/attendance" className="hover:text-gold">
               근태 관리
             </Link>
+            <Link href="/admin/work-orders" className="hover:text-gold">
+              작업지시서
+            </Link>
+            <Link href="/admin/work-logs" className="hover:text-gold">
+              업무일지
+            </Link>
             {canManage && (
               <>
                 <Link href="/admin/employees" className="hover:text-gold">
