@@ -5,6 +5,9 @@ export type Profile = {
   id: string;
   full_name: string;
   phone: string | null;
+  username: string | null;
+  hire_date: string | null;
+  department: string | null;
   role: UserRole;
   status: ApprovalStatus;
   team_id: string | null;

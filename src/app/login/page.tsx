@@ -4,10 +4,11 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { toAuthEmail } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,14 +20,14 @@ export default function LoginPage() {
 
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: toAuthEmail(username),
       password,
     });
 
     setIsSubmitting(false);
 
     if (signInError) {
-      setError("이메일 또는 비밀번호가 올바르지 않습니다.");
+      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
       return;
     }
 
@@ -44,15 +45,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="email" className="text-xs tracking-wide text-charcoal/70">
-              이메일
+            <label htmlFor="username" className="text-xs tracking-wide text-charcoal/70">
+              아이디
             </label>
             <input
-              id="email"
-              type="email"
+              id="username"
+              type="text"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               className="border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold"
             />
           </div>
