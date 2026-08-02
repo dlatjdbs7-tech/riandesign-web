@@ -61,3 +61,112 @@ export type WorkLog = {
   content: string;
   created_at: string;
 };
+
+export type Customer = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  memo: string | null;
+  created_at: string;
+};
+
+export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected";
+export type Quote = {
+  id: string;
+  customer_id: string | null;
+  title: string;
+  amount: number | null;
+  status: QuoteStatus;
+  quote_date: string;
+  memo: string | null;
+  created_at: string;
+};
+
+export type TransactionStatus = "unpaid" | "partial" | "paid";
+export type Transaction = {
+  id: string;
+  customer_id: string | null;
+  title: string;
+  amount: number;
+  status: TransactionStatus;
+  transaction_date: string;
+  memo: string | null;
+  created_at: string;
+};
+
+export type AsStatus = "received" | "in_progress" | "completed";
+export type AsRequest = {
+  id: string;
+  customer_id: string | null;
+  title: string;
+  description: string | null;
+  status: AsStatus;
+  request_date: string;
+  created_at: string;
+};
+
+export type Material = {
+  id: string;
+  name: string;
+  spec: string | null;
+  unit: string | null;
+  unit_price: number | null;
+  supplier: string | null;
+  created_at: string;
+};
+
+export type QuickPhrase = {
+  id: string;
+  category: string | null;
+  content: string;
+  created_at: string;
+};
+
+export type Vendor = {
+  id: string;
+  name: string;
+  contact: string | null;
+  category: string | null;
+  memo: string | null;
+  created_at: string;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  type: string | null;
+  created_at: string;
+};
+
+export type InquiryStatus = "new" | "contacted" | "closed";
+export type Inquiry = {
+  id: string;
+  name: string;
+  phone: string;
+  message: string | null;
+  status: InquiryStatus;
+  created_at: string;
+};
+
+export type PortfolioItem = {
+  id: string;
+  title: string;
+  category: string | null;
+  image_url: string | null;
+  display_order: number;
+  created_at: string;
+};
+
+export type CompanySettings = {
+  id: number;
+  company_name: string | null;
+  business_registration_number: string | null;
+  representative_name: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  logo_url: string | null;
+  updated_at: string;
+};

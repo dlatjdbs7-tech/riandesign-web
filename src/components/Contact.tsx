@@ -1,13 +1,27 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { submitInquiry } from "@/app/(marketing)/actions";
 
 export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 실제 이메일/DB 전송 연동은 별도 작업 단위(백엔드 연결)에서 진행합니다.
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    const result = await submitInquiry(new FormData(event.currentTarget));
+
+    setIsSubmitting(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
     setIsSubmitted(true);
   }
 
@@ -73,11 +87,14 @@ export default function Contact() {
               개인정보 수집 및 이용에 동의합니다.
             </label>
 
+            {error && <p className="text-sm text-red-300">{error}</p>}
+
             <button
               type="submit"
-              className="mt-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude"
+              disabled={isSubmitting}
+              className="mt-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude disabled:opacity-50"
             >
-              문의 보내기
+              {isSubmitting ? "전송 중..." : "문의 보내기"}
             </button>
           </form>
         )}
