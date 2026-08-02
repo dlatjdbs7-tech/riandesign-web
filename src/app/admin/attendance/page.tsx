@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import type { AttendanceRecord, Profile } from "@/lib/types";
+import { formatKST } from "@/lib/date";
 import AttendanceCheckInOut from "@/components/admin/AttendanceCheckInOut";
 
 type RecordWithRelations = AttendanceRecord & {
@@ -52,14 +53,8 @@ export default async function AttendancePage() {
                 <td className="px-4 py-3">{record.profiles?.full_name ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{record.profiles?.department ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{record.work_sites?.name ?? "-"}</td>
-                <td className="px-4 py-3 text-charcoal/70">
-                  {record.check_in_at ? new Date(record.check_in_at).toLocaleString("ko-KR") : "-"}
-                </td>
-                <td className="px-4 py-3 text-charcoal/70">
-                  {record.check_out_at
-                    ? new Date(record.check_out_at).toLocaleString("ko-KR")
-                    : "-"}
-                </td>
+                <td className="px-4 py-3 text-charcoal/70">{formatKST(record.check_in_at)}</td>
+                <td className="px-4 py-3 text-charcoal/70">{formatKST(record.check_out_at)}</td>
               </tr>
             ))}
             {(!records || records.length === 0) && (
