@@ -1,0 +1,8 @@
+export default function EmployeesPage() {
+  return (
+    <div>
+      <h1 className="font-serif text-2xl font-semibold text-charcoal">직원 관리</h1>
+      <p className="mt-2 text-sm text-charcoal/60">준비 중입니다.</p>
+    </div>
+  );
+}
