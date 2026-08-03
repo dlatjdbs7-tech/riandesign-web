@@ -160,6 +160,29 @@ export type PortfolioItem = {
   created_at: string;
 };
 
+export type SiteContent = {
+  id: number;
+  hero_tagline: string | null;
+  hero_headline: string | null;
+  hero_description: string | null;
+  about_title: string | null;
+  about_paragraph_1: string | null;
+  about_paragraph_2: string | null;
+  about_stat_projects: string | null;
+  about_stat_region: string | null;
+  about_stat_focus: string | null;
+  about_image_url: string | null;
+  updated_at: string;
+};
+
+export type Service = {
+  id: string;
+  title: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+};
+
 export type CompanySettings = {
   id: number;
   company_name: string | null;

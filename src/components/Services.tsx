@@ -1,4 +1,7 @@
-const SERVICES = [
+import { createClient } from "@/utils/supabase/server";
+import type { Service } from "@/lib/types";
+
+const FALLBACK_SERVICES = [
   {
     title: "주거공간 인테리어",
     description: "아파트, 주택, 빌라의 전체 리모델링부터 부분 시공까지 맞춤 설계합니다.",
@@ -17,7 +20,16 @@ const SERVICES = [
   },
 ];
 
-export default function Services() {
+export default async function Services() {
+  const supabase = await createClient();
+  const { data: items } = await supabase
+    .from("services")
+    .select("*")
+    .order("display_order")
+    .returns<Service[]>();
+
+  const services = items && items.length > 0 ? items : FALLBACK_SERVICES;
+
   return (
     <section id="services" className="bg-beige/60 px-6 py-24 sm:px-10">
       <div className="mx-auto max-w-6xl">
@@ -29,9 +41,9 @@ export default function Services() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {SERVICES.map((service) => (
+          {services.map((service, index) => (
             <div
-              key={service.title}
+              key={"id" in service ? service.id : `${service.title}-${index}`}
               className="flex flex-col gap-3 rounded-sm border border-nude/60 bg-cream p-8"
             >
               <h3 className="font-serif text-lg font-semibold text-charcoal">
