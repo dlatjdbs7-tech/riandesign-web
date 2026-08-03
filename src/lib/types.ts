@@ -194,3 +194,19 @@ export type CompanySettings = {
   logo_url: string | null;
   updated_at: string;
 };
+
+export type WorkOrderPhoto = {
+  id: string;
+  work_order_id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+};
+
+export type PublicProject = {
+  id: string;
+  title: string;
+  status: WorkOrderStatus;
+  work_date: string | null;
+  customer_name: string;
+};

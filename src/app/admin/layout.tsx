@@ -13,6 +13,7 @@ const NAV_GROUPS: { label: string | null; items: { href: string; label: string; 
     items: [
       { href: "/admin/quotes", label: "견적서" },
       { href: "/admin/work-orders", label: "작업지시서" },
+      { href: "/admin/customer-pages", label: "고객페이지" },
       { href: "/admin/transactions", label: "거래명세서" },
       { href: "/admin/customers", label: "고객관리" },
       { href: "/admin/as-requests", label: "AS관리" },
