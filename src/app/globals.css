@@ -19,9 +19,21 @@
   --font-sans: var(--font-pretendard);
   --font-serif: var(--font-pretendard);
   --font-admin: var(--font-pretendard);
+  --font-display: var(--font-manrope);
 }
 
 body {
   background: var(--cream);
   color: var(--charcoal);
+}
+
+/* reandesign.kr처럼 큰 헤딩에 살짝 타이트한 자간을 준다 (하이엔드 인테리어 사이트 특유의 절제된 느낌) */
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
+
+/* 마케팅 페이지 곳곳의 영문 라벨(ABOUT/PORTFOLIO/PROCESS 등)에 Manrope 적용 */
+.tracking-\[0\.4em\] {
+  font-family: var(--font-display);
 }

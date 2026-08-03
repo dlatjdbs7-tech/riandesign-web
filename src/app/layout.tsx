@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 
 // reandesign.kr 운영 사이트와 동일한 Pretendard로 통일 (홈페이지 + 관리자 시스템 전체)
@@ -7,6 +8,13 @@ const pretendard = localFont({
   src: "../../node_modules/pretendard/dist/web/variable/woff2/PretendardVariable.woff2",
   variable: "--font-pretendard",
   weight: "45 920",
+  display: "swap",
+});
+
+// reandesign.kr이 영문 라벨/큰 타이틀에 쓰는 Manrope (예: "Our story" 헤딩, "ABOUT" 라벨)
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -35,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${pretendard.variable} h-full antialiased`}
+      className={`${pretendard.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

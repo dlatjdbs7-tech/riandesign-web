@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const NAV_ITEMS = [
   { label: "ABOUT", href: "/about" },
@@ -16,11 +17,15 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-nude/60 bg-cream/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
-        <Link
-          href="/"
-          className="font-serif text-xl font-semibold tracking-[0.2em] text-charcoal"
-        >
-          REAN DESIGN
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/logo.png"
+            alt="REAN DESIGN"
+            width={159}
+            height={36}
+            priority
+            className="h-8 w-auto sm:h-9"
+          />
         </Link>
 
         <nav aria-label="주요 메뉴" className="hidden gap-10 sm:flex">
@@ -28,7 +33,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm tracking-wide text-charcoal/80 transition-colors hover:text-gold"
+              className="font-display text-sm tracking-wide text-charcoal/80 transition-colors hover:text-gold"
             >
               {item.label}
             </Link>
@@ -37,9 +42,9 @@ export default function Header() {
 
         <Link
           href="/contact"
-          className="hidden rounded-full border border-charcoal px-5 py-2 text-sm tracking-wide text-charcoal transition-colors hover:bg-charcoal hover:text-cream sm:inline-block"
+          className="hidden rounded-full bg-gold px-5 py-2 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude sm:inline-block"
         >
-          상담 신청
+          상담신청
         </Link>
 
         <button
@@ -73,7 +78,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="py-3 text-sm tracking-wide text-charcoal/80"
+              className="font-display py-3 text-sm tracking-wide text-charcoal/80"
               onClick={() => setIsMenuOpen(false)}
             >
               {item.label}
@@ -81,10 +86,10 @@ export default function Header() {
           ))}
           <Link
             href="/contact"
-            className="mt-2 rounded-full border border-charcoal px-5 py-2 text-center text-sm tracking-wide text-charcoal"
+            className="mt-2 rounded-full bg-gold px-5 py-2 text-center text-sm tracking-wide text-charcoal"
             onClick={() => setIsMenuOpen(false)}
           >
-            상담 신청
+            상담신청
           </Link>
         </nav>
       )}
