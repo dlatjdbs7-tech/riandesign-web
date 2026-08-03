@@ -52,7 +52,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-cream px-6 py-16">
+    <main className="flex min-h-screen items-center justify-center bg-cream px-6 py-16 font-admin">
       <div className="w-full max-w-sm">
         <p className="text-center text-xs tracking-[0.4em] text-taupe">REAN DESIGN</p>
         <h1 className="mt-3 text-center font-serif text-2xl font-semibold text-charcoal">

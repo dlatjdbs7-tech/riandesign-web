@@ -60,9 +60,10 @@ Vercel과 GitHub 저장소가 연결되어 있어 `main` 브랜치에 Push하면
 ```
 src/
 ├── app/
-│   ├── (marketing)/        # 공개 홈페이지 (Header/Footer 포함)
+│   ├── (marketing)/        # 공개 홈페이지 (Header/Footer 포함, 멀티페이지)
 │   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   ├── page.tsx          # 홈 (각 섹션 요약 + 상세 페이지 링크)
+│   │   ├── about/, project/, process/, review/, contact/
 │   ├── admin/               # 관리자 시스템 (로그인 + 승인된 사용자만 접근)
 │   │   ├── layout.tsx        # 권한별 사이드바 메뉴
 │   │   ├── attendance/        # 근태관리 (위치기반 출퇴근)
@@ -105,7 +106,7 @@ scripts/migrate.mjs      # 마이그레이션 실행 스크립트
 | LIBRARY | 자재리스트, 자주 쓰는 문구 | 기본 CRUD 구현 |
 | LIBRARY | 템플릿 목록 | 준비중 |
 | PEOPLE | 임직원(가입승인), 견적처, 카테고리 | 기본 CRUD 구현 |
-| MARKETING | 접수관리(홈페이지 문의 연동), 포트폴리오(홈페이지 연동), 사이트관리(히어로/소개/서비스 문구 홈페이지 연동) | 구현 완료 |
+| MARKETING | 접수관리, 포트폴리오, 사이트관리, 시공프로세스, 고객후기 (모두 홈페이지 각 페이지에 자동 반영) | 구현 완료 |
 | FINANCE | 정산 | 준비중 |
 | OPERATIONS | 팀원권한(역할/팀 배정 + 메뉴 접근 권한 설정), 근무지 관리 | 구현 완료 |
 | OPERATIONS | 결재관리 | 준비중 |

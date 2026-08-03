@@ -16,8 +16,9 @@
   --color-taupe: var(--taupe);
   --color-charcoal: var(--charcoal);
   --color-gold: var(--gold);
-  --font-sans: var(--font-sans-kr);
-  --font-serif: var(--font-serif-kr);
+  --font-sans: var(--font-pretendard);
+  --font-serif: var(--font-pretendard);
+  --font-admin: var(--font-pretendard);
 }
 
 body {

@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const canView = (key: string) => isOwner || permissionMap?.get(key) !== false;
 
   return (
-    <div className="flex min-h-screen bg-cream">
+    <div className="flex min-h-screen bg-cream font-admin">
       <aside className="flex w-60 flex-col justify-between overflow-y-auto bg-charcoal px-6 py-8 text-cream">
         <div>
           <p className="text-xs tracking-[0.3em] text-nude">REAN DESIGN</p>
