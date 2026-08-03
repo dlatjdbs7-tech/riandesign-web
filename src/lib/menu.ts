@@ -47,6 +47,8 @@ export const MENU_GROUPS: MenuGroup[] = [
       { key: "/admin/site-management", label: "사이트관리" },
       { key: "/admin/inquiries", label: "접수관리" },
       { key: "/admin/portfolio", label: "포트폴리오" },
+      { key: "/admin/process", label: "시공프로세스" },
+      { key: "/admin/reviews", label: "고객후기" },
     ],
   },
   { label: "FINANCE", items: [{ key: "/admin/finance", label: "정산" }] },

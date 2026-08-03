@@ -16,6 +16,9 @@ export async function updateCompanySettings(formData: FormData) {
       address: String(formData.get("address") ?? "").trim() || null,
       phone: String(formData.get("phone") ?? "").trim() || null,
       email: String(formData.get("email") ?? "").trim() || null,
+      blog_url: String(formData.get("blog_url") ?? "").trim() || null,
+      instagram_url: String(formData.get("instagram_url") ?? "").trim() || null,
+      youtube_url: String(formData.get("youtube_url") ?? "").trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

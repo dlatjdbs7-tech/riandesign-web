@@ -34,6 +34,7 @@ export default async function PortfolioPage() {
               <tr>
                 <th className="px-4 py-3">제목</th>
                 <th className="px-4 py-3">분류</th>
+                <th className="px-4 py-3">평형</th>
                 <th className="px-4 py-3">순서</th>
                 {canManage && <th className="px-4 py-3" />}
               </tr>
@@ -43,6 +44,7 @@ export default async function PortfolioPage() {
                 <tr key={item.id} className="border-b border-nude/30 last:border-0">
                   <td className="px-4 py-3">{item.title}</td>
                   <td className="px-4 py-3 text-charcoal/70">{item.category ?? "-"}</td>
+                  <td className="px-4 py-3 text-charcoal/70">{item.size_py ?? "-"}</td>
                   <td className="px-4 py-3 text-charcoal/70">{item.display_order}</td>
                   {canManage && (
                     <td className="px-4 py-3">
@@ -57,7 +59,7 @@ export default async function PortfolioPage() {
               ))}
               {(!items || items.length === 0) && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-charcoal/50">
+                  <td colSpan={5} className="px-4 py-6 text-center text-charcoal/50">
                     등록된 포트폴리오가 없습니다. (등록 전까지는 홈페이지에 임시 이미지가 표시됩니다)
                   </td>
                 </tr>
@@ -70,6 +72,7 @@ export default async function PortfolioPage() {
           <form action={createPortfolioItem} className="flex h-fit flex-col gap-4 rounded-sm border border-nude/60 bg-white p-6">
             <input name="title" placeholder="제목" required className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold" />
             <input name="category" placeholder="분류 (예: 주거공간)" className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold" />
+            <input name="size_py" placeholder="평형 (예: 39PY)" className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold" />
             <input name="image_url" placeholder="이미지 URL (선택)" className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold" />
             <input name="display_order" type="number" placeholder="표시 순서" defaultValue={0} className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold" />
             <button type="submit" className="self-start rounded-full bg-charcoal px-6 py-2 text-sm tracking-wide text-cream hover:bg-gold">

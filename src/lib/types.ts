@@ -50,6 +50,7 @@ export type WorkOrder = {
   description: string | null;
   assignee_id: string | null;
   status: WorkOrderStatus;
+  progress_percent: number;
   created_by: string | null;
   created_at: string;
 };
@@ -155,6 +156,7 @@ export type PortfolioItem = {
   id: string;
   title: string;
   category: string | null;
+  size_py: string | null;
   image_url: string | null;
   display_order: number;
   created_at: string;
@@ -172,6 +174,9 @@ export type SiteContent = {
   about_stat_region: string | null;
   about_stat_focus: string | null;
   about_image_url: string | null;
+  about_naming_story: string | null;
+  process_intro: string | null;
+  contact_notice: string | null;
   updated_at: string;
 };
 
@@ -179,6 +184,25 @@ export type Service = {
   id: string;
   title: string;
   description: string | null;
+  display_order: number;
+  created_at: string;
+};
+
+export type ProcessStep = {
+  id: string;
+  step_number: number;
+  title: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+};
+
+export type Review = {
+  id: string;
+  author_name: string;
+  project_label: string | null;
+  rating: number;
+  content: string;
   display_order: number;
   created_at: string;
 };
@@ -192,6 +216,9 @@ export type CompanySettings = {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  blog_url: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
   updated_at: string;
 };
 

@@ -2,7 +2,12 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, WorkLog, WorkOrder } from "@/lib/types";
 import { formatKST } from "@/lib/date";
-import { addWorkLog, deleteWorkOrder, updateWorkOrderStatus } from "../actions";
+import {
+  addWorkLog,
+  deleteWorkOrder,
+  updateWorkOrderProgress,
+  updateWorkOrderStatus,
+} from "../actions";
 
 const STATUS_OPTIONS: { value: WorkOrder["status"]; label: string }[] = [
   { value: "pending", label: "대기" },
@@ -92,6 +97,33 @@ export default async function WorkOrderDetailPage({
             </form>
           ))}
         </div>
+      )}
+
+      {canUpdate && (
+        <form
+          action={updateWorkOrderProgress.bind(null, order.id)}
+          className="mt-4 flex items-center gap-3"
+        >
+          <label htmlFor="progress_percent" className="text-xs tracking-wide text-charcoal/60">
+            공정률
+          </label>
+          <input
+            id="progress_percent"
+            name="progress_percent"
+            type="number"
+            min={0}
+            max={100}
+            defaultValue={order.progress_percent}
+            className="w-20 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-gold"
+          />
+          <span className="text-xs text-charcoal/60">%</span>
+          <button
+            type="submit"
+            className="rounded-full border border-charcoal/30 px-4 py-1 text-xs text-charcoal hover:border-charcoal"
+          >
+            저장
+          </button>
+        </form>
       )}
 
       <div className="mt-10">

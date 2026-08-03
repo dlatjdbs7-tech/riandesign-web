@@ -19,12 +19,18 @@ export async function updateSiteContent(formData: FormData) {
       about_stat_region: String(formData.get("about_stat_region") ?? "").trim() || null,
       about_stat_focus: String(formData.get("about_stat_focus") ?? "").trim() || null,
       about_image_url: String(formData.get("about_image_url") ?? "").trim() || null,
+      about_naming_story: String(formData.get("about_naming_story") ?? "").trim() || null,
+      process_intro: String(formData.get("process_intro") ?? "").trim() || null,
+      contact_notice: String(formData.get("contact_notice") ?? "").trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);
 
   revalidatePath("/admin/site-management");
   revalidatePath("/");
+  revalidatePath("/about");
+  revalidatePath("/process");
+  revalidatePath("/contact");
 }
 
 export async function createService(formData: FormData) {

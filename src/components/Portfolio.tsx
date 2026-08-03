@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PlaceholderBlock from "./PlaceholderBlock";
 import { createClient } from "@/utils/supabase/server";
 import type { PortfolioItem } from "@/lib/types";
@@ -17,11 +18,16 @@ export default async function Portfolio() {
     .from("portfolio_items")
     .select("*")
     .order("display_order")
+    .limit(6)
     .returns<PortfolioItem[]>();
 
   const hasRealItems = !!items && items.length > 0;
   const projects = hasRealItems
-    ? items!.map((item) => ({ title: item.title, category: item.category ?? "", imageUrl: item.image_url }))
+    ? items!.map((item) => ({
+        title: item.title,
+        category: item.size_py ?? item.category ?? "",
+        imageUrl: item.image_url,
+      }))
     : FALLBACK_PROJECTS.map((project) => ({ ...project, imageUrl: null as string | null }));
 
   return (
@@ -58,6 +64,15 @@ export default async function Portfolio() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-14 text-center">
+        <Link
+          href="/project"
+          className="inline-flex items-center gap-2 rounded-full border border-charcoal/30 px-8 py-3 text-sm tracking-wide text-charcoal transition-colors hover:border-charcoal"
+        >
+          PROJECT 전체보기 <span aria-hidden>→</span>
+        </Link>
       </div>
     </section>
   );

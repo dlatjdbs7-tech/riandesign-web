@@ -80,6 +80,34 @@ export default async function CompanySettingsPage() {
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <label className="text-xs tracking-wide text-charcoal/70">블로그 URL</label>
+          <input
+            name="blog_url"
+            defaultValue={settings?.blog_url ?? ""}
+            disabled={!isOwner}
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs tracking-wide text-charcoal/70">인스타그램 URL</label>
+          <input
+            name="instagram_url"
+            defaultValue={settings?.instagram_url ?? ""}
+            disabled={!isOwner}
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs tracking-wide text-charcoal/70">유튜브 URL</label>
+          <input
+            name="youtube_url"
+            defaultValue={settings?.youtube_url ?? ""}
+            disabled={!isOwner}
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+          />
+        </div>
+
         {isOwner && (
           <button
             type="submit"

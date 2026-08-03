@@ -96,6 +96,16 @@ export default async function SiteManagementPage() {
                 className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
               />
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs tracking-wide text-charcoal/70">브랜드 네이밍 스토리 (About 페이지 하단)</label>
+              <textarea
+                name="about_naming_story"
+                rows={2}
+                defaultValue={content?.about_naming_story ?? ""}
+                disabled={!canManage}
+                className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+              />
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-xs tracking-wide text-charcoal/70">PROJECTS</label>
@@ -132,6 +142,32 @@ export default async function SiteManagementPage() {
                 defaultValue={content?.about_image_url ?? ""}
                 disabled={!canManage}
                 className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-nude/60 pt-6">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">프로세스 / 상담 안내 문구</h2>
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs tracking-wide text-charcoal/70">프로세스 페이지 소개 문구</label>
+              <textarea
+                name="process_intro"
+                rows={2}
+                defaultValue={content?.process_intro ?? ""}
+                disabled={!canManage}
+                className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs tracking-wide text-charcoal/70">상담 안내 문구 (예약제 등)</label>
+              <textarea
+                name="contact_notice"
+                rows={2}
+                defaultValue={content?.contact_notice ?? ""}
+                disabled={!canManage}
+                className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
               />
             </div>
           </div>

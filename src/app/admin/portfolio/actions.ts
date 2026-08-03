@@ -11,6 +11,7 @@ export async function createPortfolioItem(formData: FormData) {
   await supabase.from("portfolio_items").insert({
     title,
     category: String(formData.get("category") ?? "").trim() || null,
+    size_py: String(formData.get("size_py") ?? "").trim() || null,
     image_url: String(formData.get("image_url") ?? "").trim() || null,
     display_order: Number(formData.get("display_order")) || 0,
   });

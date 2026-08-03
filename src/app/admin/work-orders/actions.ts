@@ -38,6 +38,15 @@ export async function updateWorkOrderStatus(id: string, status: WorkOrderStatus)
   revalidatePath(`/admin/work-orders/${id}`);
 }
 
+export async function updateWorkOrderProgress(id: string, formData: FormData) {
+  const percent = Math.max(0, Math.min(100, Number(formData.get("progress_percent")) || 0));
+  const supabase = await createClient();
+  await supabase.from("work_orders").update({ progress_percent: percent }).eq("id", id);
+  revalidatePath("/admin/work-orders");
+  revalidatePath(`/admin/work-orders/${id}`);
+  revalidatePath("/admin");
+}
+
 export async function deleteWorkOrder(id: string) {
   const supabase = await createClient();
   await supabase.from("work_orders").delete().eq("id", id);

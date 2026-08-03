@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PlaceholderBlock from "./PlaceholderBlock";
 import { createClient } from "@/utils/supabase/server";
 import type { SiteContent } from "@/lib/types";
@@ -64,6 +65,12 @@ export default async function About() {
               <dd className="mt-1 font-serif text-2xl text-charcoal">{statFocus}</dd>
             </div>
           </dl>
+          <Link
+            href="/about"
+            className="mt-2 inline-flex w-fit items-center gap-2 text-sm tracking-wide text-charcoal transition-colors hover:text-gold"
+          >
+            브랜드 이야기 더 보기 <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </section>
