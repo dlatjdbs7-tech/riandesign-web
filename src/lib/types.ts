@@ -238,6 +238,15 @@ export type PublicProject = {
   customer_name: string;
 };
 
+export type Manual = {
+  id: string;
+  title: string;
+  content: string;
+  created_by: string | null;
+  updated_at: string;
+  created_at: string;
+};
+
 export type TodoStatus = "pending" | "in_progress" | "done";
 export type Todo = {
   id: string;

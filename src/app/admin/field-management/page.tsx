@@ -1,5 +1,78 @@
-import ComingSoon from "@/components/admin/ComingSoon";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import type { Customer, Profile, WorkOrder } from "@/lib/types";
 
-export default function FieldManagementPage() {
-  return <ComingSoon title="현장관리" />;
+type WorkOrderRow = WorkOrder & {
+  customers: Pick<Customer, "name"> | null;
+  profiles: Pick<Profile, "full_name"> | null;
+};
+
+const COLUMNS: { status: WorkOrder["status"]; label: string; accent: string }[] = [
+  { status: "pending", label: "대기", accent: "border-charcoal/20" },
+  { status: "in_progress", label: "진행중", accent: "border-gold" },
+  { status: "completed", label: "완료", accent: "border-emerald-600" },
+];
+
+export default async function FieldManagementPage() {
+  const supabase = await createClient();
+  const { data: orders } = await supabase
+    .from("work_orders")
+    .select("*, customers(name), profiles!work_orders_assignee_id_fkey(full_name)")
+    .order("work_date", { ascending: true, nullsFirst: false })
+    .returns<WorkOrderRow[]>();
+
+  return (
+    <div>
+      <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
+      <p className="mt-2 text-sm text-charcoal/60">
+        진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
+      </p>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        {COLUMNS.map((column) => {
+          const items = orders?.filter((o) => o.status === column.status) ?? [];
+          return (
+            <div key={column.status} className={`rounded-sm border-t-4 ${column.accent} bg-beige/30 p-3`}>
+              <div className="flex items-center justify-between px-1">
+                <h2 className="font-serif text-sm font-semibold text-charcoal">{column.label}</h2>
+                <span className="text-xs text-charcoal/50">{items.length}</span>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2">
+                {items.map((order) => (
+                  <Link
+                    key={order.id}
+                    href={`/admin/work-orders/${order.id}`}
+                    className="block rounded-sm border border-nude/60 bg-white p-3 text-sm hover:border-gold"
+                  >
+                    <p className="font-medium text-charcoal">{order.title}</p>
+                    <p className="mt-1 text-xs text-charcoal/60">
+                      {order.customers?.name ?? order.client_name ?? "고객 미지정"}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-charcoal/50">
+                      <span>{order.work_date ?? "일정 미정"}</span>
+                      <span>{order.profiles?.full_name ?? "담당자 미지정"}</span>
+                    </div>
+                    {column.status === "in_progress" && (
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-beige">
+                        <div
+                          className="h-1.5 rounded-full bg-gold"
+                          style={{ width: `${order.progress_percent}%` }}
+                        />
+                      </div>
+                    )}
+                  </Link>
+                ))}
+                {items.length === 0 && (
+                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
+                    없음
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
