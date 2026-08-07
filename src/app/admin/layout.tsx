@@ -44,12 +44,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div>
           <div className="text-center">
             <p className="text-base font-semibold tracking-[0.25em] text-nude">REAN DESIGN</p>
-            <p className="mt-1 text-xs text-cream/60">관리자 시스템</p>
-            <p className="mt-3 text-[10px] tracking-wide text-cream/40">
-              <span className="font-semibold">RE-</span>ANALYZE
-            </p>
-            <p className="text-[10px] tracking-wide text-cream/40">
-              <span className="font-semibold">RE-</span>DESIGN
+            <p className="mt-3 flex justify-center gap-3 text-[10px] tracking-wide text-cream/40">
+              <span>
+                <span className="font-semibold">RE-</span>ANALYZE
+              </span>
+              <span>
+                <span className="font-semibold">RE-</span>DESIGN
+              </span>
             </p>
           </div>
 
