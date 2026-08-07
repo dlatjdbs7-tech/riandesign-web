@@ -44,7 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }));
 
   return (
-    <div className="flex min-h-screen bg-cream font-admin">
+    <div className="flex min-h-screen bg-stone-100 font-admin">
       <aside className="flex w-64 flex-col justify-between overflow-y-auto border-r border-nude/50 bg-white px-5 py-8">
         <div>
           <div className="text-center">

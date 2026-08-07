@@ -15,8 +15,8 @@ function NavLink({ href, label }: { href: string; label: string }) {
       href={href}
       className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
         isActive
-          ? "bg-gold text-cream shadow-sm"
-          : "text-charcoal/70 hover:bg-beige/70 hover:text-charcoal"
+          ? "bg-orange-200/80 text-orange-800"
+          : "text-charcoal/70 hover:bg-orange-100 hover:text-orange-700"
       }`}
     >
       {Icon && <Icon size={16} strokeWidth={2} className="shrink-0" />}
