@@ -42,8 +42,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen bg-cream font-admin">
       <aside className="flex w-60 flex-col justify-between overflow-y-auto bg-charcoal px-6 py-8 text-cream">
         <div>
-          <p className="text-xs tracking-[0.3em] text-nude">REAN DESIGN</p>
-          <p className="mt-1 text-xs text-cream/60">관리자 시스템</p>
+          <div className="text-center">
+            <p className="text-base font-semibold tracking-[0.25em] text-nude">REAN DESIGN</p>
+            <p className="mt-1 text-xs text-cream/60">관리자 시스템</p>
+            <p className="mt-3 text-[10px] tracking-wide text-cream/40">
+              <span className="font-semibold">RE-</span>ANALYZE
+            </p>
+            <p className="text-[10px] tracking-wide text-cream/40">
+              <span className="font-semibold">RE-</span>DESIGN
+            </p>
+          </div>
 
           <nav className="mt-8 flex flex-col gap-5 text-sm">
             <Link href="/admin" className="hover:text-gold">
