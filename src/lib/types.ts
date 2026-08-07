@@ -237,3 +237,14 @@ export type PublicProject = {
   work_date: string | null;
   customer_name: string;
 };
+
+export type TodoStatus = "pending" | "in_progress" | "done";
+export type Todo = {
+  id: string;
+  title: string;
+  assignee_id: string | null;
+  due_date: string | null;
+  status: TodoStatus;
+  created_by: string | null;
+  created_at: string;
+};
