@@ -8,20 +8,31 @@ export type MenuGroup = {
 
 export const MENU_GROUPS: MenuGroup[] = [
   {
+    label: null,
+    items: [
+      { key: "/admin/analytics", label: "유입분석" },
+      { key: "/admin/manual", label: "리안메뉴얼" },
+    ],
+  },
+  {
     label: "PROJECTS",
     items: [
+      { key: "/admin/calendar", label: "캘린더" },
+      { key: "/admin/field-management", label: "현장관리" },
+      { key: "/admin/customer-pages", label: "고객페이지" },
+      { key: "/admin/as-requests", label: "AS관리" },
       { key: "/admin/quotes", label: "견적서" },
       { key: "/admin/work-orders", label: "작업지시서" },
-      { key: "/admin/customer-pages", label: "고객페이지" },
       { key: "/admin/transactions", label: "거래명세서" },
       { key: "/admin/customers", label: "고객관리" },
-      { key: "/admin/as-requests", label: "AS관리" },
     ],
   },
   {
     label: "DAILY",
     items: [
-      { key: "/admin/attendance", label: "근태관리" },
+      { key: "/admin/todos", label: "할일" },
+      { key: "/admin/notification-center", label: "알림센터" },
+      { key: "/admin/attendance", label: "근태·휴무" },
       { key: "/admin/work-logs", label: "업무일지" },
     ],
   },
