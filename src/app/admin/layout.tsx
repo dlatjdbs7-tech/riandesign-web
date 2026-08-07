@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
 import { MENU_GROUPS } from "@/lib/menu";
+import AdminNav from "@/components/admin/AdminNav";
 import LogoutButton from "@/components/admin/LogoutButton";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -38,13 +38,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const canView = (key: string) => isOwner || permissionMap?.get(key) !== false;
 
+  const visibleGroups = MENU_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => canView(item.key)),
+  }));
+
   return (
     <div className="flex min-h-screen bg-cream font-admin">
-      <aside className="flex w-60 flex-col justify-between overflow-y-auto bg-charcoal px-6 py-8 text-cream">
+      <aside className="flex w-64 flex-col justify-between overflow-y-auto border-r border-nude/50 bg-white px-5 py-8">
         <div>
           <div className="text-center">
-            <p className="text-base font-semibold tracking-[0.25em] text-nude">REAN DESIGN</p>
-            <p className="mt-3 flex justify-center gap-3 text-[10px] tracking-wide text-cream/40">
+            <p className="text-base font-semibold tracking-[0.25em] text-charcoal">REAN DESIGN</p>
+            <p className="mt-3 flex justify-center gap-3 text-[10px] tracking-wide text-taupe/70">
               <span>
                 <span className="font-semibold">RE-</span>ANALYZE
               </span>
@@ -54,46 +59,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </p>
           </div>
 
-          <nav className="mt-8 flex flex-col gap-5 text-sm">
-            <Link href="/admin" className="hover:text-gold">
-              대시보드
-            </Link>
-
-            {MENU_GROUPS.map((group) => {
-              const items = group.items.filter((item) => canView(item.key));
-              const showOperationsExtra = group.label === "OPERATIONS" && isOwner;
-              if (items.length === 0 && !showOperationsExtra) return null;
-
-              return (
-                <div key={group.label ?? "top"}>
-                  {group.label && (
-                    <p className="mb-2 text-[10px] tracking-[0.2em] text-cream/40">{group.label}</p>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    {group.label === "OPERATIONS" && isOwner && (
-                      <Link href="/admin/team-permissions" className="hover:text-gold">
-                        팀원권한
-                      </Link>
-                    )}
-                    {items.map((item) => (
-                      <Link key={item.key} href={item.key} className="hover:text-gold">
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-
-            <Link href="/admin/settings" className="hover:text-gold">
-              내정보
-            </Link>
-          </nav>
+          <AdminNav groups={visibleGroups} isOwner={isOwner} />
         </div>
 
-        <div className="flex flex-col gap-3">
-          <div className="text-xs text-cream/60">
-            <p className="text-cream">{profile.full_name}</p>
+        <div className="flex flex-col gap-3 border-t border-nude/50 pt-4">
+          <div className="text-xs text-charcoal/50">
+            <p className="text-sm font-medium text-charcoal">{profile.full_name}</p>
             <p>{profile.role === "owner" ? "대표" : profile.role === "manager" ? "팀장" : "직원"}</p>
           </div>
           <LogoutButton />
