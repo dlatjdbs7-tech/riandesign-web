@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { CompanySettings } from "@/lib/types";
 
@@ -64,7 +65,12 @@ export default async function Footer() {
             {info.address} · {info.phone} · {info.email}
           </p>
         </div>
-        <p>© {new Date().getFullYear()} {info.company_name}. All rights reserved.</p>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} {info.company_name}. All rights reserved.</p>
+          <Link href="/privacy" className="tracking-wide text-charcoal/70 hover:text-gold">
+            개인정보처리방침
+          </Link>
+        </div>
       </div>
     </footer>
   );

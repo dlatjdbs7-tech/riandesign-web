@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 
 export default function Contact() {
@@ -93,7 +94,12 @@ export default function Contact() {
 
             <label className="flex items-start gap-2 text-xs text-cream/60">
               <input type="checkbox" required className="mt-0.5" />
-              개인정보 수집 및 이용에 동의합니다.
+              <span>
+                <Link href="/privacy" target="_blank" className="underline hover:text-gold">
+                  개인정보 수집 및 이용
+                </Link>
+                에 동의합니다.
+              </span>
             </label>
 
             {error && <p className="text-sm text-red-300">{error}</p>}
