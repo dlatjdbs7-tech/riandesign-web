@@ -1,27 +1,31 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { AsRequest, Todo, WorkOrder } from "@/lib/types";
+import type { AsRequest, Profile, ScheduleEvent, Todo, WorkOrder } from "@/lib/types";
 import { getKSTCurrentYearMonth, getKSTDateBounds, getMonthGridWeeks } from "@/lib/date";
+import { createScheduleEvent, deleteScheduleEvent } from "./actions";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 type CalendarEvent = {
   id: string;
   title: string;
-  type: "work_order" | "as_request" | "todo";
-  href: string;
+  type: "work_order" | "as_request" | "todo" | "event";
+  href: string | null;
+  createdBy?: string | null;
 };
 
 const TYPE_STYLE: Record<CalendarEvent["type"], string> = {
   work_order: "bg-charcoal text-cream",
   as_request: "bg-red-100 text-red-700",
-  todo: "bg-gold/30 text-charcoal",
+  todo: "bg-orange-100 text-orange-800",
+  event: "bg-stone-200 text-charcoal",
 };
 
 const TYPE_LEGEND: { type: CalendarEvent["type"]; label: string }[] = [
   { type: "work_order", label: "작업지시서" },
   { type: "as_request", label: "AS" },
   { type: "todo", label: "할일" },
+  { type: "event", label: "일정" },
 ];
 
 function pad(n: number) {
@@ -62,7 +66,17 @@ export default async function CalendarPage({
   }
 
   const supabase = await createClient();
-  const [{ data: workOrders }, { data: asRequests }, { data: todos }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user!.id)
+    .single<Profile>();
+  const canManageAnyEvent = me?.role === "owner" || me?.role === "manager";
+
+  const [{ data: workOrders }, { data: asRequests }, { data: todos }, { data: events }] = await Promise.all([
     supabase
       .from("work_orders")
       .select("id, title, work_date, status")
@@ -81,6 +95,12 @@ export default async function CalendarPage({
       .gte("due_date", monthStart)
       .lte("due_date", monthEnd)
       .returns<Pick<Todo, "id" | "title" | "due_date" | "status">[]>(),
+    supabase
+      .from("calendar_events")
+      .select("*")
+      .gte("event_date", monthStart)
+      .lte("event_date", monthEnd)
+      .returns<ScheduleEvent[]>(),
   ]);
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
@@ -104,6 +124,9 @@ export default async function CalendarPage({
   );
   todos?.forEach((t) =>
     addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos" })
+  );
+  events?.forEach((e) =>
+    addEvent(e.event_date, { id: e.id, title: e.title, type: "event", href: null, createdBy: e.created_by })
   );
 
   const weeks = getMonthGridWeeks(year, month);
@@ -214,22 +237,80 @@ export default async function CalendarPage({
         <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">{selectedDate} 일정</h2>
           <div className="mt-3 flex flex-col gap-2">
-            {selectedEvents.map((event) => (
-              <Link
-                key={`${event.type}-${event.id}`}
-                href={event.href}
-                className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm hover:border-gold"
-              >
-                <span>{event.title}</span>
+            {selectedEvents.map((event) => {
+              const badge = (
                 <span className={`rounded-sm px-2 py-0.5 text-[10px] ${TYPE_STYLE[event.type]}`}>
                   {TYPE_LEGEND.find((l) => l.type === event.type)?.label}
                 </span>
-              </Link>
-            ))}
+              );
+              const canDelete = event.type === "event" && (canManageAnyEvent || event.createdBy === user!.id);
+
+              if (event.type === "event") {
+                return (
+                  <div
+                    key={`${event.type}-${event.id}`}
+                    className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm"
+                  >
+                    <span>{event.title}</span>
+                    <span className="flex items-center gap-2">
+                      {badge}
+                      {canDelete && (
+                        <form action={deleteScheduleEvent.bind(null, event.id)}>
+                          <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
+                            삭제
+                          </button>
+                        </form>
+                      )}
+                    </span>
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={`${event.type}-${event.id}`}
+                  href={event.href!}
+                  className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm hover:border-orange-400"
+                >
+                  <span>{event.title}</span>
+                  {badge}
+                </Link>
+              );
+            })}
             {selectedEvents.length === 0 && (
               <p className="text-sm text-charcoal/50">이 날짜에 등록된 일정이 없습니다.</p>
             )}
           </div>
+
+          <form
+            action={createScheduleEvent}
+            className="mt-4 flex flex-wrap items-end gap-2 border-t border-nude/40 pt-4"
+          >
+            <input type="hidden" name="event_date" value={selectedDate} />
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-charcoal/50">일정 제목</label>
+              <input
+                name="title"
+                required
+                placeholder="예: 고객 미팅"
+                className="w-40 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-orange-400"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-charcoal/50">메모 (선택)</label>
+              <input
+                name="memo"
+                placeholder="장소, 참석자 등"
+                className="w-48 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-orange-400"
+              />
+            </div>
+            <button
+              type="submit"
+              className="rounded-sm bg-orange-300 px-4 py-1.5 text-xs font-medium text-orange-900 hover:bg-orange-400"
+            >
+              일정 추가
+            </button>
+          </form>
         </div>
       )}
     </div>

@@ -23,11 +23,21 @@ export default async function PublicProjectPage({
   const supabase = await createClient();
 
   const { data: projectRows } = await supabase.rpc("get_public_project", { project_id: id });
-  const project = (projectRows as PublicProject[] | null)?.[0];
+  let project = (projectRows as PublicProject[] | null)?.[0];
+  let isManual = false;
+
+  if (!project) {
+    const { data: manualRows } = await supabase.rpc("get_public_manual_project", { project_id: id });
+    project = (manualRows as PublicProject[] | null)?.[0];
+    isManual = true;
+  }
 
   if (!project) notFound();
 
-  const { data: photos } = await supabase.rpc("get_public_project_photos", { project_id: id });
+  const { data: photos } = await supabase.rpc(
+    isManual ? "get_public_manual_project_photos" : "get_public_project_photos",
+    { project_id: id }
+  );
   const photoList = (photos as WorkOrderPhoto[] | null) ?? [];
 
   return (

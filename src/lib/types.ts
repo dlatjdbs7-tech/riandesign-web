@@ -242,6 +242,33 @@ export type WorkOrderPhoto = {
   created_at: string;
 };
 
+export type ScheduleEvent = {
+  id: string;
+  title: string;
+  event_date: string;
+  memo: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type CustomerProject = {
+  id: string;
+  title: string;
+  customer_name: string | null;
+  status: WorkOrderStatus;
+  work_date: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type CustomerProjectPhoto = {
+  id: string;
+  customer_project_id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+};
+
 export type PublicProject = {
   id: string;
   title: string;
