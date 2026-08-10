@@ -500,6 +500,20 @@ export default async function SitesPage({
                       ) : (
                         <span className="text-right text-charcoal">{formatWon(order.payment_contract)}</span>
                       )}
+                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_contract_date"
+                          type="date"
+                          value={order.payment_contract_date ?? ""}
+                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_contract_date ?? "-"}
+                        </span>
+                      )}
 
                       <span>2차 착수금</span>
                       {canManage ? (
@@ -512,6 +526,20 @@ export default async function SitesPage({
                         />
                       ) : (
                         <span className="text-right text-charcoal">{formatWon(order.payment_start)}</span>
+                      )}
+                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_start_date"
+                          type="date"
+                          value={order.payment_start_date ?? ""}
+                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_start_date ?? "-"}
+                        </span>
                       )}
 
                       <span>3차 중도금1차</span>
@@ -526,6 +554,20 @@ export default async function SitesPage({
                       ) : (
                         <span className="text-right text-charcoal">{formatWon(order.payment_interim1)}</span>
                       )}
+                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_interim1_date"
+                          type="date"
+                          value={order.payment_interim1_date ?? ""}
+                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_interim1_date ?? "-"}
+                        </span>
+                      )}
 
                       <span>4차 중도금2차</span>
                       {canManage ? (
@@ -539,6 +581,20 @@ export default async function SitesPage({
                       ) : (
                         <span className="text-right text-charcoal">{formatWon(order.payment_interim2)}</span>
                       )}
+                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_interim2_date"
+                          type="date"
+                          value={order.payment_interim2_date ?? ""}
+                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_interim2_date ?? "-"}
+                        </span>
+                      )}
 
                       <span>5차 잔금</span>
                       {canManage ? (
@@ -551,6 +607,20 @@ export default async function SitesPage({
                         />
                       ) : (
                         <span className="text-right text-charcoal">{formatWon(order.payment_balance)}</span>
+                      )}
+                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_balance_date"
+                          type="date"
+                          value={order.payment_balance_date ?? ""}
+                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_balance_date ?? "-"}
+                        </span>
                       )}
 
                       <span className="font-medium text-charcoal/70">수금액 합계</span>

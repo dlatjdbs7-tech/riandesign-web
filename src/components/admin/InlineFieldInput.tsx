@@ -13,7 +13,12 @@ type EditableField =
   | "payment_balance"
   | "work_date"
   | "work_end_date"
-  | "material_order_date";
+  | "material_order_date"
+  | "payment_contract_date"
+  | "payment_start_date"
+  | "payment_interim1_date"
+  | "payment_interim2_date"
+  | "payment_balance_date";
 
 function formatWithCommas(raw: string) {
   const digits = raw.replace(/[^\d]/g, "");

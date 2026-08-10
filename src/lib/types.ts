@@ -60,6 +60,11 @@ export type WorkOrder = {
   payment_interim1: number | null;
   payment_interim2: number | null;
   payment_balance: number | null;
+  payment_contract_date: string | null;
+  payment_start_date: string | null;
+  payment_interim1_date: string | null;
+  payment_interim2_date: string | null;
+  payment_balance_date: string | null;
   material_order_date: string | null;
   created_by: string | null;
   created_at: string;

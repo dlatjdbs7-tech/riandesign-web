@@ -74,7 +74,16 @@ const EDITABLE_NUMBER_FIELDS = [
   "payment_interim2",
   "payment_balance",
 ] as const;
-const EDITABLE_DATE_FIELDS = ["work_date", "work_end_date", "material_order_date"] as const;
+const EDITABLE_DATE_FIELDS = [
+  "work_date",
+  "work_end_date",
+  "material_order_date",
+  "payment_contract_date",
+  "payment_start_date",
+  "payment_interim1_date",
+  "payment_interim2_date",
+  "payment_balance_date",
+] as const;
 
 export async function updateWorkOrderField(
   id: string,
