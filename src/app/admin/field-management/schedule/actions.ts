@@ -34,6 +34,23 @@ export async function createWorkOrderTask(formData: FormData) {
   revalidatePath("/admin/field-management/schedule");
 }
 
+export async function updateWorkOrderTaskDetails(id: string, formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return;
+
+  const supabase = await createClient();
+  await supabase
+    .from("work_order_tasks")
+    .update({
+      title,
+      start_date: String(formData.get("start_date") ?? "") || null,
+      end_date: String(formData.get("end_date") ?? "") || null,
+    })
+    .eq("id", id);
+
+  revalidatePath("/admin/field-management/schedule");
+}
+
 export async function setWorkOrderTaskManualStatus(id: string, status: WorkOrderStatus) {
   const supabase = await createClient();
   await supabase.from("work_order_tasks").update({ status, auto_status: false }).eq("id", id);

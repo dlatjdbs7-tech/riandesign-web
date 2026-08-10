@@ -46,6 +46,18 @@ export async function updateWorkOrderAssignee(id: string, formData: FormData) {
   revalidatePath(`/admin/work-orders/${id}`);
 }
 
+export async function updateWorkOrderClientName(id: string, clientName: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("work_orders")
+    .update({ client_name: clientName.trim() || null })
+    .eq("id", id);
+  revalidatePath("/admin/work-orders");
+  revalidatePath(`/admin/work-orders/${id}`);
+  revalidatePath("/admin/field-management/schedule");
+  revalidatePath("/admin/customer-pages");
+}
+
 export async function updateWorkOrderProgress(id: string, formData: FormData) {
   const percent = Math.max(0, Math.min(100, Number(formData.get("progress_percent")) || 0));
   const supabase = await createClient();

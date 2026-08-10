@@ -4,9 +4,10 @@ import type { Customer, WorkOrder, WorkOrderTask } from "@/lib/types";
 import { getKSTDateBounds } from "@/lib/date";
 import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import WorkOrderTaskRow from "@/components/admin/WorkOrderTaskRow";
+import ClientNameInput from "@/components/admin/ClientNameInput";
 import { createWorkOrderTask } from "./actions";
 
-type WorkOrderRow = Pick<WorkOrder, "id" | "title" | "status" | "work_date"> & {
+type WorkOrderRow = Pick<WorkOrder, "id" | "title" | "status" | "work_date" | "client_name"> & {
   customers: Pick<Customer, "name"> | null;
 };
 
@@ -23,7 +24,7 @@ export default async function WorkOrderSchedulePage({
 
   let query = supabase
     .from("work_orders")
-    .select("id, title, status, work_date, customers(name)")
+    .select("id, title, status, work_date, client_name, customers(name)")
     .order("work_date", { ascending: true, nullsFirst: false });
 
   if (!showAll) {
@@ -50,7 +51,7 @@ export default async function WorkOrderSchedulePage({
         <div>
           <h1 className="font-serif text-2xl font-semibold text-charcoal">공정표</h1>
           <p className="mt-2 text-sm text-charcoal/60">
-            현장별 시공 단계를 등록하고 진행 상태를 관리합니다. 아래 탭을 눌러 현장을 전환하세요.
+            현장별 공정을 등록하고 진행 상태를 관리합니다. 아래 탭을 눌러 현장을 전환하세요.
           </p>
         </div>
         <div className="flex items-center gap-4 text-xs">
@@ -74,10 +75,14 @@ export default async function WorkOrderSchedulePage({
         <>
           <div className="mt-6 rounded-t-sm border border-b-0 border-nude/60 bg-white p-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold text-charcoal">
+              <h2 className="flex items-center font-serif text-lg font-semibold text-charcoal">
                 {selectedOrder.title}
-                <span className="ml-2 text-xs font-normal text-charcoal/50">
-                  {selectedOrder.customers?.name ?? "고객 미지정"} · {selectedOrder.work_date ?? "일정 미정"}
+                <span className="ml-2 flex items-center gap-1 text-xs font-normal text-charcoal/50">
+                  <ClientNameInput
+                    workOrderId={selectedOrder.id}
+                    clientName={selectedOrder.client_name ?? selectedOrder.customers?.name ?? ""}
+                  />
+                  · {selectedOrder.work_date ?? "일정 미정"}
                 </span>
               </h2>
               <Link
@@ -92,7 +97,7 @@ export default async function WorkOrderSchedulePage({
               <thead>
                 <tr className="border-b border-nude/60 text-[10px] tracking-wide text-charcoal/50">
                   <th className="w-8 pb-2 font-normal"></th>
-                  <th className="pb-2 font-normal">단계</th>
+                  <th className="pb-2 font-normal">공정</th>
                   <th className="pb-2 font-normal">시작일</th>
                   <th className="pb-2 font-normal">종료일</th>
                   <th className="pb-2 font-normal">상태</th>
@@ -117,7 +122,7 @@ export default async function WorkOrderSchedulePage({
               </tbody>
             </table>
             {(!tasks || tasks.length === 0) && (
-              <p className="mt-4 text-sm text-charcoal/40">등록된 공정 단계가 없습니다.</p>
+              <p className="mt-4 text-sm text-charcoal/40">등록된 공정이 없습니다.</p>
             )}
 
             <form
@@ -126,7 +131,7 @@ export default async function WorkOrderSchedulePage({
             >
               <input type="hidden" name="work_order_id" value={selectedOrder.id} />
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-charcoal/50">단계명</label>
+                <label className="text-[10px] text-charcoal/50">공정명</label>
                 <input
                   name="title"
                   required
@@ -154,7 +159,7 @@ export default async function WorkOrderSchedulePage({
                 type="submit"
                 className="rounded-sm bg-orange-300 px-4 py-1.5 text-xs font-medium text-orange-900 hover:bg-orange-400"
               >
-                단계 추가
+                공정 추가
               </button>
             </form>
           </div>
