@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, WorkOrder, WorkOrderTask } from "@/lib/types";
+import { getKSTDateBounds } from "@/lib/date";
+import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import WorkOrderTaskRow from "@/components/admin/WorkOrderTaskRow";
 import { createWorkOrderTask } from "./actions";
 
@@ -15,6 +17,7 @@ export default async function WorkOrderSchedulePage({
 }) {
   const params = await searchParams;
   const showAll = params.all === "1";
+  const { todayDateString } = getKSTDateBounds();
 
   const supabase = await createClient();
 
@@ -105,7 +108,8 @@ export default async function WorkOrderSchedulePage({
                     title={task.title}
                     startDate={task.start_date}
                     endDate={task.end_date}
-                    status={task.status}
+                    status={getTaskDisplayStatus(task, todayDateString)}
+                    autoStatus={task.auto_status}
                     isFirst={index === 0}
                     isLast={index === (tasks?.length ?? 1) - 1}
                   />

@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import {
   deleteWorkOrderTask,
   moveWorkOrderTask,
-  updateWorkOrderTaskStatus,
+  setWorkOrderTaskAutoStatus,
+  setWorkOrderTaskManualStatus,
 } from "@/app/admin/field-management/schedule/actions";
 import type { WorkOrderStatus } from "@/lib/types";
 
@@ -21,6 +22,7 @@ export default function WorkOrderTaskRow({
   startDate,
   endDate,
   status,
+  autoStatus,
   isFirst,
   isLast,
 }: {
@@ -30,13 +32,19 @@ export default function WorkOrderTaskRow({
   startDate: string | null;
   endDate: string | null;
   status: WorkOrderStatus;
+  autoStatus: boolean;
   isFirst: boolean;
   isLast: boolean;
 }) {
   const router = useRouter();
+  const isInProgress = status === "in_progress";
 
   return (
-    <tr className="border-b border-nude/30 last:border-0">
+    <tr
+      className={`border-b border-nude/30 last:border-0 ${
+        isInProgress ? "bg-orange-50" : ""
+      }`}
+    >
       <td className="py-2 pr-3">
         <div className="flex flex-col gap-0.5">
           <button
@@ -63,24 +71,49 @@ export default function WorkOrderTaskRow({
           </button>
         </div>
       </td>
-      <td className="py-2 pr-3 text-sm text-charcoal">{title}</td>
+      <td
+        className={`border-l-4 py-2 pr-3 pl-2 text-sm ${
+          isInProgress ? "border-orange-400 font-semibold text-orange-700" : "border-transparent text-charcoal"
+        }`}
+      >
+        {title}
+      </td>
       <td className="py-2 pr-3 text-xs text-charcoal/60">{startDate ?? "-"}</td>
       <td className="py-2 pr-3 text-xs text-charcoal/60">{endDate ?? "-"}</td>
       <td className="py-2 pr-3">
-        <select
-          defaultValue={status}
-          onChange={async (event) => {
-            await updateWorkOrderTaskStatus(id, event.target.value as WorkOrderStatus);
-            router.refresh();
-          }}
-          className="border-b border-nude bg-transparent py-1 text-xs outline-none"
-        >
-          {Object.entries(STATUS_LABEL).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            key={`${status}-${autoStatus}`}
+            defaultValue={status}
+            onChange={async (event) => {
+              await setWorkOrderTaskManualStatus(id, event.target.value as WorkOrderStatus);
+              router.refresh();
+            }}
+            className={`border-b bg-transparent py-1 text-xs outline-none ${
+              isInProgress ? "border-orange-400 font-medium text-orange-700" : "border-nude"
+            }`}
+          >
+            {Object.entries(STATUS_LABEL).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {autoStatus ? (
+            <span className="text-[10px] text-charcoal/40">자동</span>
+          ) : (
+            <button
+              type="button"
+              onClick={async () => {
+                await setWorkOrderTaskAutoStatus(id);
+                router.refresh();
+              }}
+              className="text-[10px] text-taupe hover:text-orange-600"
+            >
+              자동으로
+            </button>
+          )}
+        </div>
       </td>
       <td className="py-2 text-right">
         <button

@@ -230,6 +230,7 @@ export type WorkOrderTask = {
   end_date: string | null;
   display_order: number;
   status: WorkOrderStatus;
+  auto_status: boolean;
   created_by: string | null;
   created_at: string;
 };
