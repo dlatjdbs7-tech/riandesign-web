@@ -5,6 +5,7 @@ import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
 import { promoteQuoteToWorkOrder } from "./actions";
+import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -257,13 +258,17 @@ export default async function SitesPage({
                     {order.customers?.name ?? order.client_name ?? "-"}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-sm px-2 py-0.5 text-xs ${
-                        order.status === "cancelled" ? "bg-red-100 text-red-700" : "bg-stone-200 text-charcoal/70"
-                      }`}
-                    >
-                      {order.status === "cancelled" ? "취소" : "보류"}
-                    </span>
+                    {canManage ? (
+                      <SiteStatusSelect id={order.id} status={order.status} />
+                    ) : (
+                      <span
+                        className={`rounded-sm px-2 py-0.5 text-xs ${
+                          order.status === "cancelled" ? "bg-red-100 text-red-700" : "bg-stone-200 text-charcoal/70"
+                        }`}
+                      >
+                        {order.status === "cancelled" ? "취소" : "보류"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-charcoal/70">{formatWon(order.contract_amount)}</td>
                   <td className="px-4 py-3 text-charcoal/70">{order.profiles?.full_name ?? "-"}</td>
@@ -509,6 +514,7 @@ export default async function SitesPage({
                     <th className="px-4 py-3">공사기간</th>
                     <th className="px-4 py-3">담당</th>
                     <th className="px-4 py-3">A/S</th>
+                    {canManage && <th className="px-4 py-3">상태</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -531,11 +537,16 @@ export default async function SitesPage({
                       <td className="px-4 py-3 text-charcoal/70">
                         {order.customer_id ? (asCountByCustomer.get(order.customer_id) ?? 0) : 0}건
                       </td>
+                      {canManage && (
+                        <td className="px-4 py-3">
+                          <SiteStatusSelect id={order.id} status={order.status} />
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {(!completedOrders || completedOrders.length === 0) && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-charcoal/50">
+                      <td colSpan={canManage ? 8 : 7} className="px-4 py-6 text-center text-charcoal/50">
                         마감된 현장이 없습니다.
                       </td>
                     </tr>
