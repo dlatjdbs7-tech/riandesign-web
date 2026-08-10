@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { toAuthEmail, USERNAME_PATTERN } from "@/lib/auth";
+import { DEPARTMENTS } from "@/lib/departments";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -126,15 +127,22 @@ export default function SignupPage() {
             <label htmlFor="department" className="text-xs tracking-wide text-charcoal/70">
               부서
             </label>
-            <input
+            <select
               id="department"
-              type="text"
               required
-              placeholder="예: 디자인팀, 시공팀, 관리팀"
               value={department}
               onChange={(event) => setDepartment(event.target.value)}
               className="border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold"
-            />
+            >
+              <option value="" disabled>
+                선택해주세요
+              </option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
           </div>
 
           {error && <p className="text-sm text-red-700">{error}</p>}

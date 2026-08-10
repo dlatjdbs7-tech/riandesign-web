@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
 import { approveEmployee, rejectEmployee } from "./actions";
 import CategorySection from "@/components/admin/CategorySection";
+import DepartmentSelect from "@/components/admin/DepartmentSelect";
 
 const STATUS_LABEL: Record<Profile["status"], string> = {
   pending: "승인대기",
@@ -62,7 +63,13 @@ export default async function EmployeesPage() {
               <tr key={employee.id} className="border-b border-nude/30 last:border-0">
                 <td className="px-4 py-3">{employee.full_name}</td>
                 <td className="px-4 py-3 text-charcoal/70">{employee.username ?? "-"}</td>
-                <td className="px-4 py-3 text-charcoal/70">{employee.department ?? "-"}</td>
+                <td className="px-4 py-3 text-charcoal/70">
+                  {canApprove ? (
+                    <DepartmentSelect employeeId={employee.id} department={employee.department} />
+                  ) : (
+                    employee.department ?? "-"
+                  )}
+                </td>
                 <td className="px-4 py-3 text-charcoal/70">{employee.hire_date ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{ROLE_LABEL[employee.role]}</td>
                 <td className="px-4 py-3">

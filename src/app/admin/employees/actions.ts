@@ -17,3 +17,9 @@ export async function approveEmployee(id: string) {
 export async function rejectEmployee(id: string) {
   await updateStatus(id, "rejected");
 }
+
+export async function updateEmployeeDepartment(id: string, department: string) {
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ department }).eq("id", id);
+  revalidatePath("/admin/employees");
+}
