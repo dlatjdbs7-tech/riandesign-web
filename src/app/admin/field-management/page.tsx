@@ -16,8 +16,9 @@ const COLUMNS: { status: WorkOrder["status"]; label: string; accent: string }[] 
 const CELLS = [
   { href: "/admin/field-management/schedule", label: "공정표" },
   { href: "/admin/work-orders", label: "작업지시서" },
+  { href: "/admin/quotes", label: "견적서" },
   { href: "/admin/field-management/purchase-orders", label: "발주서" },
-  { href: "/admin/field-management/quick-links", label: "자주쓰는링크" },
+  { href: "/admin/field-management/quick-links", label: "자주쓰는URL" },
 ];
 
 export default async function FieldManagementPage() {
@@ -35,7 +36,7 @@ export default async function FieldManagementPage() {
         진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {CELLS.map((cell) => (
           <Link
             key={cell.href}

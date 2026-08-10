@@ -31,7 +31,7 @@ export default async function QuickLinksPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-semibold text-charcoal">자주쓰는링크</h1>
+        <h1 className="font-serif text-2xl font-semibold text-charcoal">자주쓰는URL</h1>
         <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
           ← 시공관리
         </Link>

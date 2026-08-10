@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, Profile, Quote } from "@/lib/types";
 import { createQuote, deleteQuote } from "./actions";
@@ -36,7 +37,12 @@ export default async function QuotesPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">견적서</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-2xl font-semibold text-charcoal">견적서</h1>
+        <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
+          ← 시공관리
+        </Link>
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">

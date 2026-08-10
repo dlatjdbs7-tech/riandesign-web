@@ -48,12 +48,14 @@ export default function AdminNav({
               {group.label === "OPERATIONS" && isOwner && (
                 <NavLink href="/admin/team-permissions" label="팀원권한" />
               )}
-              {group.items.map((item) => (
-                <div key={item.key}>
-                  {item.dividerBefore && <hr className="my-1 border-t border-dashed border-nude" />}
-                  <NavLink href={item.key} label={item.label} />
-                </div>
-              ))}
+              {group.items
+                .filter((item) => !item.hidden)
+                .map((item) => (
+                  <div key={item.key}>
+                    {item.dividerBefore && <hr className="my-1 border-t border-dashed border-nude" />}
+                    <NavLink href={item.key} label={item.label} />
+                  </div>
+                ))}
             </div>
           </div>
         );
