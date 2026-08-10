@@ -9,6 +9,7 @@ import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
+import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -208,12 +209,7 @@ export default async function SitesPage({
             placeholder="현장 주소"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
           />
-          <input
-            name="contract_amount"
-            type="number"
-            placeholder="계약금액"
-            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
-          />
+          <FormattedNumberInput name="contract_amount" placeholder="계약금액" />
           <select
             name="assignee_id"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"

@@ -16,7 +16,7 @@ export async function createWorkOrder(formData: FormData) {
 
   const assigneeId = String(formData.get("assignee_id") ?? "") || null;
   const workDate = String(formData.get("work_date") ?? "") || null;
-  const contractAmount = String(formData.get("contract_amount") ?? "").trim();
+  const contractAmount = String(formData.get("contract_amount") ?? "").replace(/,/g, "").trim();
   const status = (String(formData.get("status") ?? "").trim() || "pending") as SiteStatus;
 
   await supabase.from("work_orders").insert({
@@ -88,7 +88,7 @@ export async function updateWorkOrderField(
     if (field === "title" && !trimmed) return;
     await supabase.from("work_orders").update({ [field]: trimmed || null }).eq("id", id);
   } else if ((EDITABLE_NUMBER_FIELDS as readonly string[]).includes(field)) {
-    const trimmed = value.trim();
+    const trimmed = value.replace(/,/g, "").trim();
     await supabase
       .from("work_orders")
       .update({ [field]: trimmed ? Number(trimmed) : null })

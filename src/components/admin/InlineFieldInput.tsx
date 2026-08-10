@@ -15,6 +15,12 @@ type EditableField =
   | "work_end_date"
   | "material_order_date";
 
+function formatWithCommas(raw: string) {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("en-US");
+}
+
 export default function InlineFieldInput({
   workOrderId,
   field,
@@ -31,16 +37,37 @@ export default function InlineFieldInput({
   className?: string;
 }) {
   const router = useRouter();
+  const isNumeric = type === "number";
 
   return (
     <input
       key={value}
-      type={type}
-      defaultValue={value}
+      type={isNumeric ? "text" : type}
+      inputMode={isNumeric ? "numeric" : undefined}
+      defaultValue={isNumeric ? formatWithCommas(value) : value}
       placeholder={placeholder}
+      onInput={
+        isNumeric
+          ? (event) => {
+              const input = event.currentTarget;
+              const digitsBeforeCursor = input.value
+                .slice(0, input.selectionStart ?? input.value.length)
+                .replace(/[^\d]/g, "").length;
+              input.value = formatWithCommas(input.value);
+              let cursor = 0;
+              let seenDigits = 0;
+              while (cursor < input.value.length && seenDigits < digitsBeforeCursor) {
+                if (/\d/.test(input.value[cursor])) seenDigits++;
+                cursor++;
+              }
+              input.setSelectionRange(cursor, cursor);
+            }
+          : undefined
+      }
       onBlur={async (event) => {
-        if (event.target.value === value) return;
-        await updateWorkOrderField(workOrderId, field, event.target.value);
+        const raw = isNumeric ? event.target.value.replace(/,/g, "") : event.target.value;
+        if (raw === value) return;
+        await updateWorkOrderField(workOrderId, field, raw);
         router.refresh();
       }}
       className={
