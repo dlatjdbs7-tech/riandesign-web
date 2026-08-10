@@ -9,8 +9,15 @@ type WorkOrderRow = WorkOrder & {
 
 const COLUMNS: { status: WorkOrder["status"]; label: string; accent: string }[] = [
   { status: "pending", label: "대기", accent: "border-charcoal/20" },
-  { status: "in_progress", label: "진행중", accent: "border-gold" },
+  { status: "in_progress", label: "진행중", accent: "border-orange-400" },
   { status: "completed", label: "완료", accent: "border-emerald-600" },
+];
+
+const CELLS = [
+  { href: "/admin/field-management/schedule", label: "공정표", caption: "현장별 시공 단계 관리" },
+  { href: "/admin/work-orders", label: "작업지시서", caption: "작업 등록 및 진행 관리" },
+  { href: "/admin/field-management/purchase-orders", label: "발주서", caption: "자재·시공 발주 메모" },
+  { href: "/admin/field-management/quick-links", label: "자주쓰는링크", caption: "자재·설계·참조 사이트" },
 ];
 
 export default async function FieldManagementPage() {
@@ -23,26 +30,29 @@ export default async function FieldManagementPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
-          <p className="mt-2 text-sm text-charcoal/60">
-            진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
-          </p>
-        </div>
-        <Link
-          href="/admin/field-management/schedule"
-          className="shrink-0 rounded-sm bg-orange-300 px-4 py-2 text-xs font-medium text-orange-900 hover:bg-orange-400"
-        >
-          공정표 보기
-        </Link>
+      <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
+      <p className="mt-2 text-sm text-charcoal/60">
+        진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
+      </p>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {CELLS.map((cell) => (
+          <Link
+            key={cell.href}
+            href={cell.href}
+            className="rounded-sm border border-nude/60 bg-white p-4 transition-colors hover:border-orange-400 hover:bg-orange-50"
+          >
+            <p className="font-serif text-sm font-semibold text-charcoal">{cell.label}</p>
+            <p className="mt-1 text-xs text-charcoal/50">{cell.caption}</p>
+          </Link>
+        ))}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
         {COLUMNS.map((column) => {
           const items = orders?.filter((o) => o.status === column.status) ?? [];
           return (
-            <div key={column.status} className={`rounded-sm border-t-4 ${column.accent} bg-beige/30 p-3`}>
+            <div key={column.status} className={`rounded-sm border-t-4 ${column.accent} bg-stone-100 p-3`}>
               <div className="flex items-center justify-between px-1">
                 <h2 className="font-serif text-sm font-semibold text-charcoal">{column.label}</h2>
                 <span className="text-xs text-charcoal/50">{items.length}</span>
@@ -53,7 +63,7 @@ export default async function FieldManagementPage() {
                   <Link
                     key={order.id}
                     href={`/admin/work-orders/${order.id}`}
-                    className="block rounded-sm border border-nude/60 bg-white p-3 text-sm hover:border-gold"
+                    className="block rounded-sm border border-nude/60 bg-white p-3 text-sm hover:border-orange-400"
                   >
                     <p className="font-medium text-charcoal">{order.title}</p>
                     <p className="mt-1 text-xs text-charcoal/60">
@@ -64,9 +74,9 @@ export default async function FieldManagementPage() {
                       <span>{order.profiles?.full_name ?? "담당자 미지정"}</span>
                     </div>
                     {column.status === "in_progress" && (
-                      <div className="mt-2 h-1.5 w-full rounded-full bg-beige">
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-stone-100">
                         <div
-                          className="h-1.5 rounded-full bg-gold"
+                          className="h-1.5 rounded-full bg-orange-400"
                           style={{ width: `${order.progress_percent}%` }}
                         />
                       </div>

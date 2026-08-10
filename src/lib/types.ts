@@ -262,6 +262,27 @@ export type CustomerProject = {
   created_at: string;
 };
 
+export type PurchaseOrder = {
+  id: string;
+  title: string;
+  vendor_name: string | null;
+  site_address: string | null;
+  notes: string | null;
+  order_date: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type QuickLink = {
+  id: string;
+  title: string;
+  url: string;
+  category: string | null;
+  display_order: number;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type CustomerProjectPhoto = {
   id: string;
   customer_project_id: string;
