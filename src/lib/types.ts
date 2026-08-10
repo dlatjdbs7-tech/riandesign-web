@@ -262,6 +262,7 @@ export type CustomerProject = {
   created_at: string;
 };
 
+export type PurchaseOrderStatus = "ordered" | "pending" | "reference";
 export type PurchaseOrder = {
   id: string;
   title: string;
@@ -269,6 +270,7 @@ export type PurchaseOrder = {
   site_address: string | null;
   notes: string | null;
   order_date: string | null;
+  status: PurchaseOrderStatus;
   created_by: string | null;
   created_at: string;
 };

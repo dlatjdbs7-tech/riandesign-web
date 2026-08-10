@@ -14,10 +14,10 @@ const COLUMNS: { status: WorkOrder["status"]; label: string; accent: string }[] 
 ];
 
 const CELLS = [
-  { href: "/admin/field-management/schedule", label: "공정표", caption: "현장별 시공 단계 관리" },
-  { href: "/admin/work-orders", label: "작업지시서", caption: "작업 등록 및 진행 관리" },
-  { href: "/admin/field-management/purchase-orders", label: "발주서", caption: "자재·시공 발주 메모" },
-  { href: "/admin/field-management/quick-links", label: "자주쓰는링크", caption: "자재·설계·참조 사이트" },
+  { href: "/admin/field-management/schedule", label: "공정표" },
+  { href: "/admin/work-orders", label: "작업지시서" },
+  { href: "/admin/field-management/purchase-orders", label: "발주서" },
+  { href: "/admin/field-management/quick-links", label: "자주쓰는링크" },
 ];
 
 export default async function FieldManagementPage() {
@@ -40,10 +40,9 @@ export default async function FieldManagementPage() {
           <Link
             key={cell.href}
             href={cell.href}
-            className="rounded-sm border border-nude/60 bg-white p-4 transition-colors hover:border-orange-400 hover:bg-orange-50"
+            className="flex items-center justify-center rounded-sm border border-nude/60 bg-white p-4 text-center transition-colors hover:border-orange-400 hover:bg-orange-50"
           >
             <p className="font-serif text-sm font-semibold text-charcoal">{cell.label}</p>
-            <p className="mt-1 text-xs text-charcoal/50">{cell.caption}</p>
           </Link>
         ))}
       </div>
