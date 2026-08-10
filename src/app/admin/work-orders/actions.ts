@@ -65,6 +65,38 @@ export async function updateWorkOrderClientName(id: string, clientName: string) 
   revalidatePath("/admin/customer-pages");
 }
 
+const EDITABLE_TEXT_FIELDS = ["title"] as const;
+const EDITABLE_NUMBER_FIELDS = ["contract_amount", "paid_amount"] as const;
+const EDITABLE_DATE_FIELDS = ["work_date", "work_end_date", "material_order_date"] as const;
+
+export async function updateWorkOrderField(
+  id: string,
+  field: (typeof EDITABLE_TEXT_FIELDS)[number] | (typeof EDITABLE_NUMBER_FIELDS)[number] | (typeof EDITABLE_DATE_FIELDS)[number],
+  value: string
+) {
+  const supabase = await createClient();
+
+  if ((EDITABLE_TEXT_FIELDS as readonly string[]).includes(field)) {
+    const trimmed = value.trim();
+    if (field === "title" && !trimmed) return;
+    await supabase.from("work_orders").update({ [field]: trimmed || null }).eq("id", id);
+  } else if ((EDITABLE_NUMBER_FIELDS as readonly string[]).includes(field)) {
+    const trimmed = value.trim();
+    await supabase
+      .from("work_orders")
+      .update({ [field]: trimmed ? Number(trimmed) : field === "paid_amount" ? 0 : null })
+      .eq("id", id);
+  } else if ((EDITABLE_DATE_FIELDS as readonly string[]).includes(field)) {
+    await supabase.from("work_orders").update({ [field]: value || null }).eq("id", id);
+  } else {
+    return;
+  }
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/work-orders");
+  revalidatePath(`/admin/work-orders/${id}`);
+}
+
 export async function updateWorkOrderProgress(id: string, formData: FormData) {
   const percent = Math.max(0, Math.min(100, Number(formData.get("progress_percent")) || 0));
   const supabase = await createClient();

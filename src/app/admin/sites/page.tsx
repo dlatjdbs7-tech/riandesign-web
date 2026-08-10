@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder } from "@/lib/types";
+import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder, WorkOrderTask } from "@/lib/types";
 import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
 import { promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
+import ClientNameInput from "@/components/admin/ClientNameInput";
+import AssigneeSelect from "@/components/admin/AssigneeSelect";
+import InlineFieldInput from "@/components/admin/InlineFieldInput";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -118,6 +121,27 @@ export default async function SitesPage({
   for (const req of openAsRequests ?? []) {
     if (!req.customer_id) continue;
     asCountByCustomer.set(req.customer_id, (asCountByCustomer.get(req.customer_id) ?? 0) + 1);
+  }
+
+  const inProgressIds = (inProgressOrders ?? []).map((o) => o.id);
+  const { data: tasks } = inProgressIds.length
+    ? await supabase
+        .from("work_order_tasks")
+        .select("work_order_id, start_date, end_date")
+        .in("work_order_id", inProgressIds)
+        .returns<Pick<WorkOrderTask, "work_order_id" | "start_date" | "end_date">[]>()
+    : { data: null };
+
+  const periodByOrder = new Map<string, { start: string | null; end: string | null }>();
+  for (const task of tasks ?? []) {
+    const current = periodByOrder.get(task.work_order_id) ?? { start: null, end: null };
+    if (task.start_date && (!current.start || task.start_date < current.start)) {
+      current.start = task.start_date;
+    }
+    if (task.end_date && (!current.end || task.end_date > current.end)) {
+      current.end = task.end_date;
+    }
+    periodByOrder.set(task.work_order_id, current);
   }
 
   return (
@@ -395,16 +419,35 @@ export default async function SitesPage({
                 const materialDday = order.material_order_date
                   ? daysBetweenDateStrings(todayDateString, order.material_order_date)
                   : null;
+                const computedPeriod = periodByOrder.get(order.id);
+                const periodStart = computedPeriod?.start ?? order.work_date;
+                const periodEnd = computedPeriod?.end ?? order.work_end_date;
 
                 return (
                   <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-serif text-base font-semibold text-charcoal">{order.title}</p>
-                        <p className="mt-1 text-xs text-charcoal/60">
-                          {order.customers?.name ?? order.client_name ?? "고객 미지정"} ·{" "}
-                          {order.customers?.phone ?? "-"}
-                        </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        {canManage ? (
+                          <InlineFieldInput
+                            workOrderId={order.id}
+                            field="title"
+                            value={order.title}
+                            className="w-full border-b border-transparent bg-transparent font-serif text-base font-semibold text-charcoal outline-none hover:border-nude focus:border-orange-400"
+                          />
+                        ) : (
+                          <p className="font-serif text-base font-semibold text-charcoal">{order.title}</p>
+                        )}
+                        <div className="mt-1 flex items-center gap-1 text-xs text-charcoal/60">
+                          {canManage ? (
+                            <ClientNameInput
+                              workOrderId={order.id}
+                              clientName={order.client_name ?? order.customers?.name ?? ""}
+                            />
+                          ) : (
+                            <span>{order.customers?.name ?? order.client_name ?? "고객 미지정"}</span>
+                          )}
+                          <span>· {order.customers?.phone ?? "-"}</span>
+                        </div>
                       </div>
                       <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${RISK_STYLE[risk]}`}>
                         {RISK_LABEL[risk]}
@@ -430,27 +473,96 @@ export default async function SitesPage({
                       <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${collectionRate}%` }} />
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-y-1 text-xs text-charcoal/60">
+                    <div className="mt-3 grid grid-cols-2 items-center gap-y-1.5 text-xs text-charcoal/60">
                       <span>계약금액</span>
-                      <span className="text-right text-charcoal">{formatWon(order.contract_amount)}</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="contract_amount"
+                          type="number"
+                          value={order.contract_amount?.toString() ?? ""}
+                          placeholder="미입력"
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.contract_amount)}</span>
+                      )}
+
+                      <span>수금액</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="paid_amount"
+                          type="number"
+                          value={order.paid_amount.toString()}
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.paid_amount)}</span>
+                      )}
+
                       <span>미수금</span>
                       <span className="text-right text-charcoal">{formatWon(unpaid)}</span>
+
                       <span>자재 발주</span>
-                      <span className="text-right text-charcoal">
-                        {order.material_order_date ?? "-"}
-                        {materialDday !== null && (
-                          <span className={materialDday < 0 ? "ml-1 text-red-600" : "ml-1 text-charcoal/50"}>
-                            (D{materialDday >= 0 ? "-" : "+"}
-                            {Math.abs(materialDday)})
-                          </span>
-                        )}
-                      </span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="material_order_date"
+                          type="date"
+                          value={order.material_order_date ?? ""}
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">
+                          {order.material_order_date ?? "-"}
+                          {materialDday !== null && (
+                            <span className={materialDday < 0 ? "ml-1 text-red-600" : "ml-1 text-charcoal/50"}>
+                              (D{materialDday >= 0 ? "-" : "+"}
+                              {Math.abs(materialDday)})
+                            </span>
+                          )}
+                        </span>
+                      )}
+
                       <span>담당</span>
-                      <span className="text-right text-charcoal">{order.profiles?.full_name ?? "-"}</span>
+                      {canManage ? (
+                        <div className="text-right">
+                          <AssigneeSelect
+                            workOrderId={order.id}
+                            assigneeId={order.assignee_id}
+                            employees={employees ?? []}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-right text-charcoal">{order.profiles?.full_name ?? "-"}</span>
+                      )}
+
                       <span>공사기간</span>
-                      <span className="text-right text-charcoal">
-                        {formatPeriod(order.work_date, order.work_end_date)}
-                      </span>
+                      {canManage ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <InlineFieldInput
+                            workOrderId={order.id}
+                            field="work_date"
+                            type="date"
+                            value={periodStart ?? ""}
+                            className="w-24 border-b border-transparent bg-transparent text-right text-[11px] outline-none hover:border-nude focus:border-orange-400"
+                          />
+                          <span>~</span>
+                          <InlineFieldInput
+                            workOrderId={order.id}
+                            field="work_end_date"
+                            type="date"
+                            value={periodEnd ?? ""}
+                            className="w-24 border-b border-transparent bg-transparent text-right text-[11px] outline-none hover:border-nude focus:border-orange-400"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-right text-charcoal">{formatPeriod(periodStart, periodEnd)}</span>
+                      )}
+                      {computedPeriod && (
+                        <>
+                          <span />
+                          <span className="text-right text-[10px] text-charcoal/40">공정표 기준 자동 반영</span>
+                        </>
+                      )}
                     </div>
 
                     <div className="mt-3 flex gap-2">
