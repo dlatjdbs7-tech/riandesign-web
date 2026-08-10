@@ -3,7 +3,17 @@
 import { useRouter } from "next/navigation";
 import { updateWorkOrderField } from "@/app/admin/work-orders/actions";
 
-type EditableField = "title" | "contract_amount" | "paid_amount" | "work_date" | "work_end_date" | "material_order_date";
+type EditableField =
+  | "title"
+  | "contract_amount"
+  | "payment_contract"
+  | "payment_start"
+  | "payment_interim1"
+  | "payment_interim2"
+  | "payment_balance"
+  | "work_date"
+  | "work_end_date"
+  | "material_order_date";
 
 export default function InlineFieldInput({
   workOrderId,

@@ -55,6 +55,11 @@ export type WorkOrder = {
   progress_percent: number;
   contract_amount: number | null;
   paid_amount: number;
+  payment_contract: number | null;
+  payment_start: number | null;
+  payment_interim1: number | null;
+  payment_interim2: number | null;
+  payment_balance: number | null;
   material_order_date: string | null;
   created_by: string | null;
   created_at: string;

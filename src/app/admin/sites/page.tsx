@@ -410,12 +410,17 @@ export default async function SitesPage({
             <div className="mt-3 grid gap-4 lg:grid-cols-2">
               {inProgressOrders?.map((order) => {
                 const risk = getWorkOrderRisk(order, todayDateString);
+                const totalPaid =
+                  (order.payment_contract ?? 0) +
+                  (order.payment_start ?? 0) +
+                  (order.payment_interim1 ?? 0) +
+                  (order.payment_interim2 ?? 0) +
+                  (order.payment_balance ?? 0);
                 const collectionRate =
                   order.contract_amount && order.contract_amount > 0
-                    ? Math.min(100, Math.round((order.paid_amount / order.contract_amount) * 100))
+                    ? Math.min(100, Math.round((totalPaid / order.contract_amount) * 100))
                     : 0;
-                const unpaid =
-                  order.contract_amount !== null ? order.contract_amount - order.paid_amount : null;
+                const unpaid = order.contract_amount !== null ? order.contract_amount - totalPaid : null;
                 const materialDday = order.material_order_date
                   ? daysBetweenDateStrings(todayDateString, order.material_order_date)
                   : null;
@@ -460,7 +465,7 @@ export default async function SitesPage({
                     </div>
                     <div className="mt-1 h-2 w-full rounded-full bg-stone-100">
                       <div
-                        className="h-2 rounded-full bg-orange-400"
+                        className="h-2 rounded-full bg-sky-300"
                         style={{ width: `${order.progress_percent}%` }}
                       />
                     </div>
@@ -470,7 +475,7 @@ export default async function SitesPage({
                       <span className="font-medium text-charcoal">{collectionRate}%</span>
                     </div>
                     <div className="mt-1 h-2 w-full rounded-full bg-stone-100">
-                      <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${collectionRate}%` }} />
+                      <div className="h-2 rounded-full bg-red-300" style={{ width: `${collectionRate}%` }} />
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 items-center gap-y-1.5 text-xs text-charcoal/60">
@@ -487,17 +492,73 @@ export default async function SitesPage({
                         <span className="text-right text-charcoal">{formatWon(order.contract_amount)}</span>
                       )}
 
-                      <span>수금액</span>
+                      <span>1차 계약금</span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
-                          field="paid_amount"
+                          field="payment_contract"
                           type="number"
-                          value={order.paid_amount.toString()}
+                          value={order.payment_contract?.toString() ?? ""}
+                          placeholder="미입력"
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.paid_amount)}</span>
+                        <span className="text-right text-charcoal">{formatWon(order.payment_contract)}</span>
                       )}
+
+                      <span>2차 착수금</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_start"
+                          type="number"
+                          value={order.payment_start?.toString() ?? ""}
+                          placeholder="미입력"
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.payment_start)}</span>
+                      )}
+
+                      <span>3차 중도금1차</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_interim1"
+                          type="number"
+                          value={order.payment_interim1?.toString() ?? ""}
+                          placeholder="미입력"
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.payment_interim1)}</span>
+                      )}
+
+                      <span>4차 중도금2차</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_interim2"
+                          type="number"
+                          value={order.payment_interim2?.toString() ?? ""}
+                          placeholder="미입력"
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.payment_interim2)}</span>
+                      )}
+
+                      <span>5차 잔금</span>
+                      {canManage ? (
+                        <InlineFieldInput
+                          workOrderId={order.id}
+                          field="payment_balance"
+                          type="number"
+                          value={order.payment_balance?.toString() ?? ""}
+                          placeholder="미입력"
+                        />
+                      ) : (
+                        <span className="text-right text-charcoal">{formatWon(order.payment_balance)}</span>
+                      )}
+
+                      <span className="font-medium text-charcoal/70">수금액 합계</span>
+                      <span className="text-right font-medium text-charcoal">{formatWon(totalPaid)}</span>
 
                       <span>미수금</span>
                       <span className="text-right text-charcoal">{formatWon(unpaid)}</span>

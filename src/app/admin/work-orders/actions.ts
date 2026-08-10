@@ -66,7 +66,14 @@ export async function updateWorkOrderClientName(id: string, clientName: string) 
 }
 
 const EDITABLE_TEXT_FIELDS = ["title"] as const;
-const EDITABLE_NUMBER_FIELDS = ["contract_amount", "paid_amount"] as const;
+const EDITABLE_NUMBER_FIELDS = [
+  "contract_amount",
+  "payment_contract",
+  "payment_start",
+  "payment_interim1",
+  "payment_interim2",
+  "payment_balance",
+] as const;
 const EDITABLE_DATE_FIELDS = ["work_date", "work_end_date", "material_order_date"] as const;
 
 export async function updateWorkOrderField(
@@ -84,7 +91,7 @@ export async function updateWorkOrderField(
     const trimmed = value.trim();
     await supabase
       .from("work_orders")
-      .update({ [field]: trimmed ? Number(trimmed) : field === "paid_amount" ? 0 : null })
+      .update({ [field]: trimmed ? Number(trimmed) : null })
       .eq("id", id);
   } else if ((EDITABLE_DATE_FIELDS as readonly string[]).includes(field)) {
     await supabase.from("work_orders").update({ [field]: value || null }).eq("id", id);
