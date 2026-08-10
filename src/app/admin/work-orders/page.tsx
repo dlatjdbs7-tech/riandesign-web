@@ -51,7 +51,12 @@ export default async function WorkOrdersPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">작업지시서</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-serif text-2xl font-semibold text-charcoal">작업지시서</h1>
+        <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
+          ← 시공관리
+        </Link>
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">

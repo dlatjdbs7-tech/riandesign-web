@@ -100,6 +100,8 @@ export type Transaction = {
   status: TransactionStatus;
   transaction_date: string;
   memo: string | null;
+  attachment_url: string | null;
+  attachment_name: string | null;
   created_at: string;
 };
 

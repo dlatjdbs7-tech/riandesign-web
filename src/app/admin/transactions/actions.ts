@@ -13,6 +13,19 @@ export async function createTransaction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let attachmentUrl: string | null = null;
+  let attachmentName: string | null = null;
+
+  const file = formData.get("attachment");
+  if (file instanceof File && file.size > 0) {
+    const path = `${user?.id ?? "anon"}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("transaction-files").upload(path, file);
+    if (!error) {
+      attachmentUrl = supabase.storage.from("transaction-files").getPublicUrl(path).data.publicUrl;
+      attachmentName = file.name;
+    }
+  }
+
   await supabase.from("transactions").insert({
     title,
     customer_id: String(formData.get("customer_id") ?? "") || null,
@@ -20,6 +33,8 @@ export async function createTransaction(formData: FormData) {
     transaction_date:
       String(formData.get("transaction_date") ?? "") || new Date().toISOString().slice(0, 10),
     memo: String(formData.get("memo") ?? "").trim() || null,
+    attachment_url: attachmentUrl,
+    attachment_name: attachmentName,
     created_by: user?.id,
   });
 
