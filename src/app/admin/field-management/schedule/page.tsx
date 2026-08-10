@@ -56,7 +56,7 @@ export default async function WorkOrderSchedulePage({
         </div>
         <div className="flex items-center gap-4 text-xs">
           <Link href="/admin/field-management" className="text-taupe hover:text-orange-600">
-            ← 현장관리
+            ← 시공관리
           </Link>
           <Link
             href={showAll ? "/admin/field-management/schedule" : "/admin/field-management/schedule?all=1"}

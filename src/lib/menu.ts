@@ -18,7 +18,8 @@ export const MENU_GROUPS: MenuGroup[] = [
     label: "PROJECTS",
     items: [
       { key: "/admin/calendar", label: "캘린더" },
-      { key: "/admin/field-management", label: "현장관리" },
+      { key: "/admin/field-management", label: "시공관리" },
+      { key: "/admin/sites", label: "현장관리" },
       { key: "/admin/customer-pages", label: "고객페이지" },
       { key: "/admin/as-requests", label: "AS관리" },
       { key: "/admin/quotes", label: "견적서" },

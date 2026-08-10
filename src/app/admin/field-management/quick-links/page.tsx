@@ -33,7 +33,7 @@ export default async function QuickLinksPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-semibold text-charcoal">자주쓰는링크</h1>
         <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
-          ← 현장관리
+          ← 시공관리
         </Link>
       </div>
       <p className="mt-2 text-sm text-charcoal/60">자주 찾는 URL을 상태별로 한눈에 모아둡니다.</p>

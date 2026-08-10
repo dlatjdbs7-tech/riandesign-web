@@ -32,6 +32,7 @@ import {
   CreditCard,
   ShieldCheck,
   UserCircle,
+  HardHat,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,6 +42,7 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   "/admin/manual": BookOpen,
   "/admin/calendar": Calendar,
   "/admin/field-management": Building2,
+  "/admin/sites": HardHat,
   "/admin/customer-pages": ImageIcon,
   "/admin/as-requests": Wrench,
   "/admin/quotes": FileText,

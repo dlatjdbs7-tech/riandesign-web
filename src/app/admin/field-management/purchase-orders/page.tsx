@@ -26,7 +26,7 @@ export default async function PurchaseOrdersPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-semibold text-charcoal">발주서</h1>
         <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
-          ← 현장관리
+          ← 시공관리
         </Link>
       </div>
       <p className="mt-2 text-sm text-charcoal/60">
