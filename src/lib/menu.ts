@@ -3,7 +3,7 @@
 
 export type MenuGroup = {
   label: string | null;
-  items: { key: string; label: string }[];
+  items: { key: string; label: string; dividerBefore?: boolean }[];
 };
 
 export const MENU_GROUPS: MenuGroup[] = [
@@ -20,12 +20,12 @@ export const MENU_GROUPS: MenuGroup[] = [
       { key: "/admin/calendar", label: "캘린더" },
       { key: "/admin/sites", label: "현장관리" },
       { key: "/admin/field-management", label: "시공관리" },
-      { key: "/admin/customer-pages", label: "고객페이지" },
-      { key: "/admin/as-requests", label: "AS관리" },
-      { key: "/admin/quotes", label: "견적서" },
       { key: "/admin/work-orders", label: "작업지시서" },
-      { key: "/admin/transactions", label: "거래명세서" },
+      { key: "/admin/as-requests", label: "AS관리" },
+      { key: "/admin/quotes", label: "견적서", dividerBefore: true },
+      { key: "/admin/customer-pages", label: "고객페이지" },
       { key: "/admin/customers", label: "고객관리" },
+      { key: "/admin/transactions", label: "거래명세서" },
     ],
   },
   {

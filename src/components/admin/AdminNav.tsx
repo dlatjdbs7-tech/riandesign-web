@@ -49,7 +49,10 @@ export default function AdminNav({
                 <NavLink href="/admin/team-permissions" label="팀원권한" />
               )}
               {group.items.map((item) => (
-                <NavLink key={item.key} href={item.key} label={item.label} />
+                <div key={item.key}>
+                  {item.dividerBefore && <hr className="my-1 border-t border-dashed border-nude" />}
+                  <NavLink href={item.key} label={item.label} />
+                </div>
               ))}
             </div>
           </div>
