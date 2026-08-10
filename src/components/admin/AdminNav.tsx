@@ -9,14 +9,19 @@ function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(`${href}/`);
   const Icon = MENU_ICONS[href];
+  const isNotificationCenter = href === "/admin/notification-center";
 
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-        isActive
-          ? "bg-orange-200/80 text-orange-800"
-          : "text-charcoal/70 hover:bg-orange-100 hover:text-orange-700"
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        isNotificationCenter
+          ? isActive
+            ? "bg-red-200/80 text-red-800"
+            : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+          : isActive
+            ? "bg-orange-200/80 text-orange-800"
+            : "text-charcoal/70 hover:bg-orange-100 hover:text-orange-700"
       }`}
     >
       {Icon && <Icon size={16} strokeWidth={2} className="shrink-0" />}
