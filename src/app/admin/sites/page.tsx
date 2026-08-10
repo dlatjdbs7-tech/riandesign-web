@@ -282,7 +282,7 @@ export default async function SitesPage({
       ) : (
         <>
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -290,7 +290,7 @@ export default async function SitesPage({
                 </span>
                 <span className="text-xs text-charcoal/50">{newInquiries?.length ?? 0}</span>
               </div>
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-3 flex flex-1 flex-col gap-2">
                 {newInquiries?.map((inquiry) => (
                   <Link
                     key={inquiry.id}
@@ -302,14 +302,14 @@ export default async function SitesPage({
                   </Link>
                 ))}
                 {(!newInquiries || newInquiries.length === 0) && (
-                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
+                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
                     새 상담문의
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -317,7 +317,7 @@ export default async function SitesPage({
                 </span>
                 <span className="text-xs text-charcoal/50">{contactedInquiries?.length ?? 0}</span>
               </div>
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-3 flex flex-1 flex-col gap-2">
                 {contactedInquiries?.map((inquiry) => (
                   <Link
                     key={inquiry.id}
@@ -329,14 +329,14 @@ export default async function SitesPage({
                   </Link>
                 ))}
                 {(!contactedInquiries || contactedInquiries.length === 0) && (
-                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
+                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
                     연락·상담 진행
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-sky-500" />
@@ -344,7 +344,7 @@ export default async function SitesPage({
                 </span>
                 <span className="text-xs text-charcoal/50">{sentQuotes?.length ?? 0}</span>
               </div>
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-3 flex flex-1 flex-col gap-2">
                 {sentQuotes?.map((quote) => (
                   <div key={quote.id} className="rounded-sm border border-nude/40 p-3 text-sm">
                     <p className="font-medium text-charcoal">{quote.customers?.name ?? quote.title}</p>
@@ -364,7 +364,7 @@ export default async function SitesPage({
                   </div>
                 ))}
                 {(!sentQuotes || sentQuotes.length === 0) && (
-                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
+                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
                     발송된 견적 없음
                   </p>
                 )}
