@@ -222,6 +222,18 @@ export type CompanySettings = {
   updated_at: string;
 };
 
+export type WorkOrderTask = {
+  id: string;
+  work_order_id: string;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+  display_order: number;
+  status: WorkOrderStatus;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type WorkOrderPhoto = {
   id: string;
   work_order_id: string;

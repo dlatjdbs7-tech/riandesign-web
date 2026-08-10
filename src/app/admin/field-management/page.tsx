@@ -23,10 +23,20 @@ export default async function FieldManagementPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
-      <p className="mt-2 text-sm text-charcoal/60">
-        진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
+          <p className="mt-2 text-sm text-charcoal/60">
+            진행 단계별로 모든 현장을 한눈에 봅니다. 카드를 누르면 상세로 이동합니다.
+          </p>
+        </div>
+        <Link
+          href="/admin/field-management/schedule"
+          className="shrink-0 rounded-sm bg-orange-300 px-4 py-2 text-xs font-medium text-orange-900 hover:bg-orange-400"
+        >
+          공정표 보기
+        </Link>
+      </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         {COLUMNS.map((column) => {
