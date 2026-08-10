@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, WorkLog, WorkOrder } from "@/lib/types";
 import { formatKST } from "@/lib/date";
+import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import {
   addWorkLog,
   deleteWorkOrder,
@@ -53,6 +54,15 @@ export default async function WorkOrderDetailPage({
   const canManage = me?.role === "owner" || me?.role === "manager";
   const canUpdate = canManage || order.assignee_id === user!.id;
 
+  const { data: employees } = canManage
+    ? await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("status", "approved")
+        .order("full_name")
+        .returns<Pick<Profile, "id" | "full_name">[]>()
+    : { data: null };
+
   return (
     <div>
       <div className="flex items-start justify-between">
@@ -61,9 +71,18 @@ export default async function WorkOrderDetailPage({
           <p className="mt-2 text-sm text-charcoal/60">
             {order.client_name ?? "-"} {order.site_address ? `· ${order.site_address}` : ""}
           </p>
-          <p className="mt-1 text-sm text-charcoal/60">
-            작업일 {order.work_date ?? "-"} · 담당자 {order.profiles?.full_name ?? "-"}
-          </p>
+          <div className="mt-1 flex items-center gap-1 text-sm text-charcoal/60">
+            <span>작업일 {order.work_date ?? "-"} · 담당자</span>
+            {canManage ? (
+              <AssigneeSelect
+                workOrderId={order.id}
+                assigneeId={order.assignee_id}
+                employees={employees ?? []}
+              />
+            ) : (
+              <span>{order.profiles?.full_name ?? "-"}</span>
+            )}
+          </div>
         </div>
         {canManage && (
           <form action={deleteWorkOrder.bind(null, order.id)}>
