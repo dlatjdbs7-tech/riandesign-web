@@ -81,6 +81,7 @@ export type Customer = {
   email: string | null;
   address: string | null;
   memo: string | null;
+  is_vip: boolean;
   created_at: string;
 };
 

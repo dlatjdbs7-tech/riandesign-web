@@ -18,6 +18,7 @@ export async function createCustomer(formData: FormData) {
     email: String(formData.get("email") ?? "").trim() || null,
     address: String(formData.get("address") ?? "").trim() || null,
     memo: String(formData.get("memo") ?? "").trim() || null,
+    is_vip: formData.get("is_vip") === "on",
     created_by: user?.id,
   });
 
@@ -28,4 +29,11 @@ export async function deleteCustomer(id: string) {
   const supabase = await createClient();
   await supabase.from("customers").delete().eq("id", id);
   revalidatePath("/admin/customers");
+}
+
+export async function toggleCustomerVip(id: string, isVip: boolean) {
+  const supabase = await createClient();
+  await supabase.from("customers").update({ is_vip: isVip }).eq("id", id);
+  revalidatePath("/admin/customers");
+  revalidatePath(`/admin/customers/${id}`);
 }

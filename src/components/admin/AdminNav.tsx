@@ -37,7 +37,7 @@ export default function AdminNav({
       <NavLink href="/admin" label="대시보드" />
 
       {groups.map((group) => {
-        if (group.items.length === 0 && !(group.label === "OPERATIONS" && isOwner)) return null;
+        if (group.items.length === 0 && !(group.label === "PEOPLE" && isOwner)) return null;
 
         return (
           <div key={group.label ?? "top"}>
@@ -45,9 +45,6 @@ export default function AdminNav({
               <p className="mb-2 px-3 text-[10px] tracking-[0.2em] text-taupe/70">{group.label}</p>
             )}
             <div className="flex flex-col gap-1">
-              {group.label === "OPERATIONS" && isOwner && (
-                <NavLink href="/admin/team-permissions" label="팀원권한" />
-              )}
               {group.items
                 .filter((item) => !item.hidden)
                 .map((item) => (
@@ -56,6 +53,9 @@ export default function AdminNav({
                     <NavLink href={item.key} label={item.label} />
                   </div>
                 ))}
+              {group.label === "PEOPLE" && isOwner && (
+                <NavLink href="/admin/team-permissions" label="임직원권한" />
+              )}
             </div>
           </div>
         );

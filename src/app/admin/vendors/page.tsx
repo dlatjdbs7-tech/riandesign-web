@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, Vendor } from "@/lib/types";
 import { createVendor, deleteVendor } from "./actions";
+import CategorySection from "@/components/admin/CategorySection";
 
 export default async function VendorsPage() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function VendorsPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">견적처</h1>
+      <h1 className="font-serif text-2xl font-semibold text-charcoal">업체정보</h1>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">
@@ -75,6 +76,8 @@ export default async function VendorsPage() {
           </form>
         )}
       </div>
+
+      <CategorySection type="업체" canManage={canManage} />
     </div>
   );
 }

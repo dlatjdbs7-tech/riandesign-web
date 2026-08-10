@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
 import { approveEmployee, rejectEmployee } from "./actions";
+import CategorySection from "@/components/admin/CategorySection";
 
 const STATUS_LABEL: Record<Profile["status"], string> = {
   pending: "승인대기",
@@ -34,10 +35,11 @@ export default async function EmployeesPage() {
     .returns<Profile[]>();
 
   const canApprove = me?.role === "owner";
+  const canManage = me?.role === "owner" || me?.role === "manager";
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">직원 관리</h1>
+      <h1 className="font-serif text-2xl font-semibold text-charcoal">팀원정보</h1>
       <p className="mt-2 text-sm text-charcoal/60">
         새로 가입한 직원은 &quot;승인대기&quot; 상태이며, 승인해야 시스템을 이용할 수 있습니다.
       </p>
@@ -105,6 +107,8 @@ export default async function EmployeesPage() {
           </tbody>
         </table>
       </div>
+
+      <CategorySection type="팀원" canManage={canManage} />
     </div>
   );
 }

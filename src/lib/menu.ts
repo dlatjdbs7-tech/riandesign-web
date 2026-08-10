@@ -24,7 +24,6 @@ export const MENU_GROUPS: MenuGroup[] = [
       { key: "/admin/as-requests", label: "AS관리" },
       { key: "/admin/quotes", label: "견적서", hidden: true },
       { key: "/admin/customer-pages", label: "고객페이지", dividerBefore: true },
-      { key: "/admin/customers", label: "고객관리" },
       { key: "/admin/transactions", label: "거래명세서", hidden: true },
     ],
   },
@@ -48,9 +47,10 @@ export const MENU_GROUPS: MenuGroup[] = [
   {
     label: "PEOPLE",
     items: [
-      { key: "/admin/employees", label: "임직원" },
-      { key: "/admin/vendors", label: "견적처" },
-      { key: "/admin/categories", label: "카테고리" },
+      { key: "/admin/employees", label: "팀원정보" },
+      { key: "/admin/vendors", label: "업체정보" },
+      { key: "/admin/customers", label: "고객·우수회원" },
+      { key: "/admin/categories", label: "카테고리", hidden: true },
     ],
   },
   {
