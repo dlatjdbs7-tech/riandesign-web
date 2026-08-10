@@ -6,6 +6,7 @@ import type { PurchaseOrderStatus } from "@/lib/types";
 
 export async function createQuickLink(formData: FormData) {
   const url = String(formData.get("url") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
   const status = String(formData.get("status") ?? "pending") as PurchaseOrderStatus;
   if (!url) return;
 
@@ -15,7 +16,7 @@ export async function createQuickLink(formData: FormData) {
   } = await supabase.auth.getUser();
 
   await supabase.from("quick_links").insert({
-    title: url,
+    title: title || url,
     url,
     status,
     created_by: user?.id,

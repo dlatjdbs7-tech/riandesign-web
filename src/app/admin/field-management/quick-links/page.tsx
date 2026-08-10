@@ -51,11 +51,14 @@ export default async function QuickLinksPage() {
               <div className="mt-3 flex flex-col gap-2">
                 {items.map((link) => (
                   <div key={link.id} className="rounded-sm border border-nude/60 bg-white p-3 text-sm">
+                    {link.title !== link.url && (
+                      <p className="truncate font-medium text-charcoal">{link.title}</p>
+                    )}
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block truncate text-charcoal hover:text-orange-600"
+                      className="block truncate text-xs text-taupe hover:text-orange-600"
                     >
                       {link.url}
                     </a>
@@ -84,6 +87,11 @@ export default async function QuickLinksPage() {
                   className="mt-3 flex flex-col gap-2 border-t border-nude/40 pt-3"
                 >
                   <input type="hidden" name="status" value={column.status} />
+                  <input
+                    name="title"
+                    placeholder="소제목 (예: 이케아 조명)"
+                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
+                  />
                   <input
                     type="url"
                     name="url"
