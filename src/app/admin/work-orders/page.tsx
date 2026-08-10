@@ -7,6 +7,8 @@ const STATUS_LABEL: Record<WorkOrder["status"], string> = {
   pending: "대기",
   in_progress: "진행중",
   completed: "완료",
+  cancelled: "취소",
+  on_hold: "보류",
 };
 
 type WorkOrderRow = WorkOrder & {

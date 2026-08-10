@@ -14,6 +14,8 @@ const STATUS_OPTIONS: { value: WorkOrder["status"]; label: string }[] = [
   { value: "pending", label: "대기" },
   { value: "in_progress", label: "진행중" },
   { value: "completed", label: "완료" },
+  { value: "on_hold", label: "보류" },
+  { value: "cancelled", label: "취소" },
 ];
 
 type WorkOrderDetail = WorkOrder & { profiles: Pick<Profile, "full_name"> | null };

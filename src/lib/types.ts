@@ -39,6 +39,7 @@ export type AttendanceRecord = {
 };
 
 export type WorkOrderStatus = "pending" | "in_progress" | "completed";
+export type SiteStatus = WorkOrderStatus | "cancelled" | "on_hold";
 
 export type WorkOrder = {
   id: string;
@@ -47,10 +48,14 @@ export type WorkOrder = {
   site_address: string | null;
   customer_id: string | null;
   work_date: string | null;
+  work_end_date: string | null;
   description: string | null;
   assignee_id: string | null;
-  status: WorkOrderStatus;
+  status: SiteStatus;
   progress_percent: number;
+  contract_amount: number | null;
+  paid_amount: number;
+  material_order_date: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -297,7 +302,7 @@ export type CustomerProjectPhoto = {
 export type PublicProject = {
   id: string;
   title: string;
-  status: WorkOrderStatus;
+  status: SiteStatus;
   work_date: string | null;
   customer_name: string;
 };

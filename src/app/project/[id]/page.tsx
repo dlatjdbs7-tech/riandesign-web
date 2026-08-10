@@ -12,6 +12,8 @@ const STATUS_LABEL: Record<PublicProject["status"], string> = {
   pending: "준비중",
   in_progress: "시공 진행중",
   completed: "시공 완료",
+  cancelled: "일정 협의중",
+  on_hold: "일정 협의중",
 };
 
 export default async function PublicProjectPage({

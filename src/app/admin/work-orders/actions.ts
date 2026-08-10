@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import type { WorkOrderStatus } from "@/lib/types";
+import type { SiteStatus } from "@/lib/types";
 
 export async function createWorkOrder(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -16,6 +16,8 @@ export async function createWorkOrder(formData: FormData) {
 
   const assigneeId = String(formData.get("assignee_id") ?? "") || null;
   const workDate = String(formData.get("work_date") ?? "") || null;
+  const contractAmount = String(formData.get("contract_amount") ?? "").trim();
+  const status = (String(formData.get("status") ?? "").trim() || "pending") as SiteStatus;
 
   await supabase.from("work_orders").insert({
     title,
@@ -23,15 +25,20 @@ export async function createWorkOrder(formData: FormData) {
     client_name: String(formData.get("client_name") ?? "").trim() || null,
     site_address: String(formData.get("site_address") ?? "").trim() || null,
     work_date: workDate,
+    work_end_date: String(formData.get("work_end_date") ?? "") || null,
+    material_order_date: String(formData.get("material_order_date") ?? "") || null,
     description: String(formData.get("description") ?? "").trim() || null,
     assignee_id: assigneeId,
+    contract_amount: contractAmount ? Number(contractAmount) : null,
+    status,
     created_by: user?.id,
   });
 
   revalidatePath("/admin/work-orders");
+  revalidatePath("/admin/sites");
 }
 
-export async function updateWorkOrderStatus(id: string, status: WorkOrderStatus) {
+export async function updateWorkOrderStatus(id: string, status: SiteStatus) {
   const supabase = await createClient();
   await supabase.from("work_orders").update({ status }).eq("id", id);
   revalidatePath("/admin/work-orders");
