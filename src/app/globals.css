@@ -20,6 +20,8 @@
   --font-serif: var(--font-pretendard);
   --font-admin: var(--font-pretendard);
   --font-display: var(--font-manrope);
+  /* 관리자 화면 카드/박스(rounded-sm)를 기본값(4px)보다 살짝 더 둥글게 */
+  --radius-sm: 0.375rem;
 }
 
 body {
