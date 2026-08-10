@@ -488,7 +488,15 @@ export default async function SitesPage({
                         <span className="text-right text-charcoal">{formatWon(order.contract_amount)}</span>
                       )}
 
-                      <span>1차 계약금</span>
+                      <span
+                        className={
+                          order.payment_contract_date
+                            ? "flex items-center gap-1 font-medium text-red-500"
+                            : undefined
+                        }
+                      >
+                        1차 계약금{order.payment_contract_date && " ✓"}
+                      </span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
@@ -496,9 +504,22 @@ export default async function SitesPage({
                           type="number"
                           value={order.payment_contract?.toString() ?? ""}
                           placeholder="미입력"
+                          className={
+                            order.payment_contract_date
+                              ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                              : undefined
+                          }
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.payment_contract)}</span>
+                        <span
+                          className={
+                            order.payment_contract_date
+                              ? "text-right font-medium text-red-500"
+                              : "text-right text-charcoal"
+                          }
+                        >
+                          {formatWon(order.payment_contract)}
+                        </span>
                       )}
                       <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
                       {canManage ? (
@@ -515,7 +536,15 @@ export default async function SitesPage({
                         </span>
                       )}
 
-                      <span>2차 착수금</span>
+                      <span
+                        className={
+                          order.payment_start_date
+                            ? "flex items-center gap-1 font-medium text-red-500"
+                            : undefined
+                        }
+                      >
+                        2차 착수금{order.payment_start_date && " ✓"}
+                      </span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
@@ -523,9 +552,22 @@ export default async function SitesPage({
                           type="number"
                           value={order.payment_start?.toString() ?? ""}
                           placeholder="미입력"
+                          className={
+                            order.payment_start_date
+                              ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                              : undefined
+                          }
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.payment_start)}</span>
+                        <span
+                          className={
+                            order.payment_start_date
+                              ? "text-right font-medium text-red-500"
+                              : "text-right text-charcoal"
+                          }
+                        >
+                          {formatWon(order.payment_start)}
+                        </span>
                       )}
                       <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
                       {canManage ? (
@@ -542,7 +584,15 @@ export default async function SitesPage({
                         </span>
                       )}
 
-                      <span>3차 중도금1차</span>
+                      <span
+                        className={
+                          order.payment_interim1_date
+                            ? "flex items-center gap-1 font-medium text-red-500"
+                            : undefined
+                        }
+                      >
+                        3차 중도금1차{order.payment_interim1_date && " ✓"}
+                      </span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
@@ -550,9 +600,22 @@ export default async function SitesPage({
                           type="number"
                           value={order.payment_interim1?.toString() ?? ""}
                           placeholder="미입력"
+                          className={
+                            order.payment_interim1_date
+                              ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                              : undefined
+                          }
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.payment_interim1)}</span>
+                        <span
+                          className={
+                            order.payment_interim1_date
+                              ? "text-right font-medium text-red-500"
+                              : "text-right text-charcoal"
+                          }
+                        >
+                          {formatWon(order.payment_interim1)}
+                        </span>
                       )}
                       <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
                       {canManage ? (
@@ -569,7 +632,15 @@ export default async function SitesPage({
                         </span>
                       )}
 
-                      <span>4차 중도금2차</span>
+                      <span
+                        className={
+                          order.payment_interim2_date
+                            ? "flex items-center gap-1 font-medium text-red-500"
+                            : undefined
+                        }
+                      >
+                        4차 중도금2차{order.payment_interim2_date && " ✓"}
+                      </span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
@@ -577,9 +648,22 @@ export default async function SitesPage({
                           type="number"
                           value={order.payment_interim2?.toString() ?? ""}
                           placeholder="미입력"
+                          className={
+                            order.payment_interim2_date
+                              ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                              : undefined
+                          }
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.payment_interim2)}</span>
+                        <span
+                          className={
+                            order.payment_interim2_date
+                              ? "text-right font-medium text-red-500"
+                              : "text-right text-charcoal"
+                          }
+                        >
+                          {formatWon(order.payment_interim2)}
+                        </span>
                       )}
                       <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
                       {canManage ? (
@@ -596,7 +680,15 @@ export default async function SitesPage({
                         </span>
                       )}
 
-                      <span>5차 잔금</span>
+                      <span
+                        className={
+                          order.payment_balance_date
+                            ? "flex items-center gap-1 font-medium text-red-500"
+                            : undefined
+                        }
+                      >
+                        5차 잔금{order.payment_balance_date && " ✓"}
+                      </span>
                       {canManage ? (
                         <InlineFieldInput
                           workOrderId={order.id}
@@ -604,9 +696,22 @@ export default async function SitesPage({
                           type="number"
                           value={order.payment_balance?.toString() ?? ""}
                           placeholder="미입력"
+                          className={
+                            order.payment_balance_date
+                              ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                              : undefined
+                          }
                         />
                       ) : (
-                        <span className="text-right text-charcoal">{formatWon(order.payment_balance)}</span>
+                        <span
+                          className={
+                            order.payment_balance_date
+                              ? "text-right font-medium text-red-500"
+                              : "text-right text-charcoal"
+                          }
+                        >
+                          {formatWon(order.payment_balance)}
+                        </span>
                       )}
                       <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
                       {canManage ? (
