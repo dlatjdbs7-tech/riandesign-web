@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { Profile, QuickLink } from "@/lib/types";
+import type { Profile, PurchaseOrderStatus, QuickLink } from "@/lib/types";
+import QuickLinkStatusSelect from "@/components/admin/QuickLinkStatusSelect";
 import { createQuickLink, deleteQuickLink } from "./actions";
+
+const COLUMNS: { status: PurchaseOrderStatus; label: string }[] = [
+  { status: "ordered", label: "URL발주" },
+  { status: "pending", label: "URL발주대기" },
+  { status: "reference", label: "URL참조" },
+];
 
 export default async function QuickLinksPage() {
   const supabase = await createClient();
@@ -18,17 +25,8 @@ export default async function QuickLinksPage() {
   const { data: links } = await supabase
     .from("quick_links")
     .select("*")
-    .order("category", { ascending: true, nullsFirst: false })
-    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: false })
     .returns<QuickLink[]>();
-
-  const groups = new Map<string, QuickLink[]>();
-  for (const link of links ?? []) {
-    const key = link.category ?? "기타";
-    const list = groups.get(key) ?? [];
-    list.push(link);
-    groups.set(key, list);
-  }
 
   return (
     <div>
@@ -38,79 +36,72 @@ export default async function QuickLinksPage() {
           ← 현장관리
         </Link>
       </div>
-      <p className="mt-2 text-sm text-charcoal/60">
-        자재사이트, 설계사이트, 참조사이트 등 자주 찾는 링크를 카테고리별로 모아둡니다.
-      </p>
+      <p className="mt-2 text-sm text-charcoal/60">자주 찾는 URL을 상태별로 한눈에 모아둡니다.</p>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="flex flex-col gap-6">
-          {Array.from(groups.entries()).map(([category, categoryLinks]) => (
-            <div key={category} className="rounded-sm border border-nude/60 bg-white p-4">
-              <h2 className="font-serif text-sm font-semibold text-charcoal">{category}</h2>
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        {COLUMNS.map((column) => {
+          const items = links?.filter((l) => l.status === column.status) ?? [];
+          return (
+            <div key={column.status} className="rounded-sm border-t-4 border-orange-400 bg-stone-100 p-3">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="font-serif text-sm font-semibold text-charcoal">{column.label}</h2>
+                <span className="text-xs text-charcoal/50">{items.length}</span>
+              </div>
+
               <div className="mt-3 flex flex-col gap-2">
-                {categoryLinks.map((link) => (
-                  <div
-                    key={link.id}
-                    className="flex items-center justify-between rounded-sm border border-nude/40 p-2.5 text-sm"
-                  >
+                {items.map((link) => (
+                  <div key={link.id} className="rounded-sm border border-nude/60 bg-white p-3 text-sm">
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="truncate text-charcoal hover:text-orange-600"
+                      className="block truncate text-charcoal hover:text-orange-600"
                     >
-                      {link.title}
+                      {link.url}
                     </a>
-                    {canManage && (
-                      <form action={deleteQuickLink.bind(null, link.id)}>
-                        <button type="submit" className="ml-2 shrink-0 text-xs text-charcoal/40 hover:text-red-600">
-                          삭제
-                        </button>
-                      </form>
-                    )}
+                    <div className="mt-2 flex items-center justify-between">
+                      <QuickLinkStatusSelect id={link.id} status={link.status} />
+                      {canManage && (
+                        <form action={deleteQuickLink.bind(null, link.id)}>
+                          <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
+                            삭제
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </div>
                 ))}
+                {items.length === 0 && (
+                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
+                    없음
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
-          {groups.size === 0 && (
-            <p className="rounded-sm border border-dashed border-nude p-8 text-center text-sm text-charcoal/40">
-              등록된 링크가 없습니다.
-            </p>
-          )}
-        </div>
 
-        {canManage && (
-          <form
-            action={createQuickLink}
-            className="flex h-fit flex-col gap-4 rounded-sm border border-nude/60 bg-white p-6"
-          >
-            <input
-              name="title"
-              placeholder="제목 (예: OO자재 쇼핑몰)"
-              required
-              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
-            />
-            <input
-              name="url"
-              type="url"
-              placeholder="https://..."
-              required
-              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
-            />
-            <input
-              name="category"
-              placeholder="카테고리 (예: 자재사이트, 설계사이트, 참조사이트)"
-              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
-            />
-            <button
-              type="submit"
-              className="self-start rounded-full bg-orange-300 px-6 py-2 text-sm tracking-wide text-orange-900 hover:bg-orange-400"
-            >
-              링크 등록
-            </button>
-          </form>
-        )}
+              {canManage && (
+                <form
+                  action={createQuickLink}
+                  className="mt-3 flex flex-col gap-2 border-t border-nude/40 pt-3"
+                >
+                  <input type="hidden" name="status" value={column.status} />
+                  <input
+                    type="url"
+                    name="url"
+                    required
+                    placeholder="https://..."
+                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
+                  />
+                  <button
+                    type="submit"
+                    className="self-start rounded-full border border-orange-400 px-3 py-1 text-xs text-orange-700 hover:bg-orange-100"
+                  >
+                    + URL 추가
+                  </button>
+                </form>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

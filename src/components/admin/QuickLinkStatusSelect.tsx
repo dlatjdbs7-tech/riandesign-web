@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { updatePurchaseOrderStatus } from "@/app/admin/field-management/purchase-orders/actions";
+import { updateQuickLinkStatus } from "@/app/admin/field-management/quick-links/actions";
 import type { PurchaseOrderStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<PurchaseOrderStatus, string> = {
@@ -10,7 +10,7 @@ const STATUS_LABEL: Record<PurchaseOrderStatus, string> = {
   reference: "URL참조",
 };
 
-export default function PurchaseOrderStatusSelect({
+export default function QuickLinkStatusSelect({
   id,
   status,
 }: {
@@ -24,7 +24,7 @@ export default function PurchaseOrderStatusSelect({
       key={status}
       defaultValue={status}
       onChange={async (event) => {
-        await updatePurchaseOrderStatus(id, event.target.value as PurchaseOrderStatus);
+        await updateQuickLinkStatus(id, event.target.value as PurchaseOrderStatus);
         router.refresh();
       }}
       className="border-b border-nude bg-transparent py-0.5 text-[10px] text-charcoal/60 outline-none focus:border-orange-400"

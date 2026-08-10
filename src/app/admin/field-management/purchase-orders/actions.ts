@@ -2,11 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
-import type { PurchaseOrderStatus } from "@/lib/types";
 
 export async function createPurchaseOrder(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
-  const status = String(formData.get("status") ?? "pending") as PurchaseOrderStatus;
   if (!title) return;
 
   const supabase = await createClient();
@@ -16,16 +14,13 @@ export async function createPurchaseOrder(formData: FormData) {
 
   await supabase.from("purchase_orders").insert({
     title,
-    status,
+    vendor_name: String(formData.get("vendor_name") ?? "").trim() || null,
+    site_address: String(formData.get("site_address") ?? "").trim() || null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+    order_date: String(formData.get("order_date") ?? "") || null,
     created_by: user?.id,
   });
 
-  revalidatePath("/admin/field-management/purchase-orders");
-}
-
-export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrderStatus) {
-  const supabase = await createClient();
-  await supabase.from("purchase_orders").update({ status }).eq("id", id);
   revalidatePath("/admin/field-management/purchase-orders");
 }
 

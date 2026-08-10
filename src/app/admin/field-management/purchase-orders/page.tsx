@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { Profile, PurchaseOrder, PurchaseOrderStatus } from "@/lib/types";
-import PurchaseOrderStatusSelect from "@/components/admin/PurchaseOrderStatusSelect";
+import type { Profile, PurchaseOrder } from "@/lib/types";
 import { createPurchaseOrder, deletePurchaseOrder } from "./actions";
-
-const COLUMNS: { status: PurchaseOrderStatus; label: string }[] = [
-  { status: "ordered", label: "URL발주" },
-  { status: "pending", label: "URL발주대기" },
-  { status: "reference", label: "URL참조" },
-];
 
 export default async function PurchaseOrdersPage() {
   const supabase = await createClient();
@@ -36,72 +29,86 @@ export default async function PurchaseOrdersPage() {
           ← 현장관리
         </Link>
       </div>
-      <p className="mt-2 text-sm text-charcoal/60">자재·시공 발주용 URL을 상태별로 모아둡니다.</p>
+      <p className="mt-2 text-sm text-charcoal/60">
+        자재·시공 발주 내용을 간단히 메모로 남깁니다.
+      </p>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        {COLUMNS.map((column) => {
-          const items = orders?.filter((o) => o.status === column.status) ?? [];
-          return (
-            <div key={column.status} className="rounded-sm border-t-4 border-orange-400 bg-stone-100 p-3">
-              <div className="flex items-center justify-between px-1">
-                <h2 className="font-serif text-sm font-semibold text-charcoal">{column.label}</h2>
-                <span className="text-xs text-charcoal/50">{items.length}</span>
-              </div>
-
-              <div className="mt-3 flex flex-col gap-2">
-                {items.map((order) => (
-                  <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-3 text-sm">
-                    <a
-                      href={order.title}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block truncate text-charcoal hover:text-orange-600"
-                    >
-                      {order.title}
-                    </a>
-                    <div className="mt-2 flex items-center justify-between">
-                      <PurchaseOrderStatusSelect id={order.id} status={order.status} />
-                      {canManage && (
-                        <form action={deletePurchaseOrder.bind(null, order.id)}>
-                          <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                            삭제
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {items.length === 0 && (
-                  <p className="rounded-sm border border-dashed border-nude p-4 text-center text-xs text-charcoal/40">
-                    없음
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="flex flex-col gap-3">
+          {orders?.map((order) => (
+            <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="font-serif text-base font-semibold text-charcoal">{order.title}</h2>
+                  <p className="mt-1 text-xs text-charcoal/60">
+                    {order.vendor_name ?? "거래처 미지정"} · {order.order_date ?? "날짜 미정"}
                   </p>
+                  {order.site_address && (
+                    <p className="mt-1 text-xs text-charcoal/50">현장주소 {order.site_address}</p>
+                  )}
+                </div>
+                {canManage && (
+                  <form action={deletePurchaseOrder.bind(null, order.id)}>
+                    <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
+                      삭제
+                    </button>
+                  </form>
                 )}
               </div>
-
-              {canManage && (
-                <form
-                  action={createPurchaseOrder}
-                  className="mt-3 flex flex-col gap-2 border-t border-nude/40 pt-3"
-                >
-                  <input type="hidden" name="status" value={column.status} />
-                  <input
-                    type="url"
-                    name="title"
-                    required
-                    placeholder="https://..."
-                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
-                  />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full border border-orange-400 px-3 py-1 text-xs text-orange-700 hover:bg-orange-100"
-                  >
-                    + URL 추가
-                  </button>
-                </form>
+              {order.notes && (
+                <p className="mt-3 whitespace-pre-line rounded-sm bg-stone-100 p-3 text-sm text-charcoal/80">
+                  {order.notes}
+                </p>
               )}
             </div>
-          );
-        })}
+          ))}
+          {(!orders || orders.length === 0) && (
+            <p className="rounded-sm border border-dashed border-nude p-8 text-center text-sm text-charcoal/40">
+              등록된 발주서가 없습니다.
+            </p>
+          )}
+        </div>
+
+        {canManage && (
+          <form
+            action={createPurchaseOrder}
+            className="flex h-fit flex-col gap-4 rounded-sm border border-nude/60 bg-white p-6"
+          >
+            <input
+              name="title"
+              placeholder="제목 (예: 도안리슈빌 타일 발주)"
+              required
+              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
+            />
+            <input
+              name="vendor_name"
+              placeholder="거래처"
+              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
+            />
+            <input
+              name="site_address"
+              placeholder="현장주소"
+              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
+            />
+            <input
+              type="date"
+              name="order_date"
+              className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
+            />
+            <textarea
+              name="notes"
+              rows={4}
+              placeholder="특이사항"
+              className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
+            />
+            <button
+              type="submit"
+              className="self-start rounded-full bg-orange-300 px-6 py-2 text-sm tracking-wide text-orange-900 hover:bg-orange-400"
+            >
+              발주서 등록
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

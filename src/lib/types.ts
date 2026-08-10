@@ -280,6 +280,7 @@ export type QuickLink = {
   title: string;
   url: string;
   category: string | null;
+  status: PurchaseOrderStatus;
   display_order: number;
   created_by: string | null;
   created_at: string;
