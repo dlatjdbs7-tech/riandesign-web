@@ -10,7 +10,6 @@ import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
-import VatToggle from "@/components/admin/VatToggle";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -475,7 +474,7 @@ export default async function SitesPage({
                       <div className="h-2 rounded-full bg-red-300" style={{ width: `${collectionRate}%` }} />
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 items-center gap-y-1.5 text-xs text-charcoal/60">
+                    <div className="mt-3 grid grid-cols-2 items-center gap-y-1 tracking-tight text-xs text-charcoal/60">
                       <span>계약금액</span>
                       {canManage ? (
                         <InlineFieldInput
@@ -498,7 +497,7 @@ export default async function SitesPage({
                       >
                         1차 계약금{order.payment_contract_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -508,47 +507,35 @@ export default async function SitesPage({
                             placeholder="미입력"
                             className={
                               order.payment_contract_date
-                                ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
-                                : undefined
+                                ? "min-w-0 flex-1 border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                                : "min-w-0 flex-1 border-b border-transparent bg-transparent text-right outline-none hover:border-nude focus:border-orange-400"
                             }
                           />
                         ) : (
                           <span
                             className={
                               order.payment_contract_date
-                                ? "text-right font-medium text-red-500"
-                                : "text-right text-charcoal"
+                                ? "flex-1 text-right font-medium text-red-500"
+                                : "flex-1 text-right text-charcoal"
                             }
                           >
                             {formatWon(order.payment_contract)}
                           </span>
                         )}
                         {canManage ? (
-                          <VatToggle
+                          <InlineFieldInput
                             workOrderId={order.id}
-                            field="payment_contract_vat_included"
-                            checked={order.payment_contract_vat_included}
+                            field="payment_contract_date"
+                            type="date"
+                            value={order.payment_contract_date ?? ""}
+                            className="w-[5.5rem] shrink-0 border-b border-transparent bg-transparent text-right text-[10px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
                           />
                         ) : (
-                          <span className="shrink-0 text-[10px] text-charcoal/50">
-                            {order.payment_contract_vat_included ? "포함" : "별도"}
+                          <span className="w-[5.5rem] shrink-0 text-right text-[10px] text-charcoal/50">
+                            {order.payment_contract_date ?? "-"}
                           </span>
                         )}
                       </div>
-                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="payment_contract_date"
-                          type="date"
-                          value={order.payment_contract_date ?? ""}
-                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        <span className="text-right text-[11px] text-charcoal/50">
-                          {order.payment_contract_date ?? "-"}
-                        </span>
-                      )}
 
                       <span
                         className={
@@ -559,7 +546,7 @@ export default async function SitesPage({
                       >
                         2차 착수금{order.payment_start_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -569,47 +556,35 @@ export default async function SitesPage({
                             placeholder="미입력"
                             className={
                               order.payment_start_date
-                                ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
-                                : undefined
+                                ? "min-w-0 flex-1 border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                                : "min-w-0 flex-1 border-b border-transparent bg-transparent text-right outline-none hover:border-nude focus:border-orange-400"
                             }
                           />
                         ) : (
                           <span
                             className={
                               order.payment_start_date
-                                ? "text-right font-medium text-red-500"
-                                : "text-right text-charcoal"
+                                ? "flex-1 text-right font-medium text-red-500"
+                                : "flex-1 text-right text-charcoal"
                             }
                           >
                             {formatWon(order.payment_start)}
                           </span>
                         )}
                         {canManage ? (
-                          <VatToggle
+                          <InlineFieldInput
                             workOrderId={order.id}
-                            field="payment_start_vat_included"
-                            checked={order.payment_start_vat_included}
+                            field="payment_start_date"
+                            type="date"
+                            value={order.payment_start_date ?? ""}
+                            className="w-[5.5rem] shrink-0 border-b border-transparent bg-transparent text-right text-[10px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
                           />
                         ) : (
-                          <span className="shrink-0 text-[10px] text-charcoal/50">
-                            {order.payment_start_vat_included ? "포함" : "별도"}
+                          <span className="w-[5.5rem] shrink-0 text-right text-[10px] text-charcoal/50">
+                            {order.payment_start_date ?? "-"}
                           </span>
                         )}
                       </div>
-                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="payment_start_date"
-                          type="date"
-                          value={order.payment_start_date ?? ""}
-                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        <span className="text-right text-[11px] text-charcoal/50">
-                          {order.payment_start_date ?? "-"}
-                        </span>
-                      )}
 
                       <span
                         className={
@@ -620,7 +595,7 @@ export default async function SitesPage({
                       >
                         3차 중도금1차{order.payment_interim1_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -630,47 +605,35 @@ export default async function SitesPage({
                             placeholder="미입력"
                             className={
                               order.payment_interim1_date
-                                ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
-                                : undefined
+                                ? "min-w-0 flex-1 border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                                : "min-w-0 flex-1 border-b border-transparent bg-transparent text-right outline-none hover:border-nude focus:border-orange-400"
                             }
                           />
                         ) : (
                           <span
                             className={
                               order.payment_interim1_date
-                                ? "text-right font-medium text-red-500"
-                                : "text-right text-charcoal"
+                                ? "flex-1 text-right font-medium text-red-500"
+                                : "flex-1 text-right text-charcoal"
                             }
                           >
                             {formatWon(order.payment_interim1)}
                           </span>
                         )}
                         {canManage ? (
-                          <VatToggle
+                          <InlineFieldInput
                             workOrderId={order.id}
-                            field="payment_interim1_vat_included"
-                            checked={order.payment_interim1_vat_included}
+                            field="payment_interim1_date"
+                            type="date"
+                            value={order.payment_interim1_date ?? ""}
+                            className="w-[5.5rem] shrink-0 border-b border-transparent bg-transparent text-right text-[10px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
                           />
                         ) : (
-                          <span className="shrink-0 text-[10px] text-charcoal/50">
-                            {order.payment_interim1_vat_included ? "포함" : "별도"}
+                          <span className="w-[5.5rem] shrink-0 text-right text-[10px] text-charcoal/50">
+                            {order.payment_interim1_date ?? "-"}
                           </span>
                         )}
                       </div>
-                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="payment_interim1_date"
-                          type="date"
-                          value={order.payment_interim1_date ?? ""}
-                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        <span className="text-right text-[11px] text-charcoal/50">
-                          {order.payment_interim1_date ?? "-"}
-                        </span>
-                      )}
 
                       <span
                         className={
@@ -681,7 +644,7 @@ export default async function SitesPage({
                       >
                         4차 중도금2차{order.payment_interim2_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -691,47 +654,35 @@ export default async function SitesPage({
                             placeholder="미입력"
                             className={
                               order.payment_interim2_date
-                                ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
-                                : undefined
+                                ? "min-w-0 flex-1 border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                                : "min-w-0 flex-1 border-b border-transparent bg-transparent text-right outline-none hover:border-nude focus:border-orange-400"
                             }
                           />
                         ) : (
                           <span
                             className={
                               order.payment_interim2_date
-                                ? "text-right font-medium text-red-500"
-                                : "text-right text-charcoal"
+                                ? "flex-1 text-right font-medium text-red-500"
+                                : "flex-1 text-right text-charcoal"
                             }
                           >
                             {formatWon(order.payment_interim2)}
                           </span>
                         )}
                         {canManage ? (
-                          <VatToggle
+                          <InlineFieldInput
                             workOrderId={order.id}
-                            field="payment_interim2_vat_included"
-                            checked={order.payment_interim2_vat_included}
+                            field="payment_interim2_date"
+                            type="date"
+                            value={order.payment_interim2_date ?? ""}
+                            className="w-[5.5rem] shrink-0 border-b border-transparent bg-transparent text-right text-[10px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
                           />
                         ) : (
-                          <span className="shrink-0 text-[10px] text-charcoal/50">
-                            {order.payment_interim2_vat_included ? "포함" : "별도"}
+                          <span className="w-[5.5rem] shrink-0 text-right text-[10px] text-charcoal/50">
+                            {order.payment_interim2_date ?? "-"}
                           </span>
                         )}
                       </div>
-                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="payment_interim2_date"
-                          type="date"
-                          value={order.payment_interim2_date ?? ""}
-                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        <span className="text-right text-[11px] text-charcoal/50">
-                          {order.payment_interim2_date ?? "-"}
-                        </span>
-                      )}
 
                       <span
                         className={
@@ -742,7 +693,7 @@ export default async function SitesPage({
                       >
                         5차 잔금{order.payment_balance_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -752,47 +703,35 @@ export default async function SitesPage({
                             placeholder="미입력"
                             className={
                               order.payment_balance_date
-                                ? "w-full border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
-                                : undefined
+                                ? "min-w-0 flex-1 border-b border-transparent bg-transparent text-right font-medium text-red-500 outline-none hover:border-nude focus:border-orange-400"
+                                : "min-w-0 flex-1 border-b border-transparent bg-transparent text-right outline-none hover:border-nude focus:border-orange-400"
                             }
                           />
                         ) : (
                           <span
                             className={
                               order.payment_balance_date
-                                ? "text-right font-medium text-red-500"
-                                : "text-right text-charcoal"
+                                ? "flex-1 text-right font-medium text-red-500"
+                                : "flex-1 text-right text-charcoal"
                             }
                           >
                             {formatWon(order.payment_balance)}
                           </span>
                         )}
                         {canManage ? (
-                          <VatToggle
+                          <InlineFieldInput
                             workOrderId={order.id}
-                            field="payment_balance_vat_included"
-                            checked={order.payment_balance_vat_included}
+                            field="payment_balance_date"
+                            type="date"
+                            value={order.payment_balance_date ?? ""}
+                            className="w-[5.5rem] shrink-0 border-b border-transparent bg-transparent text-right text-[10px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
                           />
                         ) : (
-                          <span className="shrink-0 text-[10px] text-charcoal/50">
-                            {order.payment_balance_vat_included ? "포함" : "별도"}
+                          <span className="w-[5.5rem] shrink-0 text-right text-[10px] text-charcoal/50">
+                            {order.payment_balance_date ?? "-"}
                           </span>
                         )}
                       </div>
-                      <span className="pl-2 text-[11px] text-charcoal/40">└ 받은날짜</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="payment_balance_date"
-                          type="date"
-                          value={order.payment_balance_date ?? ""}
-                          className="w-full border-b border-transparent bg-transparent text-right text-[11px] text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        <span className="text-right text-[11px] text-charcoal/50">
-                          {order.payment_balance_date ?? "-"}
-                        </span>
-                      )}
 
                       <span className="font-medium text-charcoal/70">수금액 합계</span>
                       <span className="text-right font-medium text-charcoal">{formatWon(totalPaid)}</span>
