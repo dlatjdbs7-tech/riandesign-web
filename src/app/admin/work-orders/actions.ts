@@ -65,7 +65,7 @@ export async function updateWorkOrderClientName(id: string, clientName: string) 
   revalidatePath("/admin/customer-pages");
 }
 
-const EDITABLE_TEXT_FIELDS = ["title"] as const;
+const EDITABLE_TEXT_FIELDS = ["title", "schedule_notes"] as const;
 const EDITABLE_NUMBER_FIELDS = [
   "contract_amount",
   "payment_contract",

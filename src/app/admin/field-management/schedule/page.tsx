@@ -5,10 +5,11 @@ import { getKSTDateBounds } from "@/lib/date";
 import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import WorkOrderTaskRow from "@/components/admin/WorkOrderTaskRow";
 import ClientNameInput from "@/components/admin/ClientNameInput";
-import ScheduleGantt from "@/components/admin/ScheduleGantt";
+import ScheduleCalendarGrid from "@/components/admin/ScheduleCalendarGrid";
+import ScheduleNotesField from "@/components/admin/ScheduleNotesField";
 import { createWorkOrderTask } from "./actions";
 
-type WorkOrderRow = Pick<WorkOrder, "id" | "title" | "status" | "work_date" | "client_name"> & {
+type WorkOrderRow = Pick<WorkOrder, "id" | "title" | "status" | "work_date" | "client_name" | "schedule_notes"> & {
   customers: Pick<Customer, "name"> | null;
 };
 
@@ -25,7 +26,7 @@ export default async function WorkOrderSchedulePage({
 
   let query = supabase
     .from("work_orders")
-    .select("id, title, status, work_date, client_name, customers(name)")
+    .select("id, title, status, work_date, client_name, schedule_notes, customers(name)")
     .order("work_date", { ascending: true, nullsFirst: false });
 
   if (!showAll) {
@@ -95,7 +96,11 @@ export default async function WorkOrderSchedulePage({
             </div>
 
             <div className="mt-4">
-              <ScheduleGantt tasks={tasks ?? []} todayDateString={todayDateString} />
+              <ScheduleCalendarGrid
+                tasks={tasks ?? []}
+                todayDateString={todayDateString}
+                title={`${selectedOrder.title} 공정표`}
+              />
             </div>
 
             <table className="mt-4 w-full text-left">
@@ -167,6 +172,11 @@ export default async function WorkOrderSchedulePage({
                 공정 추가
               </button>
             </form>
+
+            <div className="mt-5 border-t border-nude/40 pt-4">
+              <p className="mb-2 text-xs font-medium tracking-wide text-charcoal/50">비고</p>
+              <ScheduleNotesField workOrderId={selectedOrder.id} notes={selectedOrder.schedule_notes} />
+            </div>
           </div>
 
           <div className="flex gap-1 overflow-x-auto rounded-b-sm border border-t-0 border-nude/60 bg-stone-100 px-2 py-1.5">
