@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MessageCircle, X, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { startTitleBlink } from "@/lib/titleBlink";
 import ChatConversationView from "./ChatConversationView";
 
 const PINNED_ROOM_ID = "00000000-0000-0000-0000-000000000001";
@@ -92,9 +93,11 @@ export default function ChatWidget({
 
     const channel = supabase
       .channel("chat-messages-widget-badges")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
         refreshConversations();
         refreshGroupRooms();
+        const row = payload.new as { sender_id: string };
+        if (row.sender_id !== currentUserId) startTitleBlink();
       })
       .subscribe();
 

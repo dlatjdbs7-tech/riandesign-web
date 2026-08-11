@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, X, Send, Paperclip, Images, FileText, Download, ExternalLink } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { startTitleBlink } from "@/lib/titleBlink";
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
@@ -97,6 +98,7 @@ export default function ChatConversationView({
           const row = payload.new as ChatMessageRow;
           setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
           markRead();
+          if (row.sender_id !== currentUserId) startTitleBlink();
         }
       )
       .on(
