@@ -1,10 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, X, ArrowLeft, Send, Plus, Trash2 } from "lucide-react";
+import {
+  MessageCircle,
+  X,
+  ArrowLeft,
+  Send,
+  Plus,
+  Trash2,
+  Paperclip,
+  Images,
+  FileText,
+  Download,
+} from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
 const PINNED_ROOM_ID = "00000000-0000-0000-0000-000000000001";
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 type ConversationSummary = {
   conversation_id: string;
@@ -31,8 +43,11 @@ type ChatMessageRow = {
   id: string;
   conversation_id: string;
   sender_id: string;
-  content: string;
+  content: string | null;
   created_at: string;
+  attachment_url: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
 };
 
 type DirectoryEntry = { id: string; full_name: string };
@@ -76,7 +91,13 @@ export default function ChatWidget({
   const [newRoomName, setNewRoomName] = useState("");
   const [ctxMenu, setCtxMenu] = useState<CtxMenu>(null);
   const [draggedRoomId, setDraggedRoomId] = useState<string | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [drawerItems, setDrawerItems] = useState<ChatMessageRow[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
   const activeConversationIdRef = useRef<string | null>(null);
   const isOpenRef = useRef(false);
 
@@ -183,6 +204,7 @@ export default function ChatWidget({
     setActiveLabel(label);
     setActiveIsGroup(isGroup);
     setMessages([]);
+    setShowDrawer(false);
     const { data } = await supabase
       .from("chat_messages")
       .select("*")
@@ -216,6 +238,7 @@ export default function ChatWidget({
   function closeConversation() {
     setActiveConversationId(null);
     setMessages([]);
+    setShowDrawer(false);
   }
 
   async function createRoom() {
@@ -296,27 +319,91 @@ export default function ChatWidget({
     setIsSending(true);
     setDraft("");
 
+    const optimisticId = `optimistic-${Date.now()}`;
     const optimistic: ChatMessageRow = {
-      id: `optimistic-${Date.now()}`,
+      id: optimisticId,
       conversation_id: activeConversationId,
       sender_id: currentUserId,
       content,
       created_at: new Date().toISOString(),
+      attachment_url: null,
+      attachment_name: null,
+      attachment_type: null,
     };
     setMessages((prev) => [...prev, optimistic]);
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("chat_messages")
-      .insert({ conversation_id: activeConversationId, sender_id: currentUserId, content });
+      .insert({ conversation_id: activeConversationId, sender_id: currentUserId, content })
+      .select()
+      .single();
 
-    if (error) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+    if (error || !inserted) {
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setDraft(content);
     } else {
+      setMessages((prev) => prev.map((m) => (m.id === optimisticId ? (inserted as ChatMessageRow) : m)));
       refreshConversations();
       refreshGroupRooms();
     }
     setIsSending(false);
+  }
+
+  async function uploadFiles(files: FileList | File[]) {
+    if (!activeConversationId) return;
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    setIsUploading(true);
+
+    for (const file of list) {
+      if (file.size > MAX_FILE_SIZE) {
+        window.alert(`"${file.name}" 파일이 너무 큽니다 (25MB 이하만 가능).`);
+        continue;
+      }
+
+      const ext = file.name.includes(".") ? file.name.split(".").pop() : "";
+      const path = `${activeConversationId}/${crypto.randomUUID()}${ext ? `.${ext}` : ""}`;
+
+      const { error: uploadError } = await supabase.storage.from("chat-files").upload(path, file);
+      if (uploadError) continue;
+
+      const { data: publicUrlData } = supabase.storage.from("chat-files").getPublicUrl(path);
+      const attachmentType = file.type.startsWith("image/") ? "image" : "file";
+
+      const { data: inserted } = await supabase
+        .from("chat_messages")
+        .insert({
+          conversation_id: activeConversationId,
+          sender_id: currentUserId,
+          content: null,
+          attachment_url: publicUrlData.publicUrl,
+          attachment_name: file.name,
+          attachment_type: attachmentType,
+        })
+        .select()
+        .single();
+
+      if (inserted) {
+        setMessages((prev) => (prev.some((m) => m.id === inserted.id) ? prev : [...prev, inserted as ChatMessageRow]));
+      }
+    }
+
+    refreshConversations();
+    refreshGroupRooms();
+    setIsUploading(false);
+  }
+
+  async function openDrawer() {
+    setShowDrawer(true);
+    if (!activeConversationId) return;
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("conversation_id", activeConversationId)
+      .not("attachment_url", "is", null)
+      .order("created_at", { ascending: false })
+      .returns<ChatMessageRow[]>();
+    if (data) setDrawerItems(data);
   }
 
   const dmPartnerIds = new Set(
@@ -377,64 +464,186 @@ export default function ChatWidget({
     );
   }
 
+  function renderMessageBubble(m: ChatMessageRow) {
+    const mine = m.sender_id === currentUserId;
+    return (
+      <div key={m.id} className={`mb-2 flex flex-col ${mine ? "items-end" : "items-start"}`}>
+        {!mine && activeIsGroup && (
+          <span className="mb-0.5 px-1 text-[11px] text-charcoal/50">{nameOf(m.sender_id)}</span>
+        )}
+        <div className="flex items-end gap-1.5">
+          {mine && <span className="text-[10px] text-charcoal/40">{formatTime(m.created_at)}</span>}
+          <div
+            onContextMenu={(e) => {
+              if (!mine) return;
+              e.preventDefault();
+              e.stopPropagation();
+              setCtxMenu({ type: "message", x: e.clientX, y: e.clientY, messageId: m.id });
+            }}
+            className={`max-w-[13rem] ${mine ? "cursor-context-menu" : ""}`}
+          >
+            {m.attachment_url && m.attachment_type === "image" ? (
+              <a href={m.attachment_url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={m.attachment_url}
+                  alt={m.attachment_name ?? "이미지"}
+                  className="max-h-48 rounded-xl object-cover"
+                />
+              </a>
+            ) : m.attachment_url ? (
+              <a
+                href={m.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={m.attachment_name ?? undefined}
+                className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
+                  mine ? "bg-red-100 text-charcoal" : "bg-stone-100 text-charcoal"
+                }`}
+              >
+                <FileText size={16} className="shrink-0" />
+                <span className="truncate">{m.attachment_name ?? "파일"}</span>
+                <Download size={12} className="shrink-0 text-charcoal/40" />
+              </a>
+            ) : null}
+            {m.content && (
+              <div
+                className={`whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${
+                  m.attachment_url ? "mt-1" : ""
+                } ${mine ? "bg-red-100 text-charcoal" : "bg-stone-100 text-charcoal"}`}
+              >
+                {m.content}
+              </div>
+            )}
+          </div>
+          {!mine && <span className="text-[10px] text-charcoal/40">{formatTime(m.created_at)}</span>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {isOpen && (
         <div className="flex h-[30rem] w-80 flex-col overflow-hidden rounded-2xl border border-nude/60 bg-white shadow-2xl">
           <div className="flex items-center gap-2 border-b border-nude/60 bg-red-500 px-4 py-3 text-white">
             {activeConversationId ? (
-              <button onClick={closeConversation} className="rounded-full p-1 hover:bg-red-600">
+              <button
+                onClick={showDrawer ? () => setShowDrawer(false) : closeConversation}
+                className="rounded-full p-1 hover:bg-red-600"
+              >
                 <ArrowLeft size={16} />
               </button>
             ) : (
               <MessageCircle size={16} />
             )}
             <p className="flex-1 truncate text-sm font-medium">
-              {activeConversationId ? activeLabel : "리안채팅방"}
+              {activeConversationId ? (showDrawer ? `${activeLabel} · 서랍` : activeLabel) : "리안채팅방"}
             </p>
+            {activeConversationId && !showDrawer && (
+              <button onClick={openDrawer} className="rounded-full p-1 hover:bg-red-600" title="사진·파일 모아보기">
+                <Images size={16} />
+              </button>
+            )}
             <button onClick={() => setIsOpen(false)} className="rounded-full p-1 hover:bg-red-600">
               <X size={16} />
             </button>
           </div>
 
-          {activeConversationId ? (
+          {activeConversationId && showDrawer ? (
+            <div className="flex-1 overflow-y-auto p-3">
+              <p className="mb-2 text-[11px] tracking-wide text-charcoal/40">
+                사진·동영상 {drawerItems.filter((d) => d.attachment_type === "image").length}
+              </p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {drawerItems
+                  .filter((d) => d.attachment_type === "image")
+                  .map((d) => (
+                    <a key={d.id} href={d.attachment_url!} target="_blank" rel="noopener noreferrer">
+                      <img src={d.attachment_url!} alt="" className="aspect-square w-full rounded-md object-cover" />
+                    </a>
+                  ))}
+                {drawerItems.filter((d) => d.attachment_type === "image").length === 0 && (
+                  <p className="col-span-3 py-4 text-center text-xs text-charcoal/40">사진이 없습니다</p>
+                )}
+              </div>
+
+              <p className="mt-4 mb-2 text-[11px] tracking-wide text-charcoal/40">
+                파일 {drawerItems.filter((d) => d.attachment_type === "file").length}
+              </p>
+              <div className="flex flex-col gap-1">
+                {drawerItems
+                  .filter((d) => d.attachment_type === "file")
+                  .map((d) => (
+                    <a
+                      key={d.id}
+                      href={d.attachment_url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={d.attachment_name ?? undefined}
+                      className="flex items-center gap-2 rounded-lg border border-nude/40 px-2.5 py-2 text-xs text-charcoal hover:bg-stone-50"
+                    >
+                      <FileText size={14} className="shrink-0 text-charcoal/50" />
+                      <span className="truncate">{d.attachment_name}</span>
+                    </a>
+                  ))}
+                {drawerItems.filter((d) => d.attachment_type === "file").length === 0 && (
+                  <p className="py-4 text-center text-xs text-charcoal/40">파일이 없습니다</p>
+                )}
+              </div>
+            </div>
+          ) : activeConversationId ? (
             <>
-              <div className="flex-1 overflow-y-auto px-3 py-3">
-                {messages.map((m) => {
-                  const mine = m.sender_id === currentUserId;
-                  return (
-                    <div key={m.id} className={`mb-2 flex flex-col ${mine ? "items-end" : "items-start"}`}>
-                      {!mine && activeIsGroup && (
-                        <span className="mb-0.5 px-1 text-[11px] text-charcoal/50">{nameOf(m.sender_id)}</span>
-                      )}
-                      <div className="flex items-end gap-1.5">
-                        {mine && <span className="text-[10px] text-charcoal/40">{formatTime(m.created_at)}</span>}
-                        <div
-                          onContextMenu={(e) => {
-                            if (!mine) return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setCtxMenu({ type: "message", x: e.clientX, y: e.clientY, messageId: m.id });
-                          }}
-                          className={`max-w-[13rem] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${
-                            mine ? "cursor-context-menu bg-red-100 text-charcoal" : "bg-stone-100 text-charcoal"
-                          }`}
-                        >
-                          {m.content}
-                        </div>
-                        {!mine && <span className="text-[10px] text-charcoal/40">{formatTime(m.created_at)}</span>}
-                      </div>
-                    </div>
-                  );
-                })}
+              <div
+                className="relative flex-1 overflow-y-auto px-3 py-3"
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  dragCounterRef.current += 1;
+                  setIsDraggingFile(true);
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDragLeave={() => {
+                  dragCounterRef.current -= 1;
+                  if (dragCounterRef.current <= 0) setIsDraggingFile(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  dragCounterRef.current = 0;
+                  setIsDraggingFile(false);
+                  if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+                }}
+              >
+                {isDraggingFile && (
+                  <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-red-400 bg-red-50/90 text-sm font-medium text-red-600">
+                    여기에 파일을 놓으세요
+                  </div>
+                )}
+                {messages.map(renderMessageBubble)}
                 <div ref={messagesEndRef} />
               </div>
               <div className="flex items-end gap-2 border-t border-nude/60 p-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.length) uploadFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="shrink-0 rounded-full p-2 text-charcoal/50 hover:bg-stone-100 hover:text-red-500 disabled:opacity-40"
+                  title="파일 첨부"
+                >
+                  <Paperclip size={18} />
+                </button>
                 <textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                       e.preventDefault();
                       sendMessage();
                     }
@@ -446,7 +655,7 @@ export default function ChatWidget({
                 <button
                   onClick={sendMessage}
                   disabled={!draft.trim() || isSending}
-                  className="rounded-full bg-red-500 p-2 text-white hover:bg-red-600 disabled:opacity-40"
+                  className="shrink-0 rounded-full bg-red-500 p-2 text-white hover:bg-red-600 disabled:opacity-40"
                 >
                   <Send size={16} />
                 </button>
@@ -476,7 +685,7 @@ export default function ChatWidget({
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") createRoom();
+                      if (e.key === "Enter" && !e.nativeEvent.isComposing) createRoom();
                     }}
                     placeholder="방 이름"
                     autoFocus
