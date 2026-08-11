@@ -74,7 +74,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       <main className="flex-1 overflow-y-auto px-10 py-10">{children}</main>
 
-      <ChatWidget currentUserId={user.id} />
+      <ChatWidget currentUserId={user.id} isOwner={isOwner} />
     </div>
   );
 }
