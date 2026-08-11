@@ -22,8 +22,7 @@ export default function VatToggle({
   const router = useRouter();
 
   return (
-    <label className="flex cursor-pointer items-center justify-end gap-1 text-[11px] text-charcoal/50">
-      <span>{checked ? "부가세 포함" : "부가세 별도"}</span>
+    <label className="flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap text-[10px] text-charcoal/50">
       <input
         type="checkbox"
         checked={checked}
@@ -31,8 +30,9 @@ export default function VatToggle({
           await updateWorkOrderField(workOrderId, field, event.target.checked ? "true" : "false");
           router.refresh();
         }}
-        className="h-3.5 w-3.5 accent-red-500"
+        className="h-3 w-3 accent-red-500"
       />
+      <span>{checked ? "포함" : "별도"}</span>
     </label>
   );
 }
