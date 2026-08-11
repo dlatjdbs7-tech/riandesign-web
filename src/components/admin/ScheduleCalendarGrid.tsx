@@ -60,7 +60,7 @@ export default function ScheduleCalendarGrid({
   return (
     <div className="overflow-hidden rounded-sm border-2 border-nude/70">
       {title && (
-        <div className="border-b-2 border-nude/70 bg-cream px-4 py-3 text-center font-serif text-base font-semibold text-charcoal">
+        <div className="border-b-2 border-nude/70 bg-orange-300 px-4 py-3 text-center font-serif text-base font-semibold text-orange-900">
           {title}
         </div>
       )}
@@ -88,37 +88,37 @@ export default function ScheduleCalendarGrid({
             return (
               <div
                 key={dateStr}
-                className={`min-h-[6rem] border-l border-nude/30 first:border-l-0 ${
+                className={`border-l border-nude/30 first:border-l-0 ${
                   i === 0 ? "bg-red-50/30" : i === 6 ? "bg-sky-50/30" : ""
                 }`}
               >
                 <div
-                  className={`flex items-center justify-center border-b border-nude/30 bg-nude/35 py-1 text-sm font-medium ${
+                  className={`flex items-center justify-center border-b border-nude/30 bg-nude/35 py-0.5 text-xs font-medium ${
                     i === 0 ? "text-red-500" : i === 6 ? "text-sky-600" : "text-charcoal/70"
                   } ${isToday ? "relative" : ""}`}
                 >
                   {isToday ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold text-white">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[11px] text-white">
                       {dayOfMonth}
                     </span>
                   ) : (
                     dayOfMonth
                   )}
                 </div>
-                <div className="flex flex-col gap-1 p-1">
+                <div className="flex min-h-[5.5rem] flex-col gap-0.5 p-1">
                   {dayTasks.map((t) => {
                     const status = getTaskDisplayStatus(t, todayDateString);
                     const chipStyle =
                       status === "in_progress"
-                        ? "bg-orange-100 text-orange-700 border border-orange-300 font-medium"
+                        ? "bg-stone-100 text-orange-700 border border-orange-300 font-medium"
                         : status === "completed"
                           ? "bg-stone-100 text-charcoal/40 border border-stone-200 line-through"
-                          : "bg-white text-charcoal/70 border border-nude/40";
+                          : "bg-stone-100 text-charcoal/70 border border-stone-200";
                     return (
                       <div
                         key={`${t.id}-${dateStr}`}
                         title={t.title}
-                        className={`truncate rounded-sm px-1.5 py-0.5 text-[11px] ${chipStyle}`}
+                        className={`truncate rounded-sm px-1 py-0.5 text-[10px] ${chipStyle}`}
                       >
                         {t.title}
                       </div>
