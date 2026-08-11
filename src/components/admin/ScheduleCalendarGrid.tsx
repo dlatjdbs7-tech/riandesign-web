@@ -1,5 +1,6 @@
 import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import type { WorkOrderTask } from "@/lib/types";
+import ScheduleTaskChip from "@/components/admin/ScheduleTaskChip";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -60,7 +61,7 @@ export default function ScheduleCalendarGrid({
   return (
     <div className="overflow-hidden rounded-sm border-2 border-nude/70">
       {title && (
-        <div className="border-b-2 border-nude/70 bg-orange-300 px-4 py-3 text-center font-serif text-base font-semibold text-orange-900">
+        <div className="border-b-2 border-nude/70 bg-violet-200 px-4 py-1.5 text-center font-serif text-base font-semibold text-violet-900">
           {title}
         </div>
       )}
@@ -93,7 +94,7 @@ export default function ScheduleCalendarGrid({
                 }`}
               >
                 <div
-                  className={`flex items-center justify-center border-b border-nude/30 bg-nude/35 py-0.5 text-xs font-medium ${
+                  className={`flex items-center justify-center border-b border-nude/30 bg-stone-200 py-0.5 text-xs font-medium ${
                     i === 0 ? "text-red-500" : i === 6 ? "text-sky-600" : "text-charcoal/70"
                   } ${isToday ? "relative" : ""}`}
                 >
@@ -115,13 +116,14 @@ export default function ScheduleCalendarGrid({
                           ? "bg-stone-100 text-charcoal/40 border border-stone-200 line-through"
                           : "bg-stone-100 text-charcoal/70 border border-stone-200";
                     return (
-                      <div
+                      <ScheduleTaskChip
                         key={`${t.id}-${dateStr}`}
+                        taskId={t.id}
                         title={t.title}
-                        className={`truncate rounded-sm px-1 py-0.5 text-[10px] ${chipStyle}`}
-                      >
-                        {t.title}
-                      </div>
+                        startDate={t.start_date}
+                        endDate={t.end_date}
+                        className={`rounded-sm px-1 py-0.5 text-[10px] ${chipStyle}`}
+                      />
                     );
                   })}
                 </div>
