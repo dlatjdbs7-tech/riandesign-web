@@ -10,6 +10,7 @@ import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
+import VatToggle from "@/components/admin/VatToggle";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -535,6 +536,18 @@ export default async function SitesPage({
                           {order.payment_contract_date ?? "-"}
                         </span>
                       )}
+                      <span />
+                      {canManage ? (
+                        <VatToggle
+                          workOrderId={order.id}
+                          field="payment_contract_vat_included"
+                          checked={order.payment_contract_vat_included}
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_contract_vat_included ? "부가세 포함" : "부가세 별도"}
+                        </span>
+                      )}
 
                       <span
                         className={
@@ -581,6 +594,18 @@ export default async function SitesPage({
                       ) : (
                         <span className="text-right text-[11px] text-charcoal/50">
                           {order.payment_start_date ?? "-"}
+                        </span>
+                      )}
+                      <span />
+                      {canManage ? (
+                        <VatToggle
+                          workOrderId={order.id}
+                          field="payment_start_vat_included"
+                          checked={order.payment_start_vat_included}
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_start_vat_included ? "부가세 포함" : "부가세 별도"}
                         </span>
                       )}
 
@@ -631,6 +656,18 @@ export default async function SitesPage({
                           {order.payment_interim1_date ?? "-"}
                         </span>
                       )}
+                      <span />
+                      {canManage ? (
+                        <VatToggle
+                          workOrderId={order.id}
+                          field="payment_interim1_vat_included"
+                          checked={order.payment_interim1_vat_included}
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_interim1_vat_included ? "부가세 포함" : "부가세 별도"}
+                        </span>
+                      )}
 
                       <span
                         className={
@@ -679,6 +716,18 @@ export default async function SitesPage({
                           {order.payment_interim2_date ?? "-"}
                         </span>
                       )}
+                      <span />
+                      {canManage ? (
+                        <VatToggle
+                          workOrderId={order.id}
+                          field="payment_interim2_vat_included"
+                          checked={order.payment_interim2_vat_included}
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_interim2_vat_included ? "부가세 포함" : "부가세 별도"}
+                        </span>
+                      )}
 
                       <span
                         className={
@@ -725,6 +774,18 @@ export default async function SitesPage({
                       ) : (
                         <span className="text-right text-[11px] text-charcoal/50">
                           {order.payment_balance_date ?? "-"}
+                        </span>
+                      )}
+                      <span />
+                      {canManage ? (
+                        <VatToggle
+                          workOrderId={order.id}
+                          field="payment_balance_vat_included"
+                          checked={order.payment_balance_vat_included}
+                        />
+                      ) : (
+                        <span className="text-right text-[11px] text-charcoal/50">
+                          {order.payment_balance_vat_included ? "부가세 포함" : "부가세 별도"}
                         </span>
                       )}
 

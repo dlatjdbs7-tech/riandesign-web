@@ -84,10 +84,21 @@ const EDITABLE_DATE_FIELDS = [
   "payment_interim2_date",
   "payment_balance_date",
 ] as const;
+const EDITABLE_BOOLEAN_FIELDS = [
+  "payment_contract_vat_included",
+  "payment_start_vat_included",
+  "payment_interim1_vat_included",
+  "payment_interim2_vat_included",
+  "payment_balance_vat_included",
+] as const;
 
 export async function updateWorkOrderField(
   id: string,
-  field: (typeof EDITABLE_TEXT_FIELDS)[number] | (typeof EDITABLE_NUMBER_FIELDS)[number] | (typeof EDITABLE_DATE_FIELDS)[number],
+  field:
+    | (typeof EDITABLE_TEXT_FIELDS)[number]
+    | (typeof EDITABLE_NUMBER_FIELDS)[number]
+    | (typeof EDITABLE_DATE_FIELDS)[number]
+    | (typeof EDITABLE_BOOLEAN_FIELDS)[number],
   value: string
 ) {
   const supabase = await createClient();
@@ -104,6 +115,8 @@ export async function updateWorkOrderField(
       .eq("id", id);
   } else if ((EDITABLE_DATE_FIELDS as readonly string[]).includes(field)) {
     await supabase.from("work_orders").update({ [field]: value || null }).eq("id", id);
+  } else if ((EDITABLE_BOOLEAN_FIELDS as readonly string[]).includes(field)) {
+    await supabase.from("work_orders").update({ [field]: value === "true" }).eq("id", id);
   } else {
     return;
   }
