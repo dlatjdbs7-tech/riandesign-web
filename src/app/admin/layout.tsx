@@ -4,6 +4,7 @@ import type { Profile } from "@/lib/types";
 import { MENU_GROUPS } from "@/lib/menu";
 import AdminNav from "@/components/admin/AdminNav";
 import LogoutButton from "@/components/admin/LogoutButton";
+import ChatWidget from "@/components/admin/chat/ChatWidget";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -72,6 +73,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </aside>
 
       <main className="flex-1 overflow-y-auto px-10 py-10">{children}</main>
+
+      <ChatWidget currentUserId={user.id} />
     </div>
   );
 }
