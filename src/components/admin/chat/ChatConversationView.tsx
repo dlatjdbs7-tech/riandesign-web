@@ -224,7 +224,7 @@ export default function ChatConversationView({
     window.open(
       `/chat-popup/${conversationId}`,
       `chat-${conversationId}`,
-      "width=380,height=620,resizable=yes,scrollbars=yes"
+      "width=380,height=620,resizable=yes,scrollbars=yes,noopener"
     );
   }
 
