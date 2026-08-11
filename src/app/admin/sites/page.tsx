@@ -497,7 +497,7 @@ export default async function SitesPage({
                       >
                         1차 계약금{order.payment_contract_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-3">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -546,7 +546,7 @@ export default async function SitesPage({
                       >
                         2차 착수금{order.payment_start_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-3">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -595,7 +595,7 @@ export default async function SitesPage({
                       >
                         3차 중도금1차{order.payment_interim1_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-3">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -644,7 +644,7 @@ export default async function SitesPage({
                       >
                         4차 중도금2차{order.payment_interim2_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-3">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
@@ -693,7 +693,7 @@ export default async function SitesPage({
                       >
                         5차 잔금{order.payment_balance_date && " ✓"}
                       </span>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-3">
                         {canManage ? (
                           <InlineFieldInput
                             workOrderId={order.id}
