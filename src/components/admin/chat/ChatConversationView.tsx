@@ -221,10 +221,15 @@ export default function ChatConversationView({
   }
 
   function openPopup() {
+    const width = 380;
+    const height = 620;
+    // 메인 창과 겹치지 않도록 화면 우측 하단 쪽에 배치
+    const left = Math.max(0, window.screen.availWidth - width - 24);
+    const top = Math.max(0, window.screen.availHeight - height - 24);
     window.open(
       `/chat-popup/${conversationId}`,
       `chat-${conversationId}`,
-      "width=380,height=620,resizable=yes,scrollbars=yes,noopener"
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,noopener`
     );
   }
 
