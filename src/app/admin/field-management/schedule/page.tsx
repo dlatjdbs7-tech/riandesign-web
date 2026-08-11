@@ -5,6 +5,7 @@ import { getKSTDateBounds } from "@/lib/date";
 import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import WorkOrderTaskRow from "@/components/admin/WorkOrderTaskRow";
 import ClientNameInput from "@/components/admin/ClientNameInput";
+import ScheduleGantt from "@/components/admin/ScheduleGantt";
 import { createWorkOrderTask } from "./actions";
 
 type WorkOrderRow = Pick<WorkOrder, "id" | "title" | "status" | "work_date" | "client_name"> & {
@@ -91,6 +92,10 @@ export default async function WorkOrderSchedulePage({
               >
                 작업지시서 상세 →
               </Link>
+            </div>
+
+            <div className="mt-4">
+              <ScheduleGantt tasks={tasks ?? []} todayDateString={todayDateString} />
             </div>
 
             <table className="mt-4 w-full text-left">
