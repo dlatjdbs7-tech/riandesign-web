@@ -537,7 +537,7 @@ export default function ChatWidget({
               <MessageCircle size={16} />
             )}
             <p className="flex-1 truncate text-sm font-medium">
-              {activeConversationId ? (showDrawer ? `${activeLabel} · 서랍` : activeLabel) : "리안채팅방"}
+              {activeConversationId ? (showDrawer ? `${activeLabel} · 서랍` : activeLabel) : "REAN GROUP"}
             </p>
             {activeConversationId && !showDrawer && (
               <button onClick={openDrawer} className="rounded-full p-1 hover:bg-red-600" title="사진·파일 모아보기">
