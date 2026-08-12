@@ -301,10 +301,15 @@ export default function Contact() {
 
       <div className="flex flex-col gap-3">
         <p className={labelClass}>공사 내용</p>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {CONSTRUCTION_ITEMS.map((item) => (
-            <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
-              <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
+            <label key={item} className="flex items-start gap-2 text-sm text-charcoal/70">
+              <input
+                type="checkbox"
+                name="construction_items"
+                value={item}
+                className="mt-0.5 h-4 w-4"
+              />
               {item}
             </label>
           ))}
