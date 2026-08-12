@@ -30,6 +30,21 @@ export async function createInquiry(formData: FormData) {
   redirect("/admin/sites");
 }
 
+export async function updateInquiryField(
+  inquiryId: string,
+  field: "address" | "size_py",
+  value: string
+) {
+  const supabase = await createClient();
+  await supabase
+    .from("inquiries")
+    .update({ [field]: value.trim() || null })
+    .eq("id", inquiryId);
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+}
+
 export async function promoteQuoteToWorkOrder(quoteId: string) {
   const supabase = await createClient();
   const {

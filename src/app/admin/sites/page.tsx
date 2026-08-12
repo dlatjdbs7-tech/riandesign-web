@@ -7,6 +7,7 @@ import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/sch
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
 import { createInquiry, promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
+import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
 import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
@@ -443,21 +444,39 @@ export default async function SitesPage({
               </div>
               <div className="mt-3 flex flex-1 flex-col gap-2">
                 {newInquiries?.map((inquiry) => (
-                  <Link
+                  <div
                     key={inquiry.id}
-                    href="/admin/inquiries"
                     className="flex items-center gap-1.5 overflow-hidden rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-rose-400"
                   >
-                    <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                    <Link href="/admin/inquiries" className="shrink-0 text-charcoal/40 hover:underline">
+                      {formatInquiryDate(inquiry.created_at)}
+                    </Link>
                     <span className="shrink-0 text-charcoal/20">·</span>
-                    <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
-                    {(inquiry.address || inquiry.size_py) && (
+                    <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
+                      {inquiry.name}
+                    </Link>
+                    <span className="shrink-0 text-charcoal/20">·</span>
+                    {canManage ? (
                       <>
-                        <span className="shrink-0 text-charcoal/20">·</span>
-                        <span className="shrink-0 text-charcoal/60">
-                          {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ")}
-                        </span>
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="address"
+                          value={inquiry.address ?? ""}
+                          placeholder="아파트명"
+                          className="w-16 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="size_py"
+                          value={inquiry.size_py ?? ""}
+                          placeholder="평형"
+                          className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
                       </>
+                    ) : (
+                      <span className="shrink-0 text-charcoal/60">
+                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ") || "-"}
+                      </span>
                     )}
                     {inquiry.message && (
                       <>
@@ -465,7 +484,7 @@ export default async function SitesPage({
                         <span className="truncate text-charcoal/40">{inquiry.message}</span>
                       </>
                     )}
-                  </Link>
+                  </div>
                 ))}
                 {(!newInquiries || newInquiries.length === 0) && (
                   <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
@@ -485,21 +504,39 @@ export default async function SitesPage({
               </div>
               <div className="mt-3 flex flex-1 flex-col gap-2">
                 {contactedInquiries?.map((inquiry) => (
-                  <Link
+                  <div
                     key={inquiry.id}
-                    href="/admin/inquiries"
                     className="flex items-center gap-1.5 overflow-hidden rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-amber-400"
                   >
-                    <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                    <Link href="/admin/inquiries" className="shrink-0 text-charcoal/40 hover:underline">
+                      {formatInquiryDate(inquiry.created_at)}
+                    </Link>
                     <span className="shrink-0 text-charcoal/20">·</span>
-                    <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
-                    {(inquiry.address || inquiry.size_py) && (
+                    <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
+                      {inquiry.name}
+                    </Link>
+                    <span className="shrink-0 text-charcoal/20">·</span>
+                    {canManage ? (
                       <>
-                        <span className="shrink-0 text-charcoal/20">·</span>
-                        <span className="shrink-0 text-charcoal/60">
-                          {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ")}
-                        </span>
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="address"
+                          value={inquiry.address ?? ""}
+                          placeholder="아파트명"
+                          className="w-16 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="size_py"
+                          value={inquiry.size_py ?? ""}
+                          placeholder="평형"
+                          className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
                       </>
+                    ) : (
+                      <span className="shrink-0 text-charcoal/60">
+                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ") || "-"}
+                      </span>
                     )}
                     {inquiry.message && (
                       <>
@@ -507,7 +544,7 @@ export default async function SitesPage({
                         <span className="truncate text-charcoal/40">{inquiry.message}</span>
                       </>
                     )}
-                  </Link>
+                  </div>
                 ))}
                 {(!contactedInquiries || contactedInquiries.length === 0) && (
                   <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
