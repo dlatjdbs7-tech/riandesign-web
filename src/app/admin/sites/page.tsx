@@ -446,21 +446,24 @@ export default async function SitesPage({
                   <Link
                     key={inquiry.id}
                     href="/admin/inquiries"
-                    className="block rounded-sm border border-nude/40 p-3 text-sm hover:border-rose-400"
+                    className="flex items-center gap-1.5 overflow-hidden rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-rose-400"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium text-charcoal">{inquiry.name}</p>
-                      <span className="shrink-0 text-[11px] text-charcoal/40">
-                        {formatInquiryDate(inquiry.created_at)}
-                      </span>
-                    </div>
+                    <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                    <span className="shrink-0 text-charcoal/20">·</span>
+                    <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
                     {(inquiry.address || inquiry.size_py) && (
-                      <p className="mt-1 text-xs text-charcoal/60">
-                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" · ")}
-                      </p>
+                      <>
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        <span className="shrink-0 text-charcoal/60">
+                          {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ")}
+                        </span>
+                      </>
                     )}
                     {inquiry.message && (
-                      <p className="mt-1 truncate text-xs text-charcoal/50">{inquiry.message}</p>
+                      <>
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        <span className="truncate text-charcoal/40">{inquiry.message}</span>
+                      </>
                     )}
                   </Link>
                 ))}
@@ -485,21 +488,24 @@ export default async function SitesPage({
                   <Link
                     key={inquiry.id}
                     href="/admin/inquiries"
-                    className="block rounded-sm border border-nude/40 p-3 text-sm hover:border-amber-400"
+                    className="flex items-center gap-1.5 overflow-hidden rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-amber-400"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium text-charcoal">{inquiry.name}</p>
-                      <span className="shrink-0 text-[11px] text-charcoal/40">
-                        {formatInquiryDate(inquiry.created_at)}
-                      </span>
-                    </div>
+                    <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                    <span className="shrink-0 text-charcoal/20">·</span>
+                    <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
                     {(inquiry.address || inquiry.size_py) && (
-                      <p className="mt-1 text-xs text-charcoal/60">
-                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" · ")}
-                      </p>
+                      <>
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        <span className="shrink-0 text-charcoal/60">
+                          {[inquiry.address, inquiry.size_py].filter(Boolean).join(" ")}
+                        </span>
+                      </>
                     )}
                     {inquiry.message && (
-                      <p className="mt-1 truncate text-xs text-charcoal/50">{inquiry.message}</p>
+                      <>
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        <span className="truncate text-charcoal/40">{inquiry.message}</span>
+                      </>
                     )}
                   </Link>
                 ))}
