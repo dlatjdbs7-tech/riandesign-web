@@ -448,51 +448,49 @@ export default async function SitesPage({
                     key={inquiry.id}
                     className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-rose-400"
                   >
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <Link href="/admin/inquiries" className="shrink-0 text-charcoal/40 hover:underline">
+                    <div className="flex items-center gap-1.5">
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="address"
+                          value={inquiry.address ?? ""}
+                          placeholder="아파트명 입력"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                          {inquiry.address || "아파트명 미입력"}
+                        </span>
+                      )}
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="size_py"
+                          value={inquiry.size_py ?? ""}
+                          placeholder="평형"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-right text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.size_py && (
+                          <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
+                        )
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      <Link href="/admin/inquiries" className="shrink-0 hover:underline">
                         {formatInquiryDate(inquiry.created_at)}
                       </Link>
                       <span className="shrink-0 text-charcoal/20">·</span>
                       <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
                         {inquiry.name}
                       </Link>
-                      {canManage ? (
-                        <>
-                          <span className="shrink-0 text-charcoal/20">·</span>
-                          <InlineInquiryFieldInput
-                            inquiryId={inquiry.id}
-                            field="size_py"
-                            value={inquiry.size_py ?? ""}
-                            placeholder="평형"
-                            className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                          />
-                        </>
-                      ) : (
-                        inquiry.size_py && (
-                          <>
-                            <span className="shrink-0 text-charcoal/20">·</span>
-                            <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
-                          </>
-                        )
-                      )}
                       {inquiry.message && (
                         <>
                           <span className="shrink-0 text-charcoal/20">·</span>
-                          <span className="truncate text-charcoal/40">{inquiry.message}</span>
+                          <span className="truncate">{inquiry.message}</span>
                         </>
                       )}
                     </div>
-                    {canManage ? (
-                      <InlineInquiryFieldInput
-                        inquiryId={inquiry.id}
-                        field="address"
-                        value={inquiry.address ?? ""}
-                        placeholder="아파트명 입력"
-                        className="mt-1 w-full border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                      />
-                    ) : (
-                      inquiry.address && <p className="mt-1 truncate text-charcoal/60">{inquiry.address}</p>
-                    )}
                   </div>
                 ))}
                 {(!newInquiries || newInquiries.length === 0) && (
@@ -517,51 +515,49 @@ export default async function SitesPage({
                     key={inquiry.id}
                     className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-amber-400"
                   >
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <Link href="/admin/inquiries" className="shrink-0 text-charcoal/40 hover:underline">
+                    <div className="flex items-center gap-1.5">
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="address"
+                          value={inquiry.address ?? ""}
+                          placeholder="아파트명 입력"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                          {inquiry.address || "아파트명 미입력"}
+                        </span>
+                      )}
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="size_py"
+                          value={inquiry.size_py ?? ""}
+                          placeholder="평형"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-right text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.size_py && (
+                          <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
+                        )
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      <Link href="/admin/inquiries" className="shrink-0 hover:underline">
                         {formatInquiryDate(inquiry.created_at)}
                       </Link>
                       <span className="shrink-0 text-charcoal/20">·</span>
                       <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
                         {inquiry.name}
                       </Link>
-                      {canManage ? (
-                        <>
-                          <span className="shrink-0 text-charcoal/20">·</span>
-                          <InlineInquiryFieldInput
-                            inquiryId={inquiry.id}
-                            field="size_py"
-                            value={inquiry.size_py ?? ""}
-                            placeholder="평형"
-                            className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                          />
-                        </>
-                      ) : (
-                        inquiry.size_py && (
-                          <>
-                            <span className="shrink-0 text-charcoal/20">·</span>
-                            <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
-                          </>
-                        )
-                      )}
                       {inquiry.message && (
                         <>
                           <span className="shrink-0 text-charcoal/20">·</span>
-                          <span className="truncate text-charcoal/40">{inquiry.message}</span>
+                          <span className="truncate">{inquiry.message}</span>
                         </>
                       )}
                     </div>
-                    {canManage ? (
-                      <InlineInquiryFieldInput
-                        inquiryId={inquiry.id}
-                        field="address"
-                        value={inquiry.address ?? ""}
-                        placeholder="아파트명 입력"
-                        className="mt-1 w-full border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
-                      />
-                    ) : (
-                      inquiry.address && <p className="mt-1 truncate text-charcoal/60">{inquiry.address}</p>
-                    )}
                   </div>
                 ))}
                 {(!contactedInquiries || contactedInquiries.length === 0) && (
