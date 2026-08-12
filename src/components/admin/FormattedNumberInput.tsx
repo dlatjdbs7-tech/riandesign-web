@@ -1,10 +1,6 @@
 "use client";
 
-function formatWithCommas(raw: string) {
-  const digits = raw.replace(/[^\d]/g, "");
-  if (!digits) return "";
-  return Number(digits).toLocaleString("en-US");
-}
+import { formatWithCommas } from "@/lib/format";
 
 export default function FormattedNumberInput({
   name,

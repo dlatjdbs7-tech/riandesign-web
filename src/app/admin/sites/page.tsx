@@ -268,6 +268,11 @@ export default async function SitesPage({
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
           <input
+            name="floor_plan_type"
+            placeholder="타입 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
             name="name"
             required
             placeholder="이름"
@@ -534,9 +539,32 @@ export default async function SitesPage({
                       ) : (
                         inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
                       )}
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="floor_plan_type"
+                          value={inquiry.floor_plan_type ?? ""}
+                          placeholder="타입"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        inquiry.floor_plan_type && (
+                          <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
+                        )
+                      )}
                     </div>
                     <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
-                      <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="name"
+                          value={inquiry.name}
+                          placeholder="이름"
+                          className="w-16 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
+                      )}
                       <span className="shrink-0 text-charcoal/20">·</span>
                       {canManage ? (
                         <InlineInquiryFieldInput
@@ -544,17 +572,39 @@ export default async function SitesPage({
                           field="phone"
                           value={inquiry.phone ?? ""}
                           placeholder="연락처"
+                          format="phone"
                           className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         <span className="min-w-0 flex-1 truncate">{inquiry.phone ?? "-"}</span>
                       )}
                     </div>
-                    {(inquiry.budget || inquiry.message) && (
-                      <p className="mt-1 truncate text-charcoal/50">
-                        {[inquiry.budget, inquiry.message].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="budget"
+                          value={inquiry.budget ?? ""}
+                          placeholder="예산"
+                          format="number"
+                          className="w-16 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
+                      )}
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="message"
+                          value={inquiry.message ?? ""}
+                          placeholder="문의 내용"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
+                      )}
+                    </div>
                     {canManage && (
                       <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
                         <button
