@@ -1,4 +1,5 @@
 import Contact from "@/components/Contact";
+import PlaceholderBlock from "@/components/PlaceholderBlock";
 import { createClient } from "@/utils/supabase/server";
 import type { CompanySettings, SiteContent } from "@/lib/types";
 
@@ -43,14 +44,20 @@ export default async function ContactPage() {
 
   return (
     <div>
-      <section className="mx-auto max-w-7xl px-6 pt-16 pb-10 sm:px-10">
-        <p className="text-xs tracking-[0.4em] text-taupe">CONTACT</p>
-        <h1 className="mt-3 font-serif text-4xl font-semibold text-charcoal sm:text-6xl">
-          Get in touch
-        </h1>
+      <section className="mx-auto max-w-7xl px-6 pt-10 sm:px-10">
+        {content?.contact_image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={content.contact_image_url}
+            alt="상담 안내"
+            className="h-[360px] w-full rounded-sm object-cover sm:h-[480px]"
+          />
+        ) : (
+          <PlaceholderBlock label="CONTACT" className="h-[360px] w-full rounded-sm sm:h-[480px]" />
+        )}
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-10">
+      <section className="mx-auto max-w-7xl px-6 py-24 sm:px-10">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <p className="font-display text-lg text-charcoal">Contact & FAQ</p>

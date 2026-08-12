@@ -22,6 +22,7 @@ export async function updateSiteContent(formData: FormData) {
       about_naming_story: String(formData.get("about_naming_story") ?? "").trim() || null,
       process_intro: String(formData.get("process_intro") ?? "").trim() || null,
       contact_notice: String(formData.get("contact_notice") ?? "").trim() || null,
+      contact_image_url: String(formData.get("contact_image_url") ?? "").trim() || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

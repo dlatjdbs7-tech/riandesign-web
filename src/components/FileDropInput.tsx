@@ -40,7 +40,7 @@ export default function FileDropInput({
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") inputRef.current?.click();
       }}
-      className={`cursor-pointer rounded-sm border border-dashed px-4 py-5 text-center text-xs transition-colors ${
+      className={`flex cursor-pointer items-center gap-3 rounded border px-4 py-3 text-xs transition-colors ${
         isDragging ? "border-gold bg-gold/5" : "border-nude hover:border-gold/60"
       }`}
     >
@@ -53,10 +53,11 @@ export default function FileDropInput({
         className="hidden"
         onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
       />
+      <span className="shrink-0 rounded-full bg-beige px-3 py-1 text-charcoal">파일 선택</span>
       {fileName ? (
-        <p className="truncate text-charcoal">{fileName}</p>
+        <span className="truncate text-charcoal">{fileName}</span>
       ) : (
-        <p className="text-charcoal/50">클릭하거나 파일을 끌어다 놓으세요</p>
+        <span className="truncate text-charcoal/50">선택된 파일 없음 (끌어다 놓기 가능)</span>
       )}
     </div>
   );

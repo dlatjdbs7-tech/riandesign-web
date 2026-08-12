@@ -221,6 +221,7 @@ export type SiteContent = {
   about_naming_story: string | null;
   process_intro: string | null;
   contact_notice: string | null;
+  contact_image_url: string | null;
   updated_at: string;
 };
 

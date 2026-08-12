@@ -23,7 +23,7 @@ const CONSTRUCTION_ITEMS = [
 const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개"];
 
 const inputClass =
-  "border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold";
+  "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
 const labelClass = "text-xs tracking-wide text-charcoal/70";
 
 export default function Contact() {
@@ -140,7 +140,7 @@ export default function Contact() {
 
       <div className="flex flex-col gap-3">
         <p className={labelClass}>공사 내용</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="flex flex-col gap-2">
           {CONSTRUCTION_ITEMS.map((item) => (
             <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
               <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
@@ -205,9 +205,9 @@ export default function Contact() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-white transition-colors hover:opacity-90 disabled:opacity-50"
+        className="mt-2 w-full rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-white transition-colors hover:opacity-90 disabled:opacity-50"
       >
-        {isSubmitting ? "전송 중..." : "문의 보내기"}
+        {isSubmitting ? "전송 중..." : "견적 문의"}
       </button>
     </form>
   );

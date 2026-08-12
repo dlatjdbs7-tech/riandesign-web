@@ -170,6 +170,15 @@ export default async function SiteManagementPage() {
                 className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
               />
             </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs tracking-wide text-charcoal/70">상담 페이지 상단 이미지 URL (선택)</label>
+              <input
+                name="contact_image_url"
+                defaultValue={content?.contact_image_url ?? ""}
+                disabled={!canManage}
+                className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold disabled:text-charcoal/50"
+              />
+            </div>
           </div>
         </div>
 
