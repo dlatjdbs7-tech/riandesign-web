@@ -2,15 +2,30 @@
 
 import { createClient } from "@/utils/supabase/server";
 
+function isUploadedFile(value: FormDataEntryValue | null): value is File {
+  // Server Action을 <form action>이 아니라 클라이언트에서 함수처럼 직접 호출하면
+  // Next.js가 파일을 역직렬화한 객체가 서버 런타임의 File 클래스와 instanceof로
+  // 일치하지 않을 수 있어, size/name/arrayBuffer 존재 여부로 덕타이핑 검사한다.
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    typeof (value as File).arrayBuffer === "function" &&
+    typeof (value as File).size === "number"
+  );
+}
+
 async function uploadInquiryFile(
   supabase: Awaited<ReturnType<typeof createClient>>,
   formData: FormData,
   field: string
 ): Promise<string | null> {
   const file = formData.get(field);
-  if (!(file instanceof File) || file.size === 0) return null;
+  if (!isUploadedFile(file) || file.size === 0) return null;
 
-  const path = `${Date.now()}-${file.name}`;
+  // Supabase Storage 오브젝트 키는 비-ASCII 문자(한글 등)를 거부하므로 안전한 키로 치환한다.
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${Date.now()}-${safeName}`;
   const { error } = await supabase.storage.from("inquiry-files").upload(path, file);
   if (error) return null;
 

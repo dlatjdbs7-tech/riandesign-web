@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
+import FileDropInput from "./FileDropInput";
 
 const CONSTRUCTION_ITEMS = [
   "도배",
@@ -179,25 +180,13 @@ export default function Contact() {
           <label htmlFor="floor_plan" className={labelClass}>
             단위세대평면도 (선택)
           </label>
-          <input
-            id="floor_plan"
-            name="floor_plan"
-            type="file"
-            accept="image/*,.pdf"
-            className="text-xs text-charcoal/70 file:mr-3 file:rounded-full file:border-0 file:bg-beige file:px-3 file:py-1.5 file:text-xs file:text-charcoal"
-          />
+          <FileDropInput id="floor_plan" name="floor_plan" accept="image/*,.pdf" />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="reference" className={labelClass}>
             레퍼런스 (선택)
           </label>
-          <input
-            id="reference"
-            name="reference"
-            type="file"
-            accept="image/*,.pdf"
-            className="text-xs text-charcoal/70 file:mr-3 file:rounded-full file:border-0 file:bg-beige file:px-3 file:py-1.5 file:text-xs file:text-charcoal"
-          />
+          <FileDropInput id="reference" name="reference" accept="image/*,.pdf" />
         </div>
       </div>
 
