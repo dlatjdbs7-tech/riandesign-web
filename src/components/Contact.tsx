@@ -291,13 +291,10 @@ export default function Contact() {
             문의하실 내용을 최대한 상세히 작성해 주시면 상담을 진행하는 데 큰 도움이 됩니다.
           </p>
         </div>
-        <label htmlFor="message" className={labelClass}>
-          문의 내용
-        </label>
         <textarea
           id="message"
           name="message"
-          rows={4}
+          rows={7}
           required
           className={`resize-none ${inputClass}`}
         />
