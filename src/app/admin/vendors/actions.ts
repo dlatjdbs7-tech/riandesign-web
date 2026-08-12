@@ -16,10 +16,12 @@ export async function createVendor(formData: FormData) {
   });
 
   revalidatePath("/admin/vendors");
+  revalidatePath("/admin/field-management/vendors");
 }
 
 export async function deleteVendor(id: string) {
   const supabase = await createClient();
   await supabase.from("vendors").delete().eq("id", id);
   revalidatePath("/admin/vendors");
+  revalidatePath("/admin/field-management/vendors");
 }
