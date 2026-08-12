@@ -22,6 +22,7 @@ function shortMonthLabel(key: string) {
 }
 
 const STATUS_LABEL: Record<Inquiry["status"], string> = {
+  lead: "문의",
   new: "신규",
   contacted: "연락완료",
   closed: "종결",
@@ -96,7 +97,9 @@ export default async function AnalyticsPage({
 
   // 전화문의 → 방문상담 → 계약 퍼널 (선택한 기간 기준)
   const totalInquiries = inquiries?.length ?? 0;
-  const consultedInquiries = (inquiries ?? []).filter((i) => i.status !== "new").length;
+  const consultedInquiries = (inquiries ?? []).filter(
+    (i) => i.status === "contacted" || i.status === "closed"
+  ).length;
   const acceptedQuotes = (quotes ?? []).filter((q) => q.status === "accepted").length;
 
   const funnel = [
@@ -105,7 +108,7 @@ export default async function AnalyticsPage({
     { key: "contract", label: "계약", count: acceptedQuotes, color: "bg-emerald-600" },
   ];
 
-  const statusCounts = { new: 0, contacted: 0, closed: 0 } as Record<Inquiry["status"], number>;
+  const statusCounts = { lead: 0, new: 0, contacted: 0, closed: 0 } as Record<Inquiry["status"], number>;
   (inquiries ?? []).forEach((inquiry) => {
     statusCounts[inquiry.status] += 1;
   });

@@ -30,6 +30,35 @@ export async function createInquiry(formData: FormData) {
   redirect("/admin/sites");
 }
 
+export async function createLeadInquiry(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  if (!name || !phone) return;
+
+  const supabase = await createClient();
+  await supabase.from("inquiries").insert({
+    name,
+    phone,
+    message: String(formData.get("message") ?? "").trim() || null,
+    budget: String(formData.get("budget") ?? "").trim() || null,
+    status: "lead",
+  });
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+  redirect("/admin/sites");
+}
+
+export async function promoteLeadToNew(inquiryId: string) {
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status: "new" }).eq("id", inquiryId);
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+}
+
 export async function updateInquiryField(
   inquiryId: string,
   field: "address" | "size_py" | "floor_plan_type",

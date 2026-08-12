@@ -5,6 +5,7 @@ import { updateInquiryStatus } from "@/app/admin/inquiries/actions";
 import type { InquiryStatus } from "@/lib/types";
 
 const STATUS_LABEL: Record<InquiryStatus, string> = {
+  lead: "문의",
   new: "신규",
   contacted: "연락완료",
   closed: "종결",

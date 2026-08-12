@@ -5,7 +5,7 @@ import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
-import { createInquiry, promoteQuoteToWorkOrder } from "./actions";
+import { createInquiry, createLeadInquiry, promoteLeadToNew, promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
 import ClientNameInput from "@/components/admin/ClientNameInput";
@@ -48,13 +48,14 @@ function formatInquiryDate(createdAt: string) {
 export default async function SitesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; sort?: string; new?: string; newInquiry?: string }>;
+  searchParams: Promise<{ view?: string; sort?: string; new?: string; newInquiry?: string; newLead?: string }>;
 }) {
   const params = await searchParams;
   const showCancelled = params.view === "cancelled";
   const sortOldest = params.sort === "oldest";
   const showCreateForm = params.new === "1";
   const showInquiryForm = params.newInquiry === "1";
+  const showLeadForm = params.newLead === "1";
 
   const supabase = await createClient();
   const {
@@ -69,6 +70,7 @@ export default async function SitesPage({
   const { todayDateString } = getKSTDateBounds();
 
   const [
+    { data: leadInquiries },
     { data: newInquiries },
     { data: contactedInquiries },
     { data: sentQuotes },
@@ -79,6 +81,12 @@ export default async function SitesPage({
     { data: employees },
     { data: customers },
   ] = await Promise.all([
+    supabase
+      .from("inquiries")
+      .select("*")
+      .eq("status", "lead")
+      .order("created_at", { ascending: false })
+      .returns<Inquiry[]>(),
     supabase
       .from("inquiries")
       .select("*")
@@ -206,11 +214,17 @@ export default async function SitesPage({
         <div>
           <h1 className="font-serif text-2xl font-semibold text-charcoal">현장관리</h1>
           <p className="mt-2 text-sm text-charcoal/60">
-            상담문의가 곧 현장입니다. 신규 → 상담 → 견적 → 계약 → 진행 순으로 흐릅니다.
+            상담문의가 곧 현장입니다. 문의 → 신규 → 상담 → 견적 → 계약 → 진행 순으로 흐릅니다.
           </p>
         </div>
         {canManage && (
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={showLeadForm ? "/admin/sites" : "/admin/sites?newLead=1"}
+              className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500"
+            >
+              + 문의 메모
+            </Link>
             <Link
               href={showInquiryForm ? "/admin/sites" : "/admin/sites?newInquiry=1"}
               className="rounded-full bg-sky-500 px-4 py-2 text-xs font-medium text-white hover:bg-sky-600"
@@ -236,6 +250,42 @@ export default async function SitesPage({
           </div>
         )}
       </div>
+
+      {showLeadForm && canManage && (
+        <form
+          action={createLeadInquiry}
+          className="mt-6 grid gap-3 rounded-sm border border-rose-200 bg-rose-50/40 p-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <input
+            name="name"
+            required
+            placeholder="이름"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="phone"
+            required
+            placeholder="연락처"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="budget"
+            placeholder="예산 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="message"
+            placeholder="어떤 문의였는지 간단히 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <button
+            type="submit"
+            className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500 lg:col-span-4 lg:w-fit"
+          >
+            문의 기록
+          </button>
+        </form>
+      )}
 
       {showInquiryForm && canManage && (
         <form
@@ -433,7 +483,53 @@ export default async function SitesPage({
         </div>
       ) : (
         <>
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  문의
+                </span>
+                <span className="text-xs text-charcoal/50">{leadInquiries?.length ?? 0}</span>
+              </div>
+              <div className="mt-3 flex flex-1 flex-col gap-2">
+                {leadInquiries?.map((inquiry) => (
+                  <div
+                    key={inquiry.id}
+                    className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-slate-400"
+                  >
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      <span className="shrink-0 text-charcoal/60">{inquiry.phone}</span>
+                    </div>
+                    {(inquiry.budget || inquiry.message) && (
+                      <p className="mt-1 truncate text-charcoal/50">
+                        {[inquiry.budget, inquiry.message].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {canManage && (
+                      <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
+                        <button
+                          type="submit"
+                          className="w-full rounded-sm bg-rose-100 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-200"
+                        >
+                          신규 전환 →
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ))}
+                {(!leadInquiries || leadInquiries.length === 0) && (
+                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
+                    간단 문의 메모 없음
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
