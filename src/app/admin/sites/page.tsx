@@ -39,6 +39,11 @@ function formatPeriod(start: string | null, end: string | null) {
   return `${start} ~ ${end}`;
 }
 
+function formatInquiryDate(createdAt: string) {
+  const d = new Date(createdAt);
+  return d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit" });
+}
+
 export default async function SitesPage({
   searchParams,
 }: {
@@ -248,6 +253,20 @@ export default async function SitesPage({
             placeholder="연락처"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
           />
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-charcoal/50">문의날짜</label>
+            <input
+              type="date"
+              name="inquiry_date"
+              defaultValue={todayDateString}
+              className="border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-sky-500"
+            />
+          </div>
+          <input
+            name="address"
+            placeholder="아파트명 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          />
           <input
             name="size_py"
             placeholder="평형 (선택)"
@@ -429,8 +448,20 @@ export default async function SitesPage({
                     href="/admin/inquiries"
                     className="block rounded-sm border border-nude/40 p-3 text-sm hover:border-rose-400"
                   >
-                    <p className="font-medium text-charcoal">{inquiry.name}</p>
-                    <p className="mt-1 text-xs text-charcoal/50">{inquiry.phone}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-charcoal">{inquiry.name}</p>
+                      <span className="shrink-0 text-[11px] text-charcoal/40">
+                        {formatInquiryDate(inquiry.created_at)}
+                      </span>
+                    </div>
+                    {(inquiry.address || inquiry.size_py) && (
+                      <p className="mt-1 text-xs text-charcoal/60">
+                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {inquiry.message && (
+                      <p className="mt-1 truncate text-xs text-charcoal/50">{inquiry.message}</p>
+                    )}
                   </Link>
                 ))}
                 {(!newInquiries || newInquiries.length === 0) && (
@@ -456,8 +487,20 @@ export default async function SitesPage({
                     href="/admin/inquiries"
                     className="block rounded-sm border border-nude/40 p-3 text-sm hover:border-amber-400"
                   >
-                    <p className="font-medium text-charcoal">{inquiry.name}</p>
-                    <p className="mt-1 text-xs text-charcoal/50">{inquiry.phone}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-charcoal">{inquiry.name}</p>
+                      <span className="shrink-0 text-[11px] text-charcoal/40">
+                        {formatInquiryDate(inquiry.created_at)}
+                      </span>
+                    </div>
+                    {(inquiry.address || inquiry.size_py) && (
+                      <p className="mt-1 text-xs text-charcoal/60">
+                        {[inquiry.address, inquiry.size_py].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                    {inquiry.message && (
+                      <p className="mt-1 truncate text-xs text-charcoal/50">{inquiry.message}</p>
+                    )}
                   </Link>
                 ))}
                 {(!contactedInquiries || contactedInquiries.length === 0) && (

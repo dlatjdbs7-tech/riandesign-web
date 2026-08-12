@@ -9,15 +9,19 @@ export async function createInquiry(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim();
   if (!name || !phone) return;
 
+  const inquiryDate = String(formData.get("inquiry_date") ?? "").trim();
+
   const supabase = await createClient();
   await supabase.from("inquiries").insert({
     name,
     phone,
     message: String(formData.get("message") ?? "").trim() || null,
+    address: String(formData.get("address") ?? "").trim() || null,
     size_py: String(formData.get("size_py") ?? "").trim() || null,
     budget: String(formData.get("budget") ?? "").trim() || null,
     referral_source: String(formData.get("referral_source") ?? "").trim() || null,
     status: "new",
+    ...(inquiryDate ? { created_at: new Date(`${inquiryDate}T12:00:00+09:00`).toISOString() } : {}),
   });
 
   revalidatePath("/admin/sites");
