@@ -71,6 +71,7 @@ export async function submitInquiry(formData: FormData) {
     referral_source: String(formData.get("referral_source") ?? "").trim() || null,
     floor_plan_url: floorPlanUrl,
     reference_url: referenceUrl,
+    portfolio_url: String(formData.get("portfolio_url") ?? "").trim() || null,
   });
 
   if (error) {

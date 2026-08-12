@@ -109,7 +109,7 @@ export default async function NotificationCenterPage() {
             {newInquiries?.slice(0, 5).map((inquiry) => (
               <div key={inquiry.id} className="flex justify-between border-b border-nude/30 pb-2 last:border-0">
                 <span>{inquiry.name}</span>
-                <span className="text-charcoal/60">{inquiry.phone}</span>
+                <span className="text-charcoal/60">{inquiry.phone ?? "-"}</span>
               </div>
             ))}
             {(!newInquiries || newInquiries.length === 0) && (

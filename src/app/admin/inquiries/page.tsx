@@ -34,7 +34,7 @@ export default async function InquiriesPage() {
             {inquiries?.map((i) => (
               <tr key={i.id} className="border-b border-nude/30 last:border-0 align-top">
                 <td className="px-4 py-3">{i.name}</td>
-                <td className="px-4 py-3 text-charcoal/70">{i.phone}</td>
+                <td className="px-4 py-3 text-charcoal/70">{i.phone ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{i.size_py ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{i.budget ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{formatKST(i.created_at)}</td>
@@ -135,6 +135,18 @@ export default async function InquiriesPage() {
                     {i.reference_url ? (
                       <a href={i.reference_url} target="_blank" rel="noopener noreferrer" className="text-gold underline">
                         파일 보기
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-xs text-charcoal/50">관심 포트폴리오 URL</dt>
+                  <dd>
+                    {i.portfolio_url ? (
+                      <a href={i.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-gold underline">
+                        {i.portfolio_url}
                       </a>
                     ) : (
                       "-"

@@ -181,7 +181,7 @@ export type InquiryStatus = "lead" | "new" | "contacted" | "closed";
 export type Inquiry = {
   id: string;
   name: string;
-  phone: string;
+  phone: string | null;
   message: string | null;
   status: InquiryStatus;
   address: string | null;

@@ -315,6 +315,22 @@ export default function Contact() {
         </div>
       </div>
 
+      <div className="flex flex-col gap-2">
+        <div>
+          <p className="text-sm font-medium text-charcoal">관심 포트폴리오 URL</p>
+          <p className="mt-1 text-xs text-charcoal/60">
+            선택 사항입니다. 참고할 링크가 있다면 첨부해 주세요.
+          </p>
+        </div>
+        <input
+          id="portfolio_url"
+          name="portfolio_url"
+          type="url"
+          placeholder="https://"
+          className={compactInputClass}
+        />
+      </div>
+
       <label className="flex items-start gap-2 text-xs text-charcoal/60">
         <input type="checkbox" required className="mt-0.5" />
         <span>

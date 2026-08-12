@@ -12,6 +12,7 @@ import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
+import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
 
 type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
 type SiteRow = WorkOrder & {
@@ -272,13 +273,12 @@ export default async function SitesPage({
             placeholder="이름"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
-          <input
+          <FormattedPhoneInput
             name="phone"
-            required
-            placeholder="연락처"
+            placeholder="연락처 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
-          <input
+          <FormattedNumberInput
             name="budget"
             placeholder="예산 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
@@ -308,10 +308,9 @@ export default async function SitesPage({
             placeholder="이름"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
           />
-          <input
+          <FormattedPhoneInput
             name="phone"
-            required
-            placeholder="연락처"
+            placeholder="연락처 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
           />
           <div className="flex flex-col gap-1">
@@ -333,7 +332,7 @@ export default async function SitesPage({
             placeholder="평형 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
           />
-          <input
+          <FormattedNumberInput
             name="budget"
             placeholder="예산 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
@@ -543,12 +542,12 @@ export default async function SitesPage({
                         <InlineInquiryFieldInput
                           inquiryId={inquiry.id}
                           field="phone"
-                          value={inquiry.phone}
+                          value={inquiry.phone ?? ""}
                           placeholder="연락처"
                           className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
-                        <span className="min-w-0 flex-1 truncate">{inquiry.phone}</span>
+                        <span className="min-w-0 flex-1 truncate">{inquiry.phone ?? "-"}</span>
                       )}
                     </div>
                     {(inquiry.budget || inquiry.message) && (

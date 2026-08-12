@@ -6,15 +6,15 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function createInquiry(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
-  if (!name || !phone) return;
+  if (!name) return;
 
+  const phone = String(formData.get("phone") ?? "").trim();
   const inquiryDate = String(formData.get("inquiry_date") ?? "").trim();
 
   const supabase = await createClient();
   await supabase.from("inquiries").insert({
     name,
-    phone,
+    phone: phone || null,
     message: String(formData.get("message") ?? "").trim() || null,
     address: String(formData.get("address") ?? "").trim() || null,
     size_py: String(formData.get("size_py") ?? "").trim() || null,
@@ -32,13 +32,13 @@ export async function createInquiry(formData: FormData) {
 
 export async function createLeadInquiry(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
-  if (!name || !phone) return;
+  if (!name) return;
 
+  const phone = String(formData.get("phone") ?? "").trim();
   const supabase = await createClient();
   await supabase.from("inquiries").insert({
     name,
-    phone,
+    phone: phone || null,
     message: String(formData.get("message") ?? "").trim() || null,
     budget: String(formData.get("budget") ?? "").trim() || null,
     address: String(formData.get("address") ?? "").trim() || null,
