@@ -188,7 +188,7 @@ export default function Contact() {
 
         <AddressSearch name="address" />
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
             <label htmlFor="size_py" className={labelClass}>
               평수
@@ -214,26 +214,25 @@ export default function Contact() {
               className={compactInputClass}
             />
           </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label htmlFor="budget" className={labelClass}>
-            예산
-          </label>
-          <div className="relative">
-            <input
-              id="budget"
-              name="budget"
-              type="text"
-              inputMode="numeric"
-              value={budget}
-              onChange={handleBudgetChange}
-              required
-              className={`w-full pr-8 ${compactInputClass}`}
-            />
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-charcoal/50">
-              원
-            </span>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="budget" className={labelClass}>
+              예산
+            </label>
+            <div className="relative">
+              <input
+                id="budget"
+                name="budget"
+                type="text"
+                inputMode="numeric"
+                value={budget}
+                onChange={handleBudgetChange}
+                required
+                className={`w-full pr-8 ${compactInputClass}`}
+              />
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-charcoal/50">
+                원
+              </span>
+            </div>
           </div>
         </div>
 
