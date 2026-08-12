@@ -1,30 +1,23 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 import FileDropInput from "./FileDropInput";
 import AddressSearch from "./AddressSearch";
 import FlexibleDateInput from "./FlexibleDateInput";
 
-const CONSTRUCTION_ITEMS = [
-  "도배",
-  "바닥 [마루 or 타일]",
-  "필름 시공",
-  "욕실 리모델링",
-  "제작 가구 [씽크대, 붙박이장, 신발장 등]",
-  "조명 및 전기",
-  "베란다",
-  "확장 공사",
-  "분배기 교체",
-  "난방 배관 교체",
-  "시스템 에어컨",
-  "창호 시공",
-];
-
 const REFERRAL_SOURCES = ["유튜브", "인스타그램", "블로그", "지인소개", "인터넷검색", "기타"];
 const PET_OPTIONS = ["고양이", "강아지", "기타", "없음"];
 const SPACE_TYPES = ["아파트", "단독주택", "빌라", "주상복합", "오피스텔", "기타"];
+const BUDGET_RANGES = [
+  { label: "5,000~6,000만원대", desc: "꼭 필요한 곳부터, 실속 있게" },
+  { label: "7,000~8,000만원대", desc: "공간 전반을 알차게" },
+  { label: "9,000~1억대", desc: "집 전체를 제대로" },
+  { label: "1억2,000~1억5,000만원대", desc: "자재와 디테일까지 꼼꼼히" },
+  { label: "1억5,000만원 이상", desc: "원하는 모든 것을 담아" },
+  { label: "예산 無 · 디자인 제안", desc: "예산은 열어두고, 디자인부터" },
+];
 
 const inputClass =
   "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
@@ -53,14 +46,9 @@ export default function Contact() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pets, setPets] = useState<string[]>([]);
-  const [budget, setBudget] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
   const [referralSource, setReferralSource] = useState("");
   const [spaceType, setSpaceType] = useState("");
-
-  function handleBudgetChange(event: ChangeEvent<HTMLInputElement>) {
-    const digits = event.target.value.replace(/[^0-9]/g, "");
-    setBudget(digits ? Number(digits).toLocaleString("ko-KR") : "");
-  }
 
   function togglePet(option: string) {
     setPets((prev) => {
@@ -78,6 +66,11 @@ export default function Contact() {
 
     if (!referralSource) {
       setError("유입경로를 선택해주세요.");
+      return;
+    }
+
+    if (!budgetRange) {
+      setError("공사예산을 선택해주세요.");
       return;
     }
 
@@ -188,7 +181,7 @@ export default function Contact() {
 
         <AddressSearch name="address" />
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label htmlFor="size_py" className={labelClass}>
               평수
@@ -214,26 +207,33 @@ export default function Contact() {
               className={compactInputClass}
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="budget" className={labelClass}>
-              예산
-            </label>
-            <div className="relative">
-              <input
-                id="budget"
-                name="budget"
-                type="text"
-                inputMode="numeric"
-                value={budget}
-                onChange={handleBudgetChange}
-                required
-                className={`w-full pr-8 ${compactInputClass}`}
-              />
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-charcoal/50">
-                원
-              </span>
-            </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium text-charcoal">공사예산</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {BUDGET_RANGES.map((range) => {
+              const active = budgetRange === range.label;
+              return (
+                <button
+                  key={range.label}
+                  type="button"
+                  onClick={() => setBudgetRange(range.label)}
+                  className={`rounded border px-4 py-3 text-left transition-colors ${
+                    active
+                      ? "border-charcoal bg-charcoal text-cream"
+                      : "border-nude text-charcoal hover:border-charcoal/50"
+                  }`}
+                >
+                  <p className="text-sm font-semibold">{range.label}</p>
+                  <p className={`mt-1 text-xs ${active ? "text-cream/70" : "text-charcoal/50"}`}>
+                    {range.desc}
+                  </p>
+                </button>
+              );
+            })}
           </div>
+          <input type="hidden" name="budget" value={budgetRange} />
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -281,18 +281,6 @@ export default function Contact() {
             ))}
           </div>
           <input type="hidden" name="space_type" value={spaceType} />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <p className={labelClass}>공사 내용</p>
-          <div className="flex flex-col gap-2">
-            {CONSTRUCTION_ITEMS.map((item) => (
-              <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
-                <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
-                {item}
-              </label>
-            ))}
-          </div>
         </div>
       </div>
 
