@@ -2,10 +2,11 @@ import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
-import { MENU_GROUPS } from "@/lib/menu";
+import { MENU_GROUPS, CONFIGURABLE_MENU_KEYS } from "@/lib/menu";
 import { createTeam } from "./actions";
 import { RoleSelect, TeamSelect } from "@/components/admin/EmployeeRoleTeamSelects";
 import JobRankMenuPermissionCheckbox from "@/components/admin/JobRankMenuPermissionCheckbox";
+import JobRankSelectAllCheckbox from "@/components/admin/JobRankSelectAllCheckbox";
 import { JOB_RANKS } from "@/lib/jobRanks";
 
 export default async function TeamPermissionsPage() {
@@ -98,11 +99,23 @@ export default async function TeamPermissionsPage() {
             <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
               <tr>
                 <th className="px-4 py-3">메뉴</th>
-                {JOB_RANKS.map((rank) => (
-                  <th key={rank} className="px-2 py-3 text-center">
-                    {rank}
-                  </th>
-                ))}
+                {JOB_RANKS.map((rank) => {
+                  const allChecked = CONFIGURABLE_MENU_KEYS.every(
+                    (key) => permissionMap.get(`${rank}:${key}`) === true
+                  );
+                  return (
+                    <th key={rank} className="px-2 py-3 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{rank}</span>
+                        <JobRankSelectAllCheckbox
+                          jobRank={rank}
+                          menuKeys={CONFIGURABLE_MENU_KEYS}
+                          allChecked={allChecked}
+                        />
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
