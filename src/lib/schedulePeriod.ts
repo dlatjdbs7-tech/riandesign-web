@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { daysBetweenDateStrings } from "./date";
+import { getTaskDisplayStatus } from "./taskStatus";
+import type { WorkOrderTask } from "./types";
 
 export type FinishTaskInfo = {
   endDate: string;
@@ -45,4 +47,37 @@ export function wasScheduleRecentlyUpdated(
   const updatedDateString = info.updatedAt.slice(0, 10);
   const diffDays = daysBetweenDateStrings(updatedDateString, todayDateString);
   return diffDays >= 0 && diffDays <= 3;
+}
+
+// 공정률 = 완료 공정 ÷ 전체 공정. 공정표가 없는 현장은 결과에 포함되지 않는다.
+export async function getTaskCompletionProgress(
+  supabase: SupabaseClient,
+  workOrderIds: string[],
+  todayDateString: string
+): Promise<Map<string, number>> {
+  if (!workOrderIds.length) return new Map();
+
+  const { data: tasks } = await supabase
+    .from("work_order_tasks")
+    .select("work_order_id, start_date, end_date, status, auto_status")
+    .in("work_order_id", workOrderIds)
+    .returns<
+      Pick<WorkOrderTask, "work_order_id" | "start_date" | "end_date" | "status" | "auto_status">[]
+    >();
+
+  const totalByOrder = new Map<string, number>();
+  const completedByOrder = new Map<string, number>();
+  for (const task of tasks ?? []) {
+    totalByOrder.set(task.work_order_id, (totalByOrder.get(task.work_order_id) ?? 0) + 1);
+    if (getTaskDisplayStatus(task, todayDateString) === "completed") {
+      completedByOrder.set(task.work_order_id, (completedByOrder.get(task.work_order_id) ?? 0) + 1);
+    }
+  }
+
+  const progressByOrder = new Map<string, number>();
+  for (const [id, total] of totalByOrder) {
+    if (total === 0) continue;
+    progressByOrder.set(id, Math.round(((completedByOrder.get(id) ?? 0) / total) * 100));
+  }
+  return progressByOrder;
 }

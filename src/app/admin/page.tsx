@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Profile, Todo, WorkOrder } from "@/lib/types";
-import { getKSTDateBounds, getKSTWeekBounds } from "@/lib/date";
-import { getWorkOrderRisk } from "@/lib/risk";
-import { getFinishTaskInfo } from "@/lib/schedulePeriod";
+import { daysBetweenDateStrings, getKSTDateBounds, getKSTWeekBounds } from "@/lib/date";
+import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
+import { getFinishTaskInfo, getTaskCompletionProgress } from "@/lib/schedulePeriod";
+import { getNotificationCount } from "@/lib/notifications";
+
+const RISK_LABEL: Record<RiskLevel, string> = { danger: "위험", caution: "주의", normal: "정상" };
+const RISK_STYLE: Record<RiskLevel, string> = {
+  danger: "bg-red-100 text-red-700",
+  caution: "bg-amber-100 text-amber-700",
+  normal: "bg-emerald-100 text-emerald-700",
+};
 
 function FunnelBar({
   label,
@@ -34,24 +42,30 @@ function FunnelBar({
   );
 }
 
-async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typeof createClient>> }) {
-  const { startOfMonth, todayDateString } = getKSTDateBounds();
+async function ManagerDashboard({
+  supabase,
+  profile,
+}: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  profile: { id: string; role: string };
+}) {
+  const { todayDateString } = getKSTDateBounds();
   const { weekStartDate, weekEndDate } = getKSTWeekBounds();
 
   const [
     { count: newInquiryCount },
     { count: activeWorkOrderCount },
     { count: openAsCount },
-    { count: pendingEmployeeCount },
-    { data: monthTransactions },
     { count: totalInquiryCount },
     { count: contactedInquiryCount },
+    { count: sentQuoteCount },
     { count: totalQuoteCount },
     { count: acceptedQuoteCount },
     { data: inProgressOrders },
     { data: weekOrders },
     { data: weekAsRequests },
     { data: weekTodos },
+    pendingAlertCount,
   ] = await Promise.all([
     supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
     supabase.from("work_orders").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
@@ -59,14 +73,9 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
       .from("as_requests")
       .select("*", { count: "exact", head: true })
       .neq("status", "completed"),
-    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    supabase
-      .from("transactions")
-      .select("amount")
-      .eq("status", "paid")
-      .gte("transaction_date", startOfMonth.slice(0, 10)),
     supabase.from("inquiries").select("*", { count: "exact", head: true }),
     supabase.from("inquiries").select("*", { count: "exact", head: true }).neq("status", "new"),
+    supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "sent"),
     supabase.from("quotes").select("*", { count: "exact", head: true }),
     supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "accepted"),
     supabase
@@ -95,17 +104,18 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
       .lte("due_date", weekEndDate)
       .order("due_date", { ascending: true })
       .returns<Todo[]>(),
+    getNotificationCount(supabase, profile),
   ]);
 
-  const monthRevenue = (monthTransactions ?? []).reduce((sum, t) => sum + (t.amount ?? 0), 0);
-
   const cards = [
-    { label: "신규 상담문의", value: `${newInquiryCount ?? 0}건`, caption: `전체 ${totalInquiryCount ?? 0}건` },
-    { label: "진행중 작업지시서", value: `${activeWorkOrderCount ?? 0}건`, caption: "계약·시공중" },
+    {
+      label: "신규 상담문의",
+      value: `${newInquiryCount ?? 0}건`,
+      caption: `견적 진행 ${sentQuoteCount ?? 0} · 전체 ${totalInquiryCount ?? 0}건`,
+    },
+    { label: "진행중 현장", value: `${activeWorkOrderCount ?? 0}건`, caption: "계약·시공중" },
     { label: "AS 현황", value: `${openAsCount ?? 0}건`, caption: "미완료" },
-    pendingEmployeeCount !== null && pendingEmployeeCount > 0
-      ? { label: "승인 대기 직원", value: `${pendingEmployeeCount}명`, caption: "직원 관리에서 승인" }
-      : { label: "이번 달 매출", value: `${monthRevenue.toLocaleString()}원`, caption: "결제완료 기준" },
+    { label: "발송 대기 알림", value: `${pendingAlertCount}건`, caption: "알림센터" },
   ];
 
   const funnelSteps = [
@@ -115,19 +125,19 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
     { label: "계약", count: acceptedQuoteCount ?? 0, base: totalInquiryCount ?? 0 },
   ];
 
-  const finishTaskByOrder = await getFinishTaskInfo(
-    supabase,
-    (inProgressOrders ?? []).map((o) => o.id)
-  );
+  const inProgressIds = (inProgressOrders ?? []).map((o) => o.id);
+  const finishTaskByOrder = await getFinishTaskInfo(supabase, inProgressIds);
+  const progressByOrder = await getTaskCompletionProgress(supabase, inProgressIds, todayDateString);
 
+  const siteItems: { order: WorkOrder; risk: RiskLevel; progress: number }[] = [];
   const riskCounts = { danger: 0, caution: 0, normal: 0 };
-  const riskItems: { order: WorkOrder; risk: "danger" | "caution" | "normal" }[] = [];
   for (const order of inProgressOrders ?? []) {
     const risk = getWorkOrderRisk(order, todayDateString, finishTaskByOrder.get(order.id)?.endDate);
     riskCounts[risk] += 1;
-    if (risk !== "normal") riskItems.push({ order, risk });
+    siteItems.push({ order, risk, progress: progressByOrder.get(order.id) ?? order.progress_percent });
   }
-  riskItems.sort((a) => (a.risk === "danger" ? -1 : 1));
+  const riskOrder: Record<RiskLevel, number> = { danger: 0, caution: 1, normal: 2 };
+  siteItems.sort((a, b) => riskOrder[a.risk] - riskOrder[b.risk]);
 
   const scheduleItems = [
     ...(weekAsRequests ?? []).map((a) => ({
@@ -194,10 +204,10 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
       <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-lg font-semibold text-charcoal">
-            진행 현장 · 신호등 · {(inProgressOrders ?? []).length}
+            진행 현장 · 신호등 · {siteItems.length}
           </h2>
-          <Link href="/admin/work-orders" className="text-xs text-taupe hover:text-orange-600">
-            작업지시서 →
+          <Link href="/admin/sites" className="text-xs text-taupe hover:text-orange-600">
+            현장관리 →
           </Link>
         </div>
         <div className="mt-4 flex gap-3">
@@ -213,28 +223,41 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
-          {riskItems.map(({ order, risk }) => (
-            <div key={order.id}>
-              <div className="flex items-center justify-between text-sm">
-                <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
-                  {order.title}
-                </Link>
-                <span className={`text-xs ${risk === "danger" ? "text-red-700" : "text-amber-700"}`}>
-                  {risk === "danger" ? "위험 · 작업일 초과" : "주의 · 작업일 임박"}
-                </span>
+          {siteItems.map(({ order, risk, progress }) => {
+            const materialDday = order.material_order_date
+              ? daysBetweenDateStrings(todayDateString, order.material_order_date)
+              : null;
+            return (
+              <div key={order.id}>
+                <div className="flex items-center justify-between text-sm">
+                  <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
+                    {order.title}
+                  </Link>
+                  <span
+                    className={`rounded-sm px-1.5 py-0.5 text-xs ${RISK_STYLE[risk]}`}
+                  >
+                    {RISK_LABEL[risk]}
+                  </span>
+                </div>
+                {materialDday !== null && (
+                  <p className={`mt-0.5 text-xs ${materialDday < 0 ? "text-red-600" : "text-charcoal/40"}`}>
+                    자재 발주 {materialDday >= 0 ? `예정 D-${materialDday}` : `지연 D+${Math.abs(materialDday)}`}
+                  </p>
+                )}
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="h-2 flex-1 rounded-full bg-stone-100">
+                    <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${progress}%` }} />
+                  </div>
+                  <span className="w-9 shrink-0 text-right text-xs text-charcoal/50">{progress}%</span>
+                </div>
               </div>
-              <div className="mt-1 h-2 w-full rounded-full bg-stone-100">
-                <div
-                  className="h-2 rounded-full bg-emerald-600"
-                  style={{ width: `${order.progress_percent}%` }}
-                />
-              </div>
-            </div>
-          ))}
-          {riskItems.length === 0 && (
-            <p className="text-sm text-charcoal/50">위험·주의 단계인 현장이 없습니다.</p>
+            );
+          })}
+          {siteItems.length === 0 && (
+            <p className="text-sm text-charcoal/50">진행중인 현장이 없습니다.</p>
           )}
         </div>
+        <p className="mt-3 text-[11px] text-charcoal/40">공정률 = 완료 공정 ÷ 전체 공정.</p>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -382,7 +405,7 @@ export default async function AdminDashboardPage() {
     <div>
       <h1 className="font-serif text-2xl font-semibold text-charcoal">대시보드</h1>
       {canManage ? (
-        <ManagerDashboard supabase={supabase} />
+        <ManagerDashboard supabase={supabase} profile={{ id: user!.id, role: me!.role }} />
       ) : (
         <EmployeeDashboard supabase={supabase} userId={user!.id} />
       )}

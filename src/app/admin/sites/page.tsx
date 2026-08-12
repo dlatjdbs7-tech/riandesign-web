@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder, WorkOrderTask } from "@/lib/types";
 import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
-import { wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
+import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
 import { promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
@@ -189,14 +189,7 @@ export default async function SitesPage({
     });
   }
 
-  const progressByOrder = new Map<string, number>();
-  for (const [id, period] of periodByOrder) {
-    if (!period.start || !period.end) continue;
-    const totalDays = daysBetweenDateStrings(period.start, period.end);
-    if (totalDays <= 0) continue;
-    const elapsedDays = daysBetweenDateStrings(period.start, todayDateString);
-    progressByOrder.set(id, Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100))));
-  }
+  const progressByOrder = await getTaskCompletionProgress(supabase, inProgressIds, todayDateString);
 
   return (
     <div>
@@ -530,7 +523,7 @@ export default async function SitesPage({
                     </div>
                     {progressByOrder.has(order.id) && (
                       <p className="mt-0.5 text-right text-[10px] text-charcoal/40">
-                        철거~마감 기준 자동 계산
+                        완료 공정 ÷ 전체 공정 기준 자동 계산
                       </p>
                     )}
 
