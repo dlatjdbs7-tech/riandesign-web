@@ -23,22 +23,20 @@ export default function AttendanceCheckInOut({ isCheckedIn }: { isCheckedIn: boo
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleClick() {
+  async function handleClick(action: "in" | "out") {
     setMessage(null);
     setIsLoading(true);
 
     try {
       const position = await getLocation();
       const { latitude, longitude } = position.coords;
-      const result = isCheckedIn
-        ? await checkOut(latitude, longitude)
-        : await checkIn(latitude, longitude);
+      const result = action === "out" ? await checkOut(latitude, longitude) : await checkIn(latitude, longitude);
 
       if (result.error) {
         setMessage(result.error);
       } else {
         const siteName = "siteName" in result ? result.siteName : undefined;
-        setMessage(isCheckedIn ? "퇴근 처리되었습니다." : `출근 처리되었습니다 (${siteName ?? ""})`);
+        setMessage(action === "out" ? "퇴근 처리되었습니다." : `출근 처리되었습니다 (${siteName ?? ""})`);
         router.refresh();
       }
     } catch (error) {
@@ -50,16 +48,32 @@ export default function AttendanceCheckInOut({ isCheckedIn }: { isCheckedIn: boo
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isLoading}
-        className={`rounded-full px-8 py-3 text-sm tracking-wide text-cream transition-colors disabled:opacity-50 ${
-          isCheckedIn ? "bg-taupe hover:bg-charcoal" : "bg-charcoal hover:bg-gold"
-        }`}
-      >
-        {isLoading ? "처리 중..." : isCheckedIn ? "퇴근하기" : "출근하기"}
-      </button>
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={() => handleClick("in")}
+          disabled={isLoading || isCheckedIn}
+          className={`rounded-sm py-4 text-sm font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+            isCheckedIn
+              ? "bg-stone-100 text-charcoal/40"
+              : "bg-charcoal text-cream hover:bg-gold"
+          }`}
+        >
+          {isCheckedIn ? "출근 완료" : "출근하기"}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleClick("out")}
+          disabled={isLoading || !isCheckedIn}
+          className={`rounded-sm py-4 text-sm font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+            !isCheckedIn
+              ? "bg-stone-100 text-charcoal/40"
+              : "bg-taupe text-cream hover:bg-charcoal"
+          }`}
+        >
+          퇴근하기
+        </button>
+      </div>
       {message && <p className="mt-3 text-sm text-charcoal/70">{message}</p>}
     </div>
   );

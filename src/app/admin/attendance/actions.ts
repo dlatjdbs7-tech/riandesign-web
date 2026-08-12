@@ -79,3 +79,31 @@ export async function checkOut(lat: number, lng: number) {
   revalidatePath("/admin/attendance");
   return { success: true };
 }
+
+export async function setAttendanceLeave(userId: string, leaveDate: string, leaveType: "반차" | "휴무") {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("attendance_leaves")
+    .upsert(
+      { user_id: userId, leave_date: leaveDate, leave_type: leaveType, created_by: user.id },
+      { onConflict: "user_id,leave_date" }
+    );
+
+  revalidatePath("/admin/attendance");
+}
+
+export async function clearAttendanceLeave(userId: string, leaveDate: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("attendance_leaves")
+    .delete()
+    .eq("user_id", userId)
+    .eq("leave_date", leaveDate);
+
+  revalidatePath("/admin/attendance");
+}

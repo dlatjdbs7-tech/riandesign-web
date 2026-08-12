@@ -39,6 +39,15 @@ export type AttendanceRecord = {
   created_at: string;
 };
 
+export type AttendanceLeave = {
+  id: string;
+  user_id: string;
+  leave_date: string;
+  leave_type: "반차" | "휴무";
+  created_by: string | null;
+  created_at: string;
+};
+
 export type WorkOrderStatus = "pending" | "in_progress" | "completed";
 export type SiteStatus = WorkOrderStatus | "cancelled" | "on_hold";
 
