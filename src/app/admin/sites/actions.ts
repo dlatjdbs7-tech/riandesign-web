@@ -41,6 +41,8 @@ export async function createLeadInquiry(formData: FormData) {
     phone,
     message: String(formData.get("message") ?? "").trim() || null,
     budget: String(formData.get("budget") ?? "").trim() || null,
+    address: String(formData.get("address") ?? "").trim() || null,
+    size_py: String(formData.get("size_py") ?? "").trim() || null,
     status: "lead",
   });
 
@@ -61,13 +63,16 @@ export async function promoteLeadToNew(inquiryId: string) {
 
 export async function updateInquiryField(
   inquiryId: string,
-  field: "address" | "size_py" | "floor_plan_type",
+  field: "address" | "size_py" | "floor_plan_type" | "phone",
   value: string
 ) {
+  const trimmed = value.trim();
+  if (field === "phone" && !trimmed) return;
+
   const supabase = await createClient();
   await supabase
     .from("inquiries")
-    .update({ [field]: value.trim() || null })
+    .update({ [field]: field === "phone" ? trimmed : trimmed || null })
     .eq("id", inquiryId);
 
   revalidatePath("/admin/sites");

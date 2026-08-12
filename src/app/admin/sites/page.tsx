@@ -257,6 +257,16 @@ export default async function SitesPage({
           className="mt-6 grid gap-3 rounded-sm border border-rose-200 bg-rose-50/40 p-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           <input
+            name="address"
+            placeholder="아파트명 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="size_py"
+            placeholder="평수 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
             name="name"
             required
             placeholder="이름"
@@ -501,9 +511,45 @@ export default async function SitesPage({
                     <div className="flex items-center gap-1.5 overflow-hidden">
                       <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
                       <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="address"
+                          value={inquiry.address ?? ""}
+                          placeholder="아파트명"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                          {inquiry.address || "아파트명 미입력"}
+                        </span>
+                      )}
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="size_py"
+                          value={inquiry.size_py ?? ""}
+                          placeholder="평수"
+                          className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
                       <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
                       <span className="shrink-0 text-charcoal/20">·</span>
-                      <span className="shrink-0 text-charcoal/60">{inquiry.phone}</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="phone"
+                          value={inquiry.phone}
+                          placeholder="연락처"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate">{inquiry.phone}</span>
+                      )}
                     </div>
                     {(inquiry.budget || inquiry.message) && (
                       <p className="mt-1 truncate text-charcoal/50">
