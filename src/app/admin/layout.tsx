@@ -57,15 +57,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     items: group.items.filter((item) => canView(item.key)),
   }));
 
-  const { count: pendingWorkOrderCount } = await supabase
-    .from("work_orders")
+  const { count: pendingDirectiveCount } = await supabase
+    .from("work_directives")
     .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
+    .neq("status", "completed");
 
   const notificationCount = await getNotificationCount(supabase, { id: profile.id, role: profile.role });
 
   const badges: Record<string, number> = {
-    "/admin/field-management": pendingWorkOrderCount ?? 0,
+    "/admin/field-management": pendingDirectiveCount ?? 0,
     "/admin/notification-center": notificationCount,
   };
 

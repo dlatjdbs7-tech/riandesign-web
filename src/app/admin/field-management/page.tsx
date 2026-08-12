@@ -15,7 +15,7 @@ const COLUMNS: { status: WorkOrder["status"]; label: string; accent: string }[] 
 
 const CELLS = [
   { href: "/admin/field-management/schedule", label: "공정표" },
-  { href: "/admin/work-orders", label: "작업지시서" },
+  { href: "/admin/work-directives", label: "작업지시서" },
   { href: "/admin/quotes", label: "견적서" },
   { href: "/admin/transactions", label: "거래명세서" },
   { href: "/admin/field-management/purchase-orders", label: "발주서" },
@@ -31,7 +31,10 @@ export default async function FieldManagementPage() {
     .order("work_date", { ascending: true, nullsFirst: false })
     .returns<WorkOrderRow[]>();
 
-  const pendingCount = orders?.filter((o) => o.status === "pending").length ?? 0;
+  const { count: pendingDirectiveCount } = await supabase
+    .from("work_directives")
+    .select("id", { count: "exact", head: true })
+    .neq("status", "completed");
 
   return (
     <div>
@@ -42,7 +45,7 @@ export default async function FieldManagementPage() {
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {CELLS.map((cell) => {
-          const badge = cell.label === "작업지시서" ? pendingCount : 0;
+          const badge = cell.label === "작업지시서" ? (pendingDirectiveCount ?? 0) : 0;
           return (
             <Link
               key={cell.href}

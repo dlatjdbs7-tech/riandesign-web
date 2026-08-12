@@ -184,6 +184,15 @@ export type Inquiry = {
   phone: string;
   message: string | null;
   status: InquiryStatus;
+  address: string | null;
+  size_py: string | null;
+  budget: string | null;
+  construction_date: string | null;
+  move_in_date: string | null;
+  construction_items: string[] | null;
+  referral_source: string | null;
+  floor_plan_url: string | null;
+  reference_url: string | null;
   created_at: string;
 };
 
@@ -353,6 +362,18 @@ export type Todo = {
   assignee_id: string | null;
   due_date: string | null;
   status: TodoStatus;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type WorkDirectiveStatus = "pending" | "in_progress" | "completed";
+export type WorkDirective = {
+  id: string;
+  title: string;
+  content: string | null;
+  assignee_id: string | null;
+  due_date: string | null;
+  status: WorkDirectiveStatus;
   created_by: string | null;
   created_at: string;
 };
