@@ -29,6 +29,15 @@ export async function updateEmployeeTeam(id: string, teamId: string) {
   revalidatePath("/admin/team-permissions");
 }
 
+export async function updateEmployeeJobRank(id: string, jobRank: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("profiles")
+    .update({ job_rank: jobRank || null })
+    .eq("id", id);
+  revalidatePath("/admin/team-permissions");
+}
+
 export async function updateMenuPermission(
   role: ConfigurableRole,
   menuKey: string,

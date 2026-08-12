@@ -11,6 +11,7 @@ export type Profile = {
   role: UserRole;
   status: ApprovalStatus;
   team_id: string | null;
+  job_rank: string | null;
   created_at: string;
 };
 

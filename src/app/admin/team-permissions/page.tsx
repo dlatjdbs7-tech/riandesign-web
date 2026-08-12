@@ -6,6 +6,8 @@ import { MENU_GROUPS, CONFIGURABLE_ROLES } from "@/lib/menu";
 import { createTeam } from "./actions";
 import { RoleSelect, TeamSelect } from "@/components/admin/EmployeeRoleTeamSelects";
 import MenuPermissionCheckbox from "@/components/admin/MenuPermissionCheckbox";
+import JobRankCheckboxes from "@/components/admin/JobRankCheckboxes";
+import { JOB_RANKS } from "@/lib/jobRanks";
 
 const ROLE_LABEL = { manager: "팀장", employee: "직원" } as const;
 
@@ -53,12 +55,17 @@ export default async function TeamPermissionsPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="px-4 py-3">권한</th>
                 <th className="px-4 py-3">소속 팀</th>
+                {JOB_RANKS.map((rank) => (
+                  <th key={rank} className="px-2 py-3 text-center">
+                    {rank}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -71,6 +78,7 @@ export default async function TeamPermissionsPage() {
                   <td className="px-4 py-3">
                     <TeamSelect id={employee.id} teamId={employee.team_id} teams={teams ?? []} />
                   </td>
+                  <JobRankCheckboxes id={employee.id} jobRank={employee.job_rank} />
                 </tr>
               ))}
             </tbody>
