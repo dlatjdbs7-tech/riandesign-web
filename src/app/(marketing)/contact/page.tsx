@@ -25,6 +25,12 @@ const FAQ_ITEMS = [
   },
 ];
 
+const INTRO_PARAGRAPHS = [
+  "좋은 공간은 충분한 대화에서 시작됩니다.",
+  "보다 책임 있는 상담을 위해 작성해 주신 내용을 먼저 검토한 뒤, 진행가능 여부와 상담 일정을 안내드립니다.",
+  "원활한 상담을 위해 가능한 꼼꼼히 작성 부탁드립니다.",
+];
+
 export default async function ContactPage() {
   const supabase = await createClient();
   const [{ data: content }, { data: settings }] = await Promise.all([
@@ -37,38 +43,53 @@ export default async function ContactPage() {
 
   return (
     <div>
-      <section className="mx-auto max-w-4xl px-6 py-20 text-center sm:px-10">
+      <section className="mx-auto max-w-7xl px-6 pt-16 pb-10 sm:px-10">
         <p className="text-xs tracking-[0.4em] text-taupe">CONTACT</p>
-        <p className="font-display mt-3 text-lg text-charcoal">Get in touch</p>
-        <h1 className="mt-2 font-serif text-3xl font-semibold text-charcoal sm:text-5xl">
-          Contact & FAQ
+        <h1 className="mt-3 font-serif text-4xl font-semibold text-charcoal sm:text-6xl">
+          Get in touch
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-charcoal/60">{notice}</p>
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 pb-20 sm:px-10">
-        <div className="flex flex-col divide-y divide-nude/60 border-t border-b border-nude/60">
-          {FAQ_ITEMS.map((item) => (
-            <details key={item.question} className="group py-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-serif text-base font-semibold text-charcoal">
-                {item.question}
-                <span
-                  aria-hidden
-                  className="shrink-0 text-lg text-gold transition-transform group-open:rotate-45"
-                >
-                  +
-                </span>
-              </summary>
-              <p className="mt-3 text-sm leading-relaxed text-charcoal/70">{item.answer}</p>
-            </details>
-          ))}
+      <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-10">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <p className="font-display text-lg text-charcoal">Contact & FAQ</p>
+            <h2 className="mt-3 font-serif text-2xl font-semibold text-charcoal sm:text-4xl">
+              {notice}
+            </h2>
+
+            <div className="mt-6 flex flex-col gap-2 text-sm leading-relaxed text-charcoal/70">
+              {INTRO_PARAGRAPHS.map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-col divide-y divide-nude/60 border-t border-b border-nude/60">
+              {FAQ_ITEMS.map((item) => (
+                <details key={item.question} className="group py-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-charcoal">
+                    {item.question}
+                    <span
+                      aria-hidden
+                      className="shrink-0 text-lg text-gold transition-transform group-open:rotate-45"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-charcoal/70">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Contact />
+          </div>
         </div>
       </section>
 
-      <Contact />
-
       {settings?.address && (
-        <p className="px-6 py-8 text-center text-sm text-charcoal/60">{settings.address}</p>
+        <p className="px-6 pb-16 text-center text-sm text-charcoal/60">{settings.address}</p>
       )}
     </div>
   );
