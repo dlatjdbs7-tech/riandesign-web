@@ -240,13 +240,13 @@ export default function ChatWidget({
           onClick={() => openRoom(room.conversation_id, room.name)}
           className="flex flex-1 items-center gap-2 text-left"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600">
             <MessageCircle size={16} />
           </span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-1.5">
               <span className="text-sm font-medium text-charcoal">{room.name}</span>
-              {groupUnread(room.conversation_id) && <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />}
+              {groupUnread(room.conversation_id) && <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />}
             </span>
             <span className="block truncate text-xs text-charcoal/50">{room.last_message ?? "대화 시작"}</span>
           </span>
@@ -284,10 +284,10 @@ export default function ChatWidget({
             />
           ) : (
             <div className="flex h-full flex-col">
-              <div className="flex items-center gap-2 border-b border-nude/60 bg-red-500 px-4 py-3 text-white">
+              <div className="flex items-center gap-2 border-b border-nude/60 bg-orange-400 px-4 py-3 text-white">
                 <MessageCircle size={16} />
                 <p className="flex-1 truncate text-sm font-medium">REAN GROUP</p>
-                <button onClick={() => setIsOpen(false)} className="rounded-full p-1 hover:bg-red-600">
+                <button onClick={() => setIsOpen(false)} className="rounded-full p-1 hover:bg-orange-500">
                   <X size={16} />
                 </button>
               </div>
@@ -302,7 +302,7 @@ export default function ChatWidget({
                   <p className="text-[11px] tracking-wide text-charcoal/40">채팅방</p>
                   <button
                     onClick={() => setIsCreatingRoom((v) => !v)}
-                    className="flex items-center gap-0.5 text-[11px] text-taupe hover:text-red-600"
+                    className="flex items-center gap-0.5 text-[11px] text-taupe hover:text-orange-600"
                   >
                     <Plus size={12} /> 방 만들기
                   </button>
@@ -318,12 +318,12 @@ export default function ChatWidget({
                       }}
                       placeholder="방 이름"
                       autoFocus
-                      className="flex-1 rounded-full border border-nude bg-stone-50 px-3 py-1.5 text-xs outline-none focus:border-red-400"
+                      className="flex-1 rounded-full border border-nude bg-stone-50 px-3 py-1.5 text-xs outline-none focus:border-orange-400"
                     />
                     <button
                       onClick={createRoom}
                       disabled={!newRoomName.trim()}
-                      className="rounded-full bg-red-500 px-3 py-1.5 text-xs text-white hover:bg-red-600 disabled:opacity-40"
+                      className="rounded-full bg-orange-400 px-3 py-1.5 text-xs text-white hover:bg-orange-500 disabled:opacity-40"
                     >
                       만들기
                     </button>
@@ -347,7 +347,7 @@ export default function ChatWidget({
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5">
                           <span className="text-sm font-medium text-charcoal">{c.other_user_name}</span>
-                          {isUnread(c, currentUserId) && <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />}
+                          {isUnread(c, currentUserId) && <span className="h-2 w-2 shrink-0 rounded-full bg-orange-500" />}
                         </span>
                         <span className="block truncate text-xs text-charcoal/50">{c.last_message ?? "대화 시작"}</span>
                       </span>
@@ -410,11 +410,11 @@ export default function ChatWidget({
 
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-colors hover:bg-red-600"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-orange-400 text-white shadow-lg transition-colors hover:bg-orange-500"
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {!isOpen && unreadTotal > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-red-600 shadow">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-orange-600 shadow">
             {unreadTotal}
           </span>
         )}

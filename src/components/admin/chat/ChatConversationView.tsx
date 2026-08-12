@@ -266,7 +266,7 @@ export default function ChatConversationView({
                 rel="noopener noreferrer"
                 download={m.attachment_name ?? undefined}
                 className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
-                  mine ? "bg-red-100 text-charcoal" : "bg-stone-100 text-charcoal"
+                  mine ? "bg-orange-100 text-charcoal" : "bg-stone-100 text-charcoal"
                 }`}
               >
                 <FileText size={16} className="shrink-0" />
@@ -278,7 +278,7 @@ export default function ChatConversationView({
               <div
                 className={`whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${
                   m.attachment_url ? "mt-1" : ""
-                } ${mine ? "bg-red-100 text-charcoal" : "bg-stone-100 text-charcoal"}`}
+                } ${mine ? "bg-orange-100 text-charcoal" : "bg-stone-100 text-charcoal"}`}
               >
                 {m.content}
               </div>
@@ -292,25 +292,25 @@ export default function ChatConversationView({
 
   return (
     <div className={`flex flex-col overflow-hidden ${variant === "standalone" ? "h-screen bg-white" : "h-full"}`}>
-      <div className="flex items-center gap-2 border-b border-nude/60 bg-red-500 px-4 py-3 text-white">
+      <div className="flex items-center gap-2 border-b border-nude/60 bg-orange-400 px-4 py-3 text-white">
         {onBack && (
-          <button onClick={showDrawer ? () => setShowDrawer(false) : onBack} className="rounded-full p-1 hover:bg-red-600">
+          <button onClick={showDrawer ? () => setShowDrawer(false) : onBack} className="rounded-full p-1 hover:bg-orange-500">
             <ArrowLeft size={16} />
           </button>
         )}
         <p className="flex-1 truncate text-sm font-medium">{showDrawer ? `${label} · 서랍` : label}</p>
         {!showDrawer && (
-          <button onClick={openDrawer} className="rounded-full p-1 hover:bg-red-600" title="사진·파일 모아보기">
+          <button onClick={openDrawer} className="rounded-full p-1 hover:bg-orange-500" title="사진·파일 모아보기">
             <Images size={16} />
           </button>
         )}
         {variant === "embedded" && !showDrawer && (
-          <button onClick={openPopup} className="rounded-full p-1 hover:bg-red-600" title="팝업으로 열기">
+          <button onClick={openPopup} className="rounded-full p-1 hover:bg-orange-500" title="팝업으로 열기">
             <ExternalLink size={16} />
           </button>
         )}
         {onClose && (
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-red-600">
+          <button onClick={onClose} className="rounded-full p-1 hover:bg-orange-500">
             <X size={16} />
           </button>
         )}
@@ -380,7 +380,7 @@ export default function ChatConversationView({
             }}
           >
             {isDraggingFile && (
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-red-400 bg-red-50/90 text-sm font-medium text-red-600">
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-orange-400 bg-orange-50/90 text-sm font-medium text-orange-600">
                 여기에 파일을 놓으세요
               </div>
             )}
@@ -401,7 +401,7 @@ export default function ChatConversationView({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="shrink-0 rounded-full p-2 text-charcoal/50 hover:bg-stone-100 hover:text-red-500 disabled:opacity-40"
+              className="shrink-0 rounded-full p-2 text-charcoal/50 hover:bg-stone-100 hover:text-orange-500 disabled:opacity-40"
               title="파일 첨부"
             >
               <Paperclip size={18} />
@@ -417,12 +417,12 @@ export default function ChatConversationView({
               }}
               rows={1}
               placeholder="메시지 입력..."
-              className="max-h-24 flex-1 resize-none rounded-full border border-nude bg-stone-50 px-3 py-2 text-sm outline-none focus:border-red-400"
+              className="max-h-24 flex-1 resize-none rounded-full border border-nude bg-stone-50 px-3 py-2 text-sm outline-none focus:border-orange-400"
             />
             <button
               onClick={sendMessage}
               disabled={!draft.trim() || isSending}
-              className="shrink-0 rounded-full bg-red-500 p-2 text-white hover:bg-red-600 disabled:opacity-40"
+              className="shrink-0 rounded-full bg-orange-400 p-2 text-white hover:bg-orange-500 disabled:opacity-40"
             >
               <Send size={16} />
             </button>
