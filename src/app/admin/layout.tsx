@@ -5,6 +5,7 @@ import { MENU_GROUPS } from "@/lib/menu";
 import AdminNav from "@/components/admin/AdminNav";
 import LogoutButton from "@/components/admin/LogoutButton";
 import ChatWidget from "@/components/admin/chat/ChatWidget";
+import { getNotificationCount } from "@/lib/notifications";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -61,8 +62,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select("id", { count: "exact", head: true })
     .eq("status", "pending");
 
+  const notificationCount = await getNotificationCount(supabase, { id: profile.id, role: profile.role });
+
   const badges: Record<string, number> = {
     "/admin/field-management": pendingWorkOrderCount ?? 0,
+    "/admin/notification-center": notificationCount,
   };
 
   return (
