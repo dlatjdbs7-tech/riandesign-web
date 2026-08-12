@@ -7,6 +7,7 @@ import { createTeam } from "./actions";
 import { RoleSelect, TeamSelect } from "@/components/admin/EmployeeRoleTeamSelects";
 import JobRankMenuPermissionCheckbox from "@/components/admin/JobRankMenuPermissionCheckbox";
 import JobRankSelectAllCheckbox from "@/components/admin/JobRankSelectAllCheckbox";
+import AllMenuPermissionCheckbox from "@/components/admin/AllMenuPermissionCheckbox";
 import { JOB_RANKS } from "@/lib/jobRanks";
 
 export default async function TeamPermissionsPage() {
@@ -44,6 +45,10 @@ export default async function TeamPermissionsPage() {
 
   const permissionMap = new Map(
     (permissions ?? []).map((p) => [`${p.job_rank}:${p.menu_key}`, p.can_view])
+  );
+
+  const allMenuPermissionsChecked = JOB_RANKS.every((rank) =>
+    CONFIGURABLE_MENU_KEYS.every((key) => permissionMap.get(`${rank}:${key}`) === true)
   );
 
   return (
@@ -123,7 +128,13 @@ export default async function TeamPermissionsPage() {
                 <Fragment key={group.label}>
                   <tr className="bg-beige/40">
                     <td colSpan={1 + JOB_RANKS.length} className="px-4 py-1.5 text-[10px] tracking-[0.2em] text-charcoal/50">
-                      {group.label}
+                      {group.label ?? (
+                        <AllMenuPermissionCheckbox
+                          jobRanks={[...JOB_RANKS]}
+                          menuKeys={CONFIGURABLE_MENU_KEYS}
+                          allChecked={allMenuPermissionsChecked}
+                        />
+                      )}
                     </td>
                   </tr>
                   {group.items.map((item) => (

@@ -57,3 +57,18 @@ export async function updateAllJobRankMenuPermissions(
     );
   revalidatePath("/admin/team-permissions");
 }
+
+export async function updateAllMenuPermissions(
+  jobRanks: string[],
+  menuKeys: string[],
+  canView: boolean
+) {
+  const supabase = await createClient();
+  const rows = jobRanks.flatMap((jobRank) =>
+    menuKeys.map((menuKey) => ({ job_rank: jobRank, menu_key: menuKey, can_view: canView }))
+  );
+  await supabase
+    .from("job_rank_menu_permissions")
+    .upsert(rows, { onConflict: "job_rank,menu_key" });
+  revalidatePath("/admin/team-permissions");
+}
