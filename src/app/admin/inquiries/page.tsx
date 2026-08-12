@@ -74,12 +74,28 @@ export default async function InquiriesPage() {
                   <dd>{i.address ?? "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-charcoal/50">공사 예정일</dt>
+                  <dt className="text-xs text-charcoal/50">평면 타입</dt>
+                  <dd>{i.floor_plan_type ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">공사 가능일</dt>
                   <dd>{i.construction_date ?? "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-charcoal/50">입주 예정일</dt>
+                  <dt className="text-xs text-charcoal/50">입주 희망일</dt>
                   <dd>{i.move_in_date ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">상담·방문 희망일</dt>
+                  <dd>{i.visit_date ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">상담 희망 시간</dt>
+                  <dd>{i.visit_time ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">공간유형</dt>
+                  <dd>{i.space_type ?? "-"}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-charcoal/50">유입경로</dt>

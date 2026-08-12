@@ -186,11 +186,15 @@ export type Inquiry = {
   status: InquiryStatus;
   address: string | null;
   size_py: string | null;
+  floor_plan_type: string | null;
   budget: string | null;
   construction_date: string | null;
   move_in_date: string | null;
+  visit_date: string | null;
+  visit_time: string | null;
   family_members: string | null;
   pets: string[] | null;
+  space_type: string | null;
   construction_items: string[] | null;
   referral_source: string | null;
   floor_plan_url: string | null;

@@ -22,14 +22,31 @@ const CONSTRUCTION_ITEMS = [
   "창호 시공",
 ];
 
-const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개"];
+const REFERRAL_SOURCES = ["유튜브", "인스타그램", "블로그", "지인소개", "인터넷검색", "기타"];
 const PET_OPTIONS = ["고양이", "강아지", "기타", "없음"];
+const SPACE_TYPES = ["아파트", "단독주택", "빌라", "주상복합", "오피스텔", "기타"];
 
 const inputClass =
   "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
 const compactInputClass =
   "rounded border border-nude bg-transparent px-4 py-2 text-sm text-charcoal outline-none focus:border-gold";
 const labelClass = "text-xs tracking-wide text-charcoal/70";
+const toggleButtonClass = (active: boolean) =>
+  `rounded border px-3 py-2 text-sm transition-colors ${
+    active
+      ? "border-charcoal bg-charcoal text-cream"
+      : "border-nude text-charcoal/70 hover:border-charcoal/50"
+  }`;
+
+function SectionHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div>
+      <p className="font-display text-xs tracking-[0.3em] text-taupe">{eyebrow}</p>
+      <h3 className="mt-2 font-serif text-xl font-semibold text-charcoal">{title}</h3>
+      <div className="mt-3 border-b border-nude/60" />
+    </div>
+  );
+}
 
 export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -37,6 +54,8 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pets, setPets] = useState<string[]>([]);
   const [budget, setBudget] = useState("");
+  const [referralSource, setReferralSource] = useState("");
+  const [spaceType, setSpaceType] = useState("");
 
   function handleBudgetChange(event: ChangeEvent<HTMLInputElement>) {
     const digits = event.target.value.replace(/[^0-9]/g, "");
@@ -56,6 +75,12 @@ export default function Contact() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (!referralSource) {
+      setError("유입경로를 선택해주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const result = await submitInquiry(new FormData(event.currentTarget));
@@ -79,7 +104,7 @@ export default function Contact() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
       <input
         type="text"
         name="website"
@@ -89,30 +114,108 @@ export default function Contact() {
         className="absolute left-[-9999px] h-0 w-0 opacity-0"
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="name" className={labelClass}>
-            성함
-          </label>
-          <input id="name" name="name" type="text" required className={compactInputClass} />
+      <div className="flex flex-col gap-5">
+        <SectionHeader eyebrow="CUSTOMER" title="고객정보" />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="name" className={labelClass}>
+              성함
+            </label>
+            <input id="name" name="name" type="text" required className={compactInputClass} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="phone" className={labelClass}>
+              연락처
+            </label>
+            <input id="phone" name="phone" type="tel" required className={compactInputClass} />
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="phone" className={labelClass}>
-            연락처
-          </label>
-          <input id="phone" name="phone" type="tel" required className={compactInputClass} />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="family_members" className={labelClass}>
+              가족구성원
+            </label>
+            <input
+              id="family_members"
+              name="family_members"
+              type="text"
+              placeholder="예) 40대 부부, 초등학생 아들"
+              className={compactInputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className={labelClass}>반려동물</p>
+            <div className="flex gap-2">
+              {PET_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => togglePet(option)}
+                  className={`flex-1 ${toggleButtonClass(pets.includes(option))}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            {pets.map((pet) => (
+              <input key={pet} type="hidden" name="pets" value={pet} />
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className={labelClass}>유입경로</p>
+          <div className="flex flex-wrap gap-2">
+            {REFERRAL_SOURCES.map((source) => (
+              <button
+                key={source}
+                type="button"
+                onClick={() => setReferralSource(source)}
+                className={toggleButtonClass(referralSource === source)}
+              >
+                {source}
+              </button>
+            ))}
+          </div>
+          <input type="hidden" name="referral_source" value={referralSource} />
         </div>
       </div>
 
-      <AddressSearch name="address" />
+      <div className="flex flex-col gap-5">
+        <SectionHeader eyebrow="SPACE" title="공간정보" />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="size_py" className={labelClass}>
-            평형 [면적]
-          </label>
-          <input id="size_py" name="size_py" type="text" required className={compactInputClass} />
+        <AddressSearch name="address" />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="size_py" className={labelClass}>
+              평수
+            </label>
+            <input
+              id="size_py"
+              name="size_py"
+              type="text"
+              required
+              placeholder="예) 34"
+              className={compactInputClass}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="floor_plan_type" className={labelClass}>
+              평면 타입
+            </label>
+            <input
+              id="floor_plan_type"
+              name="floor_plan_type"
+              type="text"
+              placeholder="예) 84A"
+              className={compactInputClass}
+            />
+          </div>
         </div>
+
         <div className="flex flex-col gap-2">
           <label htmlFor="budget" className={labelClass}>
             예산
@@ -133,81 +236,64 @@ export default function Contact() {
             </span>
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="construction_date" className={labelClass}>
-            공사 예정일
-          </label>
-          <FlexibleDateInput id="construction_date" name="construction_date" required />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="construction_date" className={labelClass}>
+              공사 가능일
+            </label>
+            <FlexibleDateInput id="construction_date" name="construction_date" required />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="move_in_date" className={labelClass}>
+              입주 희망일
+            </label>
+            <FlexibleDateInput id="move_in_date" name="move_in_date" required />
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="move_in_date" className={labelClass}>
-            입주 예정일
-          </label>
-          <FlexibleDateInput id="move_in_date" name="move_in_date" required />
-        </div>
-      </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="family_members" className={labelClass}>
-            가족구성원
-          </label>
-          <input
-            id="family_members"
-            name="family_members"
-            type="text"
-            placeholder="예) 40대 부부, 초등학생 아들"
-            className={compactInputClass}
-          />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="visit_date" className={labelClass}>
+              상담·방문 희망일
+            </label>
+            <FlexibleDateInput id="visit_date" name="visit_date" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="visit_time" className={labelClass}>
+              상담 희망 시간
+            </label>
+            <input id="visit_time" name="visit_time" type="time" className={compactInputClass} />
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <p className={labelClass}>반려동물</p>
-          <div className="flex gap-2">
-            {PET_OPTIONS.map((option) => (
+
+        <div className="flex flex-col gap-3">
+          <p className={labelClass}>공간유형</p>
+          <div className="grid grid-cols-3 gap-2">
+            {SPACE_TYPES.map((type) => (
               <button
-                key={option}
+                key={type}
                 type="button"
-                onClick={() => togglePet(option)}
-                className={`flex-1 rounded border px-3 py-2 text-sm transition-colors ${
-                  pets.includes(option)
-                    ? "border-charcoal bg-charcoal text-cream"
-                    : "border-nude text-charcoal/70 hover:border-charcoal/50"
-                }`}
+                onClick={() => setSpaceType(type)}
+                className={toggleButtonClass(spaceType === type)}
               >
-                {option}
+                {type}
               </button>
             ))}
           </div>
-          {pets.map((pet) => (
-            <input key={pet} type="hidden" name="pets" value={pet} />
-          ))}
+          <input type="hidden" name="space_type" value={spaceType} />
         </div>
-      </div>
 
-      <div className="flex flex-col gap-3">
-        <p className={labelClass}>공사 내용</p>
-        <div className="flex flex-col gap-2">
-          {CONSTRUCTION_ITEMS.map((item) => (
-            <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
-              <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
-              {item}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <p className={labelClass}>유입경로</p>
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {REFERRAL_SOURCES.map((source) => (
-            <label key={source} className="flex items-center gap-2 text-xs text-charcoal/70">
-              <input type="radio" name="referral_source" value={source} required />
-              {source}
-            </label>
-          ))}
+        <div className="flex flex-col gap-3">
+          <p className={labelClass}>공사 내용</p>
+          <div className="flex flex-col gap-2">
+            {CONSTRUCTION_ITEMS.map((item) => (
+              <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
+                <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
+                {item}
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
