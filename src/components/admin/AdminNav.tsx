@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import type { MenuGroup } from "@/lib/menu";
 import { MENU_ICONS } from "./menu-icons";
 
-function NavLink({ href, label }: { href: string; label: string }) {
+function NavLink({ href, label, badge }: { href: string; label: string; badge?: number }) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(`${href}/`);
   const Icon = MENU_ICONS[href];
@@ -26,6 +26,11 @@ function NavLink({ href, label }: { href: string; label: string }) {
     >
       {Icon && <Icon size={16} strokeWidth={2} className="shrink-0" />}
       <span>{label}</span>
+      {!!badge && (
+        <span className="ml-auto flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-orange-500 px-1 text-[11px] font-bold text-white">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
@@ -33,9 +38,11 @@ function NavLink({ href, label }: { href: string; label: string }) {
 export default function AdminNav({
   groups,
   isOwner,
+  badges,
 }: {
   groups: MenuGroup[];
   isOwner: boolean;
+  badges?: Record<string, number>;
 }) {
   return (
     <nav className="mt-8 flex flex-col gap-5 text-sm">
@@ -55,7 +62,7 @@ export default function AdminNav({
                 .map((item) => (
                   <div key={item.key}>
                     {item.dividerBefore && <hr className="my-1 border-t border-dashed border-nude" />}
-                    <NavLink href={item.key} label={item.label} />
+                    <NavLink href={item.key} label={item.label} badge={badges?.[item.key]} />
                   </div>
                 ))}
               {group.label === "PEOPLE" && isOwner && (

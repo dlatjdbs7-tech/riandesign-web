@@ -44,6 +44,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     items: group.items.filter((item) => canView(item.key)),
   }));
 
+  const { count: pendingWorkOrderCount } = await supabase
+    .from("work_orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  const badges: Record<string, number> = {
+    "/admin/field-management": pendingWorkOrderCount ?? 0,
+  };
+
   return (
     <div className="flex min-h-screen bg-stone-100 font-admin">
       <aside className="flex w-64 flex-col justify-between overflow-y-auto border-r border-nude/50 bg-white px-5 py-8">
@@ -60,7 +69,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </p>
           </div>
 
-          <AdminNav groups={visibleGroups} isOwner={isOwner} />
+          <AdminNav groups={visibleGroups} isOwner={isOwner} badges={badges} />
         </div>
 
         <div className="flex flex-col gap-3 border-t border-nude/50 pt-4">

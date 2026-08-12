@@ -31,6 +31,8 @@ export default async function FieldManagementPage() {
     .order("work_date", { ascending: true, nullsFirst: false })
     .returns<WorkOrderRow[]>();
 
+  const pendingCount = orders?.filter((o) => o.status === "pending").length ?? 0;
+
   return (
     <div>
       <h1 className="font-serif text-2xl font-semibold text-charcoal">시공관리</h1>
@@ -39,15 +41,23 @@ export default async function FieldManagementPage() {
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        {CELLS.map((cell) => (
-          <Link
-            key={cell.href}
-            href={cell.href}
-            className="flex items-center justify-center rounded-sm border border-nude/60 bg-white p-4 text-center transition-colors hover:border-orange-400 hover:bg-orange-50"
-          >
-            <p className="font-serif text-sm font-semibold text-charcoal">{cell.label}</p>
-          </Link>
-        ))}
+        {CELLS.map((cell) => {
+          const badge = cell.label === "작업지시서" ? pendingCount : 0;
+          return (
+            <Link
+              key={cell.href}
+              href={cell.href}
+              className="relative flex items-center justify-center rounded-sm border border-nude/60 bg-white p-4 text-center transition-colors hover:border-orange-400 hover:bg-orange-50"
+            >
+              <p className="font-serif text-sm font-semibold text-charcoal">{cell.label}</p>
+              {badge > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[11px] font-bold text-white">
+                  {badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
