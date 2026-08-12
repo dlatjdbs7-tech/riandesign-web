@@ -45,10 +45,12 @@ export async function updateWorkOrderTaskDetails(id: string, formData: FormData)
       title,
       start_date: String(formData.get("start_date") ?? "") || null,
       end_date: String(formData.get("end_date") ?? "") || null,
+      updated_at: new Date().toISOString(),
     })
     .eq("id", id);
 
   revalidatePath("/admin/field-management/schedule");
+  revalidatePath("/admin/sites");
 }
 
 export async function setWorkOrderTaskManualStatus(id: string, status: WorkOrderStatus) {

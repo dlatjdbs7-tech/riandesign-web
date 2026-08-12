@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder, WorkOrderTask } from "@/lib/types";
 import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
+import { wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
 import { promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
@@ -128,9 +129,11 @@ export default async function SitesPage({
   const { data: tasks } = inProgressIds.length
     ? await supabase
         .from("work_order_tasks")
-        .select("work_order_id, title, start_date, end_date")
+        .select("work_order_id, title, start_date, end_date, updated_at, created_at")
         .in("work_order_id", inProgressIds)
-        .returns<Pick<WorkOrderTask, "work_order_id" | "title" | "start_date" | "end_date">[]>()
+        .returns<
+          Pick<WorkOrderTask, "work_order_id" | "title" | "start_date" | "end_date" | "updated_at" | "created_at">[]
+        >()
     : { data: null };
 
   // 공사기간은 "철거" 작업의 시작일 ~ "마감" 작업의 마지막 종료일로 잡는다.
@@ -138,6 +141,7 @@ export default async function SitesPage({
   const fallbackByOrder = new Map<string, { start: string | null; end: string | null }>();
   const demolitionStartByOrder = new Map<string, string>();
   const finishEndByOrder = new Map<string, string>();
+  const finishTaskMetaByOrder = new Map<string, { updatedAt: string; createdAt: string }>();
   for (const task of tasks ?? []) {
     const fallback = fallbackByOrder.get(task.work_order_id) ?? { start: null, end: null };
     if (task.start_date && (!fallback.start || task.start_date < fallback.start)) {
@@ -154,7 +158,25 @@ export default async function SitesPage({
     }
     if (task.title === "마감" && task.end_date) {
       const current = finishEndByOrder.get(task.work_order_id);
-      if (!current || task.end_date > current) finishEndByOrder.set(task.work_order_id, task.end_date);
+      if (!current || task.end_date > current) {
+        finishEndByOrder.set(task.work_order_id, task.end_date);
+        finishTaskMetaByOrder.set(task.work_order_id, {
+          updatedAt: task.updated_at,
+          createdAt: task.created_at,
+        });
+      }
+    }
+  }
+
+  const recentlyUpdatedOrders = new Set<string>();
+  for (const [id, meta] of finishTaskMetaByOrder) {
+    if (
+      wasScheduleRecentlyUpdated(
+        { endDate: finishEndByOrder.get(id)!, updatedAt: meta.updatedAt, createdAt: meta.createdAt },
+        todayDateString
+      )
+    ) {
+      recentlyUpdatedOrders.add(id);
     }
   }
 
@@ -455,6 +477,8 @@ export default async function SitesPage({
                 const periodStart = computedPeriod?.start ?? order.work_date;
                 const periodEnd = computedPeriod?.end ?? order.work_end_date;
                 const progressPercent = progressByOrder.get(order.id) ?? order.progress_percent;
+                const isRecentlyUpdated = recentlyUpdatedOrders.has(order.id);
+                const updatedAtLabel = finishTaskMetaByOrder.get(order.id)?.updatedAt.slice(5, 10).replace("-", "/");
 
                 return (
                   <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-4">
@@ -482,9 +506,16 @@ export default async function SitesPage({
                           <span>· {order.customers?.phone ?? "-"}</span>
                         </div>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${RISK_STYLE[risk]}`}>
-                        {RISK_LABEL[risk]}
-                      </span>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${RISK_STYLE[risk]}`}>
+                          {RISK_LABEL[risk]}
+                        </span>
+                        {isRecentlyUpdated && (
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+                            일정 업데이트됨 · {updatedAtLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-3 flex items-center justify-between text-xs text-charcoal/60">
