@@ -199,6 +199,7 @@ export type Inquiry = {
   referral_source: string | null;
   floor_plan_url: string | null;
   reference_url: string | null;
+  portfolio_url: string | null;
   created_at: string;
 };
 
