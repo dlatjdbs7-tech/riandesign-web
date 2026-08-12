@@ -90,7 +90,7 @@ export default async function ManualPage({
           ) : selected ? (
             <div>
               <div className="flex items-start justify-between">
-                <h2 className="font-serif text-xl font-semibold text-charcoal">{selected.title}</h2>
+                <h2 className="font-serif text-xl font-semibold tracking-tight text-charcoal">{selected.title}</h2>
                 {canManage && (
                   <form action={deleteManual.bind(null, selected.id)}>
                     <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
@@ -100,7 +100,7 @@ export default async function ManualPage({
                 )}
               </div>
               <p className="mt-1 text-xs text-charcoal/40">최종 수정 {formatKST(selected.updated_at)}</p>
-              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-charcoal/80">
+              <p className="mt-4 whitespace-pre-line text-sm leading-relaxed tracking-tight text-charcoal/80">
                 {selected.content}
               </p>
 
