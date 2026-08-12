@@ -32,7 +32,7 @@ export async function createInquiry(formData: FormData) {
 
 export async function updateInquiryField(
   inquiryId: string,
-  field: "address" | "size_py",
+  field: "address" | "size_py" | "floor_plan_type",
   value: string
 ) {
   const supabase = await createClient();

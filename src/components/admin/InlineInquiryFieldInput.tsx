@@ -11,7 +11,7 @@ export default function InlineInquiryFieldInput({
   className,
 }: {
   inquiryId: string;
-  field: "address" | "size_py";
+  field: "address" | "size_py" | "floor_plan_type";
   value: string;
   placeholder?: string;
   className?: string;
