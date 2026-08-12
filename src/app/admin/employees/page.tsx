@@ -73,7 +73,7 @@ export default async function EmployeesPage() {
                   )}
                 </td>
                 <td className="px-4 py-3 text-charcoal/70">
-                  {canApprove ? (
+                  {canApprove && employee.role !== "owner" ? (
                     <JobRankSelect employeeId={employee.id} jobRank={employee.job_rank} />
                   ) : (
                     (employee.job_rank ?? "-")
