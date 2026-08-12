@@ -155,6 +155,7 @@ export type Vendor = {
   name: string;
   contact: string | null;
   category: string | null;
+  tier: string | null;
   memo: string | null;
   created_at: string;
 };

@@ -2,8 +2,25 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, Vendor } from "@/lib/types";
 import { createVendor, deleteVendor } from "../../vendors/actions";
+import VendorTierCell from "@/components/admin/VendorTierCell";
 
-const TRADE_ORDER = ["철거", "설비·전기", "목공", "타일", "도장·필름", "마루", "도배", "가구", "조명", "청소"];
+const TRADE_ORDER = [
+  "철거",
+  "설비",
+  "폐기물",
+  "전기",
+  "목공",
+  "타일",
+  "필름",
+  "도장",
+  "마루",
+  "욕실셋팅",
+  "가구",
+  "도배",
+  "유리·실리콘",
+  "청소",
+];
+const TIERS = ["메인", "서브A", "서브B"];
 const MATERIAL_ORDER = ["마루자재", "타일자재", "조명자재", "가구자재", "도배·필름자재", "욕실자재", "기타자재"];
 
 export default async function FieldManagementVendorsPage() {
@@ -20,13 +37,19 @@ export default async function FieldManagementVendorsPage() {
     .order("created_at", { ascending: true })
     .returns<Vendor[]>();
 
+  const tradeCell = new Map<string, Vendor>();
   const grouped = new Map<string, Vendor[]>();
   for (const v of vendors ?? []) {
     const key = v.category?.trim() || "기타";
-    grouped.set(key, [...(grouped.get(key) ?? []), v]);
+    if (TRADE_ORDER.includes(key)) {
+      const cellKey = `${key}|${v.tier ?? "메인"}`;
+      if (!tradeCell.has(cellKey)) tradeCell.set(cellKey, v);
+    } else {
+      grouped.set(key, [...(grouped.get(key) ?? []), v]);
+    }
   }
 
-  const knownCategories = new Set([...TRADE_ORDER, ...MATERIAL_ORDER]);
+  const knownCategories = new Set(MATERIAL_ORDER);
   const extraCategories = Array.from(grouped.keys())
     .filter((c) => !knownCategories.has(c) && c !== "기타")
     .sort((a, b) => a.localeCompare(b, "ko"));
@@ -106,8 +129,36 @@ export default async function FieldManagementVendorsPage() {
       </div>
 
       <h2 className="mt-6 font-serif text-base font-semibold text-charcoal">시공팀 협력업체</h2>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {TRADE_ORDER.map(renderCategoryCell)}
+      <div className="mt-3 overflow-x-auto rounded-sm border border-nude/60 bg-white">
+        <table className="w-full min-w-[560px] table-fixed text-left">
+          <thead>
+            <tr className="border-b-2 border-nude/60 bg-stone-50 text-xs text-charcoal/60">
+              <th className="w-20 px-3 py-2 font-normal">공정</th>
+              {TIERS.map((tier) => (
+                <th key={tier} className="px-3 py-2 font-normal">
+                  {tier}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TRADE_ORDER.map((trade) => (
+              <tr key={trade} className="border-b border-nude/30 last:border-0">
+                <td className="px-3 py-2 align-top text-sm font-medium text-charcoal">{trade}</td>
+                {TIERS.map((tier) => (
+                  <td key={tier} className="px-3 py-2 align-top">
+                    <VendorTierCell
+                      vendor={tradeCell.get(`${trade}|${tier}`) ?? null}
+                      category={trade}
+                      tier={tier}
+                      canManage={canManage}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <hr className="my-8 border-t-2 border-dashed border-nude" />

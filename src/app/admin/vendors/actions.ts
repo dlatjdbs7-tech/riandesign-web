@@ -12,8 +12,26 @@ export async function createVendor(formData: FormData) {
     name,
     contact: String(formData.get("contact") ?? "").trim() || null,
     category: String(formData.get("category") ?? "").trim() || null,
+    tier: String(formData.get("tier") ?? "").trim() || null,
     memo: String(formData.get("memo") ?? "").trim() || null,
   });
+
+  revalidatePath("/admin/vendors");
+  revalidatePath("/admin/field-management/vendors");
+}
+
+export async function updateVendor(id: string, formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+
+  const supabase = await createClient();
+  await supabase
+    .from("vendors")
+    .update({
+      name,
+      contact: String(formData.get("contact") ?? "").trim() || null,
+    })
+    .eq("id", id);
 
   revalidatePath("/admin/vendors");
   revalidatePath("/admin/field-management/vendors");
