@@ -29,15 +29,27 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isOwner = profile.role === "owner";
 
   let permissionMap: Map<string, boolean> | null = null;
+  let usesJobRankPermissions = false;
   if (!isOwner) {
-    const { data: permissions } = await supabase
-      .from("role_menu_permissions")
-      .select("menu_key, can_view")
-      .eq("role", profile.role);
-    permissionMap = new Map((permissions ?? []).map((p) => [p.menu_key, p.can_view]));
+    if (profile.job_rank) {
+      usesJobRankPermissions = true;
+      const { data: permissions } = await supabase
+        .from("job_rank_menu_permissions")
+        .select("menu_key, can_view")
+        .eq("job_rank", profile.job_rank);
+      permissionMap = new Map((permissions ?? []).map((p) => [p.menu_key, p.can_view]));
+    } else {
+      const { data: permissions } = await supabase
+        .from("role_menu_permissions")
+        .select("menu_key, can_view")
+        .eq("role", profile.role);
+      permissionMap = new Map((permissions ?? []).map((p) => [p.menu_key, p.can_view]));
+    }
   }
 
-  const canView = (key: string) => isOwner || permissionMap?.get(key) !== false;
+  // 직급이 있으면 체크한 메뉴만 보임(기본값 숨김), 직급이 없으면 기존처럼 기본값 보임.
+  const canView = (key: string) =>
+    isOwner || (usesJobRankPermissions ? permissionMap?.get(key) === true : permissionMap?.get(key) !== false);
 
   const visibleGroups = MENU_GROUPS.map((group) => ({
     ...group,

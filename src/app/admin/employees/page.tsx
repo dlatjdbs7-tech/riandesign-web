@@ -3,6 +3,7 @@ import type { Profile } from "@/lib/types";
 import { approveEmployee, rejectEmployee } from "./actions";
 import CategorySection from "@/components/admin/CategorySection";
 import DepartmentSelect from "@/components/admin/DepartmentSelect";
+import JobRankSelect from "@/components/admin/JobRankSelect";
 
 const STATUS_LABEL: Record<Profile["status"], string> = {
   pending: "승인대기",
@@ -52,6 +53,7 @@ export default async function EmployeesPage() {
               <th className="px-4 py-3">이름</th>
               <th className="px-4 py-3">아이디</th>
               <th className="px-4 py-3">부서</th>
+              <th className="px-4 py-3">직급</th>
               <th className="px-4 py-3">입사일</th>
               <th className="px-4 py-3">권한</th>
               <th className="px-4 py-3">상태</th>
@@ -68,6 +70,13 @@ export default async function EmployeesPage() {
                     <DepartmentSelect employeeId={employee.id} department={employee.department} />
                   ) : (
                     employee.department ?? "-"
+                  )}
+                </td>
+                <td className="px-4 py-3 text-charcoal/70">
+                  {canApprove ? (
+                    <JobRankSelect employeeId={employee.id} jobRank={employee.job_rank} />
+                  ) : (
+                    (employee.job_rank ?? "-")
                   )}
                 </td>
                 <td className="px-4 py-3 text-charcoal/70">{employee.hire_date ?? "-"}</td>

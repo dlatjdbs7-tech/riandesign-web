@@ -2,14 +2,11 @@ import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
-import { MENU_GROUPS, CONFIGURABLE_ROLES } from "@/lib/menu";
+import { MENU_GROUPS } from "@/lib/menu";
 import { createTeam } from "./actions";
 import { RoleSelect, TeamSelect } from "@/components/admin/EmployeeRoleTeamSelects";
-import MenuPermissionCheckbox from "@/components/admin/MenuPermissionCheckbox";
-import JobRankCheckboxes from "@/components/admin/JobRankCheckboxes";
+import JobRankMenuPermissionCheckbox from "@/components/admin/JobRankMenuPermissionCheckbox";
 import { JOB_RANKS } from "@/lib/jobRanks";
-
-const ROLE_LABEL = { manager: "팀장", employee: "직원" } as const;
 
 export default async function TeamPermissionsPage() {
   const supabase = await createClient();
@@ -40,12 +37,12 @@ export default async function TeamPermissionsPage() {
     .returns<{ id: string; name: string }[]>();
 
   const { data: permissions } = await supabase
-    .from("role_menu_permissions")
-    .select("role, menu_key, can_view")
-    .returns<{ role: string; menu_key: string; can_view: boolean }[]>();
+    .from("job_rank_menu_permissions")
+    .select("job_rank, menu_key, can_view")
+    .returns<{ job_rank: string; menu_key: string; can_view: boolean }[]>();
 
   const permissionMap = new Map(
-    (permissions ?? []).map((p) => [`${p.role}:${p.menu_key}`, p.can_view])
+    (permissions ?? []).map((p) => [`${p.job_rank}:${p.menu_key}`, p.can_view])
   );
 
   return (
@@ -55,17 +52,12 @@ export default async function TeamPermissionsPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="px-4 py-3">권한</th>
                 <th className="px-4 py-3">소속 팀</th>
-                {JOB_RANKS.map((rank) => (
-                  <th key={rank} className="px-2 py-3 text-center">
-                    {rank}
-                  </th>
-                ))}
               </tr>
             </thead>
             <tbody>
@@ -78,7 +70,6 @@ export default async function TeamPermissionsPage() {
                   <td className="px-4 py-3">
                     <TeamSelect id={employee.id} teamId={employee.team_id} teams={teams ?? []} />
                   </td>
-                  <JobRankCheckboxes id={employee.id} jobRank={employee.job_rank} />
                 </tr>
               ))}
             </tbody>
@@ -97,18 +88,19 @@ export default async function TeamPermissionsPage() {
       <div className="mt-10">
         <h2 className="font-serif text-lg font-semibold text-charcoal">메뉴 접근 권한</h2>
         <p className="mt-1 text-sm text-charcoal/60">
-          팀장/직원이 로그인했을 때 왼쪽 메뉴에 어떤 항목이 보일지 설정합니다. 대표는 항상 전체
-          메뉴에 접근할 수 있습니다.
+          직급별로 왼쪽 메뉴에 어떤 항목이 보일지 설정합니다. 체크한 메뉴만 해당 직급에게
+          보입니다. 대표는 항상 전체 메뉴에 접근할 수 있습니다. (직급은 회원가입 시 입력되며,
+          팀원정보에서 확인·수정할 수 있습니다.)
         </p>
 
         <div className="mt-4 overflow-x-auto rounded-sm border border-nude/60 bg-white">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
               <tr>
                 <th className="px-4 py-3">메뉴</th>
-                {CONFIGURABLE_ROLES.map((role) => (
-                  <th key={role} className="px-4 py-3 text-center">
-                    {ROLE_LABEL[role]}
+                {JOB_RANKS.map((rank) => (
+                  <th key={rank} className="px-2 py-3 text-center">
+                    {rank}
                   </th>
                 ))}
               </tr>
@@ -117,19 +109,19 @@ export default async function TeamPermissionsPage() {
               {MENU_GROUPS.map((group) => (
                 <Fragment key={group.label}>
                   <tr className="bg-beige/40">
-                    <td colSpan={1 + CONFIGURABLE_ROLES.length} className="px-4 py-1.5 text-[10px] tracking-[0.2em] text-charcoal/50">
+                    <td colSpan={1 + JOB_RANKS.length} className="px-4 py-1.5 text-[10px] tracking-[0.2em] text-charcoal/50">
                       {group.label}
                     </td>
                   </tr>
                   {group.items.map((item) => (
                     <tr key={item.key} className="border-b border-nude/30 last:border-0">
                       <td className="px-4 py-2">{item.label}</td>
-                      {CONFIGURABLE_ROLES.map((role) => (
-                        <td key={role} className="px-4 py-2 text-center">
-                          <MenuPermissionCheckbox
-                            role={role}
+                      {JOB_RANKS.map((rank) => (
+                        <td key={rank} className="px-2 py-2 text-center">
+                          <JobRankMenuPermissionCheckbox
+                            jobRank={rank}
                             menuKey={item.key}
-                            canView={permissionMap.get(`${role}:${item.key}`) ?? true}
+                            canView={permissionMap.get(`${rank}:${item.key}`) ?? false}
                           />
                         </td>
                       ))}

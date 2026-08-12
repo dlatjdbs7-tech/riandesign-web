@@ -23,3 +23,13 @@ export async function updateEmployeeDepartment(id: string, department: string) {
   await supabase.from("profiles").update({ department }).eq("id", id);
   revalidatePath("/admin/employees");
 }
+
+export async function updateEmployeeJobRank(id: string, jobRank: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("profiles")
+    .update({ job_rank: jobRank || null })
+    .eq("id", id);
+  revalidatePath("/admin/employees");
+  revalidatePath("/admin/team-permissions");
+}

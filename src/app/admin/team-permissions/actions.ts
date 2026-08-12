@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { UserRole } from "@/lib/types";
-import type { ConfigurableRole } from "@/lib/menu";
 
 export async function createTeam(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -29,23 +28,17 @@ export async function updateEmployeeTeam(id: string, teamId: string) {
   revalidatePath("/admin/team-permissions");
 }
 
-export async function updateEmployeeJobRank(id: string, jobRank: string) {
-  const supabase = await createClient();
-  await supabase
-    .from("profiles")
-    .update({ job_rank: jobRank || null })
-    .eq("id", id);
-  revalidatePath("/admin/team-permissions");
-}
-
-export async function updateMenuPermission(
-  role: ConfigurableRole,
+export async function updateJobRankMenuPermission(
+  jobRank: string,
   menuKey: string,
   canView: boolean
 ) {
   const supabase = await createClient();
   await supabase
-    .from("role_menu_permissions")
-    .upsert({ role, menu_key: menuKey, can_view: canView }, { onConflict: "role,menu_key" });
+    .from("job_rank_menu_permissions")
+    .upsert(
+      { job_rank: jobRank, menu_key: menuKey, can_view: canView },
+      { onConflict: "job_rank,menu_key" }
+    );
   revalidatePath("/admin/team-permissions");
 }

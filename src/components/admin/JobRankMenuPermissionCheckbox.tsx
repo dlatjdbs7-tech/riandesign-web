@@ -1,15 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { updateMenuPermission } from "@/app/admin/team-permissions/actions";
-import type { ConfigurableRole } from "@/lib/menu";
+import { updateJobRankMenuPermission } from "@/app/admin/team-permissions/actions";
 
-export default function MenuPermissionCheckbox({
-  role,
+export default function JobRankMenuPermissionCheckbox({
+  jobRank,
   menuKey,
   canView,
 }: {
-  role: ConfigurableRole;
+  jobRank: string;
   menuKey: string;
   canView: boolean;
 }) {
@@ -20,7 +19,7 @@ export default function MenuPermissionCheckbox({
       type="checkbox"
       defaultChecked={canView}
       onChange={async (event) => {
-        await updateMenuPermission(role, menuKey, event.target.checked);
+        await updateJobRankMenuPermission(jobRank, menuKey, event.target.checked);
         router.refresh();
       }}
       className="h-4 w-4 accent-charcoal"

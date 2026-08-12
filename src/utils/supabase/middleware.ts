@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
     if (menuKey && !ALWAYS_ALLOWED_KEYS.includes(menuKey)) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, job_rank")
         .eq("id", user.id)
         .single();
 
@@ -53,17 +53,36 @@ export async function updateSession(request: NextRequest) {
           return NextResponse.redirect(url);
         }
 
-        const { data: permission } = await supabase
-          .from("role_menu_permissions")
-          .select("can_view")
-          .eq("role", role)
-          .eq("menu_key", menuKey)
-          .maybeSingle();
+        const jobRank = profile?.job_rank;
 
-        if (permission?.can_view === false) {
-          const url = request.nextUrl.clone();
-          url.pathname = "/admin";
-          return NextResponse.redirect(url);
+        if (jobRank) {
+          // 직급이 있으면 직급별 권한을 따른다: 체크한 메뉴만 보인다 (기본값 = 숨김).
+          const { data: permission } = await supabase
+            .from("job_rank_menu_permissions")
+            .select("can_view")
+            .eq("job_rank", jobRank)
+            .eq("menu_key", menuKey)
+            .maybeSingle();
+
+          if (permission?.can_view !== true) {
+            const url = request.nextUrl.clone();
+            url.pathname = "/admin";
+            return NextResponse.redirect(url);
+          }
+        } else {
+          // 직급이 아직 없으면 기존 역할(팀장/직원) 기준 권한을 따른다 (기본값 = 보임).
+          const { data: permission } = await supabase
+            .from("role_menu_permissions")
+            .select("can_view")
+            .eq("role", role)
+            .eq("menu_key", menuKey)
+            .maybeSingle();
+
+          if (permission?.can_view === false) {
+            const url = request.nextUrl.clone();
+            url.pathname = "/admin";
+            return NextResponse.redirect(url);
+          }
         }
       }
     }

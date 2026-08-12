@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { toAuthEmail, USERNAME_PATTERN } from "@/lib/auth";
 import { DEPARTMENTS } from "@/lib/departments";
+import { JOB_RANKS } from "@/lib/jobRanks";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [hireDate, setHireDate] = useState("");
   const [department, setDepartment] = useState("");
+  const [jobRank, setJobRank] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,7 +35,7 @@ export default function SignupPage() {
       email: toAuthEmail(username),
       password,
       options: {
-        data: { username, full_name: fullName, hire_date: hireDate, department },
+        data: { username, full_name: fullName, hire_date: hireDate, department, job_rank: jobRank },
       },
     });
 
@@ -140,6 +142,28 @@ export default function SignupPage() {
               {DEPARTMENTS.map((dept) => (
                 <option key={dept} value={dept}>
                   {dept}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="jobRank" className="text-xs tracking-wide text-charcoal/70">
+              직급
+            </label>
+            <select
+              id="jobRank"
+              required
+              value={jobRank}
+              onChange={(event) => setJobRank(event.target.value)}
+              className="border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold"
+            >
+              <option value="" disabled>
+                선택해주세요
+              </option>
+              {JOB_RANKS.map((rank) => (
+                <option key={rank} value={rank}>
+                  {rank}
                 </option>
               ))}
             </select>

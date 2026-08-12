@@ -91,9 +91,6 @@ export const ALWAYS_ALLOWED_KEYS = ["/admin", "/admin/settings"];
 // 대표만 접근 가능한 고정 메뉴 (설정 화면 자체를 다른 역할이 못 만지게)
 export const OWNER_ONLY_KEYS = ["/admin/team-permissions"];
 
-export const CONFIGURABLE_ROLES = ["manager", "employee"] as const;
-export type ConfigurableRole = (typeof CONFIGURABLE_ROLES)[number];
-
 export function findMenuKeyForPath(pathname: string): string | null {
   const candidates = [...CONFIGURABLE_MENU_KEYS, ...ALWAYS_ALLOWED_KEYS, ...OWNER_ONLY_KEYS];
   const matches = candidates.filter(
