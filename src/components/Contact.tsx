@@ -4,6 +4,27 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 
+const CONSTRUCTION_ITEMS = [
+  "도배",
+  "바닥 [마루 or 타일]",
+  "필름 시공",
+  "욕실 리모델링",
+  "제작 가구 [씽크대, 붙박이장, 신발장 등]",
+  "조명 및 전기",
+  "베란다",
+  "확장 공사",
+  "분배기 교체",
+  "난방 배관 교체",
+  "시스템 에어컨",
+  "창호 시공",
+];
+
+const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개"];
+
+const inputClass =
+  "border-b border-cream/30 bg-transparent py-2 text-sm outline-none focus:border-gold";
+const labelClass = "text-xs tracking-wide text-cream/70";
+
 export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,33 +75,106 @@ export default function Contact() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <label htmlFor="name" className="text-xs tracking-wide text-cream/70">
-                  이름
+                <label htmlFor="name" className={labelClass}>
+                  성함
                 </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="border-b border-cream/30 bg-transparent py-2 text-sm outline-none focus:border-gold"
-                />
+                <input id="name" name="name" type="text" required className={inputClass} />
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="phone" className="text-xs tracking-wide text-cream/70">
+                <label htmlFor="phone" className={labelClass}>
                   연락처
                 </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  className="border-b border-cream/30 bg-transparent py-2 text-sm outline-none focus:border-gold"
-                />
+                <input id="phone" name="phone" type="tel" required className={inputClass} />
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="message" className="text-xs tracking-wide text-cream/70">
+              <label htmlFor="address" className={labelClass}>
+                주소
+              </label>
+              <input
+                id="address"
+                name="address"
+                type="text"
+                required
+                placeholder="예) 대전 OO아파트 OOO동 OOOO호"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="size_py" className={labelClass}>
+                  평형 [면적]
+                </label>
+                <input id="size_py" name="size_py" type="text" required className={inputClass} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="budget" className={labelClass}>
+                  예산
+                </label>
+                <input id="budget" name="budget" type="text" required className={inputClass} />
+              </div>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="construction_date" className={labelClass}>
+                  공사 예정일
+                </label>
+                <input
+                  id="construction_date"
+                  name="construction_date"
+                  type="text"
+                  required
+                  className={inputClass}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="move_in_date" className={labelClass}>
+                  입주 예정일
+                </label>
+                <input
+                  id="move_in_date"
+                  name="move_in_date"
+                  type="text"
+                  required
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className={labelClass}>공사 내용</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+                {CONSTRUCTION_ITEMS.map((item) => (
+                  <label key={item} className="flex items-start gap-2 text-xs text-cream/70">
+                    <input
+                      type="checkbox"
+                      name="construction_items"
+                      value={item}
+                      className="mt-0.5"
+                    />
+                    {item}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className={labelClass}>유입경로</p>
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                {REFERRAL_SOURCES.map((source) => (
+                  <label key={source} className="flex items-center gap-2 text-xs text-cream/70">
+                    <input type="radio" name="referral_source" value={source} required />
+                    {source}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="message" className={labelClass}>
                 문의 내용
               </label>
               <textarea
@@ -88,8 +182,35 @@ export default function Contact() {
                 name="message"
                 rows={4}
                 required
-                className="resize-none border-b border-cream/30 bg-transparent py-2 text-sm outline-none focus:border-gold"
+                className={`resize-none ${inputClass}`}
               />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="floor_plan" className={labelClass}>
+                  단위세대평면도 (선택)
+                </label>
+                <input
+                  id="floor_plan"
+                  name="floor_plan"
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="text-xs text-cream/70 file:mr-3 file:rounded-full file:border-0 file:bg-cream/10 file:px-3 file:py-1.5 file:text-xs file:text-cream"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="reference" className={labelClass}>
+                  레퍼런스 (선택)
+                </label>
+                <input
+                  id="reference"
+                  name="reference"
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="text-xs text-cream/70 file:mr-3 file:rounded-full file:border-0 file:bg-cream/10 file:px-3 file:py-1.5 file:text-xs file:text-cream"
+                />
+              </div>
             </div>
 
             <label className="flex items-start gap-2 text-xs text-cream/60">
