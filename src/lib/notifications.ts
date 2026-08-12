@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getKSTDateBounds } from "./date";
 
-// 알림센터 페이지가 보여주는 5가지 항목(신규 상담문의/승인 대기 직원/위험 단계 작업지시서/
-// 미완료 AS/기한 지난 내 할일)의 개수 합. 사이드바 배지 숫자로 쓰인다.
+// 알림센터 페이지가 보여주는 6가지 항목(신규 상담문의/승인 대기 직원/위험 단계 현장/
+// 미완료 AS/기한 지난 내 할일/내게 온 작업지시)의 개수 합. 사이드바 배지 숫자로 쓰인다.
 export async function getNotificationCount(
   supabase: SupabaseClient,
   profile: { id: string; role: string }
@@ -16,6 +16,7 @@ export async function getNotificationCount(
     { count: riskOrderCount },
     { count: openAsCount },
     { count: overdueTodoCount },
+    { count: myDirectiveCount },
   ] = await Promise.all([
     canManage
       ? supabase.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new")
@@ -35,6 +36,11 @@ export async function getNotificationCount(
       .neq("status", "done")
       .or(`assignee_id.eq.${profile.id},created_by.eq.${profile.id}`)
       .lt("due_date", todayDateString),
+    supabase
+      .from("work_directives")
+      .select("id", { count: "exact", head: true })
+      .eq("assignee_id", profile.id)
+      .neq("status", "completed"),
   ]);
 
   return (
@@ -42,6 +48,7 @@ export async function getNotificationCount(
     (pendingEmployeeCount ?? 0) +
     (riskOrderCount ?? 0) +
     (openAsCount ?? 0) +
-    (overdueTodoCount ?? 0)
+    (overdueTodoCount ?? 0) +
+    (myDirectiveCount ?? 0)
   );
 }

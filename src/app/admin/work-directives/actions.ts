@@ -28,6 +28,7 @@ export async function updateDirectiveStatus(id: string, status: WorkDirectiveSta
   const supabase = await createClient();
   await supabase.from("work_directives").update({ status }).eq("id", id);
   revalidatePath("/admin/work-directives");
+  revalidatePath("/admin/notification-center");
 }
 
 export async function deleteDirective(id: string) {

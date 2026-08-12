@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { AsRequest, Inquiry, Profile, Todo, WorkOrder } from "@/lib/types";
+import type { AsRequest, Inquiry, Profile, Todo, WorkDirective, WorkOrder } from "@/lib/types";
 import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk } from "@/lib/risk";
+import { updateDirectiveStatus } from "../work-directives/actions";
 
 function ActionCard({
   title,
@@ -47,6 +48,7 @@ export default async function NotificationCenterPage() {
     { data: inProgressOrders },
     { data: openAsRequests },
     { data: myTodos },
+    { data: myDirectives },
   ] = await Promise.all([
     canManage
       ? supabase
@@ -72,6 +74,13 @@ export default async function NotificationCenterPage() {
       .or(`assignee_id.eq.${user!.id},created_by.eq.${user!.id}`)
       .order("due_date", { ascending: true, nullsFirst: false })
       .returns<Todo[]>(),
+    supabase
+      .from("work_directives")
+      .select("*")
+      .eq("assignee_id", user!.id)
+      .neq("status", "completed")
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .returns<WorkDirective[]>(),
   ]);
 
   const riskOrders = (inProgressOrders ?? []).filter(
@@ -116,7 +125,7 @@ export default async function NotificationCenterPage() {
           </ActionCard>
         )}
 
-        <ActionCard title={`위험 단계 작업지시서 · ${riskOrders.length}`} href="/admin/work-orders">
+        <ActionCard title={`위험 단계 현장 · ${riskOrders.length}`} href="/admin/sites">
           {riskOrders.slice(0, 5).map((order) => (
             <div key={order.id} className="flex justify-between border-b border-nude/30 pb-2 last:border-0">
               <Link href={`/admin/work-orders/${order.id}`} className="hover:text-gold">
@@ -125,7 +134,44 @@ export default async function NotificationCenterPage() {
               <span className="text-red-700">작업일 초과</span>
             </div>
           ))}
-          {riskOrders.length === 0 && <p className="text-charcoal/50">위험 단계인 작업지시서가 없습니다.</p>}
+          {riskOrders.length === 0 && <p className="text-charcoal/50">위험 단계인 현장이 없습니다.</p>}
+        </ActionCard>
+
+        <ActionCard title={`내게 온 작업지시 · ${myDirectives?.length ?? 0}`} href="/admin/work-directives">
+          {myDirectives?.slice(0, 5).map((directive) => (
+            <div key={directive.id} className="border-b border-nude/30 pb-2 last:border-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-charcoal">{directive.title}</span>
+                {directive.due_date && <span className="shrink-0 text-charcoal/50">{directive.due_date}</span>}
+              </div>
+              {directive.content && (
+                <p className="mt-1 whitespace-pre-line text-xs text-charcoal/60">{directive.content}</p>
+              )}
+              <div className="mt-2 flex gap-2">
+                {directive.status !== "in_progress" && (
+                  <form action={updateDirectiveStatus.bind(null, directive.id, "in_progress")}>
+                    <button
+                      type="submit"
+                      className="rounded-full border border-orange-300 px-3 py-1 text-xs text-orange-700 hover:bg-orange-50"
+                    >
+                      진행중으로 변경
+                    </button>
+                  </form>
+                )}
+                <form action={updateDirectiveStatus.bind(null, directive.id, "completed")}>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-charcoal px-3 py-1 text-xs text-cream hover:bg-gold"
+                  >
+                    완료 처리
+                  </button>
+                </form>
+              </div>
+            </div>
+          ))}
+          {(!myDirectives || myDirectives.length === 0) && (
+            <p className="text-charcoal/50">내게 온 작업지시가 없습니다.</p>
+          )}
         </ActionCard>
 
         <ActionCard title={`미완료 AS · ${openAsRequests?.length ?? 0}`} href="/admin/as-requests">
