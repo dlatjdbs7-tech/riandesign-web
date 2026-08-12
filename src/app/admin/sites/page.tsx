@@ -436,7 +436,7 @@ export default async function SitesPage({
 
             <div className="mt-3 grid gap-4 lg:grid-cols-2">
               {inProgressOrders?.map((order) => {
-                const risk = getWorkOrderRisk(order, todayDateString);
+                const risk = getWorkOrderRisk(order, todayDateString, finishEndByOrder.get(order.id));
                 const totalPaid =
                   (order.payment_contract ?? 0) +
                   (order.payment_start ?? 0) +

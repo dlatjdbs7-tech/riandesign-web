@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Profile, Todo, WorkOrder } from "@/lib/types";
 import { getKSTDateBounds, getKSTWeekBounds } from "@/lib/date";
 import { getWorkOrderRisk } from "@/lib/risk";
+import { getFinishEndDates } from "@/lib/schedulePeriod";
 
 function FunnelBar({
   label,
@@ -114,10 +115,15 @@ async function ManagerDashboard({ supabase }: { supabase: Awaited<ReturnType<typ
     { label: "계약", count: acceptedQuoteCount ?? 0, base: totalInquiryCount ?? 0 },
   ];
 
+  const finishEndByOrder = await getFinishEndDates(
+    supabase,
+    (inProgressOrders ?? []).map((o) => o.id)
+  );
+
   const riskCounts = { danger: 0, caution: 0, normal: 0 };
   const riskItems: { order: WorkOrder; risk: "danger" | "caution" | "normal" }[] = [];
   for (const order of inProgressOrders ?? []) {
-    const risk = getWorkOrderRisk(order, todayDateString);
+    const risk = getWorkOrderRisk(order, todayDateString, finishEndByOrder.get(order.id));
     riskCounts[risk] += 1;
     if (risk !== "normal") riskItems.push({ order, risk });
   }

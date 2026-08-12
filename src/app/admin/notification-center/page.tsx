@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Inquiry, Profile, Todo, WorkDirective, WorkOrder } from "@/lib/types";
 import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk } from "@/lib/risk";
+import { getFinishEndDates } from "@/lib/schedulePeriod";
 import { updateDirectiveStatus } from "../work-directives/actions";
 
 type DirectiveRow = WorkDirective & { profiles: Pick<Profile, "full_name"> | null };
@@ -85,8 +86,12 @@ export default async function NotificationCenterPage() {
       .returns<DirectiveRow[]>(),
   ]);
 
+  const finishEndByOrder = await getFinishEndDates(
+    supabase,
+    (inProgressOrders ?? []).map((o) => o.id)
+  );
   const riskOrders = (inProgressOrders ?? []).filter(
-    (order) => getWorkOrderRisk(order, todayDateString) === "danger"
+    (order) => getWorkOrderRisk(order, todayDateString, finishEndByOrder.get(order.id)) === "danger"
   );
 
   const overdueTodos = (myTodos ?? []).filter(
