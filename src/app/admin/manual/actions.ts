@@ -14,14 +14,10 @@ export async function createManual(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: created } = await supabase
-    .from("manuals")
-    .insert({ title, content, created_by: user?.id })
-    .select("id")
-    .single();
+  await supabase.from("manuals").insert({ title, content, created_by: user?.id });
 
   revalidatePath("/admin/manual");
-  if (created) redirect(`/admin/manual?id=${created.id}`);
+  redirect("/admin/manual");
 }
 
 export async function updateManual(id: string, formData: FormData) {
