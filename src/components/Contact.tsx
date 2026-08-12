@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 import FileDropInput from "./FileDropInput";
+import AddressSearch from "./AddressSearch";
 
 const CONSTRUCTION_ITEMS = [
   "도배",
@@ -82,19 +83,7 @@ export default function Contact() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="address" className={labelClass}>
-          주소
-        </label>
-        <input
-          id="address"
-          name="address"
-          type="text"
-          required
-          placeholder="예) 대전 OO아파트 OOO동 OOOO호"
-          className={inputClass}
-        />
-      </div>
+      <AddressSearch name="address" />
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
