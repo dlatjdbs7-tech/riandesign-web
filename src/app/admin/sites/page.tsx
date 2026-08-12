@@ -553,7 +553,7 @@ export default async function SitesPage({
               진행중인 현장 · {inProgressOrders?.length ?? 0}
             </h2>
 
-            <div className="mt-3 grid gap-4 lg:grid-cols-2">
+            <div className="mt-3 grid gap-4 lg:grid-cols-3">
               {inProgressOrders?.map((order) => {
                 const risk = getWorkOrderRisk(order, todayDateString, finishEndByOrder.get(order.id));
                 const totalPaid =
@@ -931,6 +931,7 @@ export default async function SitesPage({
                             workOrderId={order.id}
                             assigneeId={order.assignee_id}
                             employees={employees ?? []}
+                            className="border-b border-nude bg-transparent py-0.5 text-right text-xs text-charcoal outline-none focus:border-orange-400"
                           />
                         </div>
                       ) : (

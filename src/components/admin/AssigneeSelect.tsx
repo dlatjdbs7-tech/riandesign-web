@@ -7,10 +7,12 @@ export default function AssigneeSelect({
   workOrderId,
   assigneeId,
   employees,
+  className,
 }: {
   workOrderId: string;
   assigneeId: string | null;
   employees: { id: string; full_name: string }[];
+  className?: string;
 }) {
   const router = useRouter();
 
@@ -23,7 +25,10 @@ export default function AssigneeSelect({
         await updateWorkOrderAssignee(workOrderId, formData);
         router.refresh();
       }}
-      className="border-b border-nude bg-transparent py-0.5 text-sm text-charcoal outline-none focus:border-orange-400"
+      className={
+        className ??
+        "border-b border-nude bg-transparent py-0.5 text-sm text-charcoal outline-none focus:border-orange-400"
+      }
     >
       <option value="">미지정</option>
       {employees.map((employee) => (
