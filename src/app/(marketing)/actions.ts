@@ -61,6 +61,8 @@ export async function submitInquiry(formData: FormData) {
     budget: String(formData.get("budget") ?? "").trim() || null,
     construction_date: String(formData.get("construction_date") ?? "").trim() || null,
     move_in_date: String(formData.get("move_in_date") ?? "").trim() || null,
+    family_members: String(formData.get("family_members") ?? "").trim() || null,
+    pets: formData.getAll("pets").map(String),
     construction_items: formData.getAll("construction_items").map(String),
     referral_source: String(formData.get("referral_source") ?? "").trim() || null,
     floor_plan_url: floorPlanUrl,

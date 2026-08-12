@@ -24,7 +24,7 @@ declare global {
 }
 
 const inputClass =
-  "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
+  "rounded border border-nude bg-transparent px-4 py-2 text-sm text-charcoal outline-none focus:border-gold";
 
 export default function AddressSearch({ name }: { name: string }) {
   const [baseAddress, setBaseAddress] = useState("");
@@ -78,7 +78,7 @@ export default function AddressSearch({ name }: { name: string }) {
           type="button"
           onClick={() => setIsOpen(true)}
           disabled={!scriptReady}
-          className="shrink-0 rounded border border-charcoal px-4 py-3 text-sm tracking-wide text-charcoal transition-colors hover:bg-charcoal hover:text-cream disabled:opacity-50"
+          className="shrink-0 rounded border border-charcoal px-4 py-2 text-sm tracking-wide text-charcoal transition-colors hover:bg-charcoal hover:text-cream disabled:opacity-50"
         >
           주소 검색
         </button>

@@ -85,6 +85,14 @@ export default async function InquiriesPage() {
                   <dt className="text-xs text-charcoal/50">유입경로</dt>
                   <dd>{i.referral_source ?? "-"}</dd>
                 </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">가족구성원</dt>
+                  <dd>{i.family_members ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-charcoal/50">반려동물</dt>
+                  <dd>{i.pets && i.pets.length > 0 ? i.pets.join(", ") : "-"}</dd>
+                </div>
                 <div className="sm:col-span-2">
                   <dt className="text-xs text-charcoal/50">공사 내용</dt>
                   <dd>{i.construction_items && i.construction_items.length > 0 ? i.construction_items.join(", ") : "-"}</dd>

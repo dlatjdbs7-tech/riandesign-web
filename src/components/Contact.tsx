@@ -22,15 +22,29 @@ const CONSTRUCTION_ITEMS = [
 ];
 
 const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개"];
+const PET_OPTIONS = ["고양이", "강아지", "없음"];
 
 const inputClass =
   "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
+const compactInputClass =
+  "rounded border border-nude bg-transparent px-4 py-2 text-sm text-charcoal outline-none focus:border-gold";
 const labelClass = "text-xs tracking-wide text-charcoal/70";
 
 export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pets, setPets] = useState<string[]>([]);
+
+  function togglePet(option: string) {
+    setPets((prev) => {
+      if (option === "없음") return prev.includes("없음") ? [] : ["없음"];
+      const withoutNone = prev.filter((p) => p !== "없음");
+      return withoutNone.includes(option)
+        ? withoutNone.filter((p) => p !== option)
+        : [...withoutNone, option];
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,13 +87,13 @@ export default function Contact() {
           <label htmlFor="name" className={labelClass}>
             성함
           </label>
-          <input id="name" name="name" type="text" required className={inputClass} />
+          <input id="name" name="name" type="text" required className={compactInputClass} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="phone" className={labelClass}>
             연락처
           </label>
-          <input id="phone" name="phone" type="tel" required className={inputClass} />
+          <input id="phone" name="phone" type="tel" required className={compactInputClass} />
         </div>
       </div>
 
@@ -90,13 +104,13 @@ export default function Contact() {
           <label htmlFor="size_py" className={labelClass}>
             평형 [면적]
           </label>
-          <input id="size_py" name="size_py" type="text" required className={inputClass} />
+          <input id="size_py" name="size_py" type="text" required className={compactInputClass} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="budget" className={labelClass}>
             예산
           </label>
-          <input id="budget" name="budget" type="text" required className={inputClass} />
+          <input id="budget" name="budget" type="text" required className={compactInputClass} />
         </div>
       </div>
 
@@ -110,7 +124,7 @@ export default function Contact() {
             name="construction_date"
             type="text"
             required
-            className={inputClass}
+            className={compactInputClass}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -122,8 +136,45 @@ export default function Contact() {
             name="move_in_date"
             type="text"
             required
-            className={inputClass}
+            className={compactInputClass}
           />
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="family_members" className={labelClass}>
+            가족구성원
+          </label>
+          <input
+            id="family_members"
+            name="family_members"
+            type="text"
+            placeholder="예) 40대 부부, 초등학생 아들"
+            className={compactInputClass}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <p className={labelClass}>반려동물</p>
+          <div className="flex gap-2">
+            {PET_OPTIONS.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => togglePet(option)}
+                className={`flex-1 rounded border px-3 py-2 text-sm transition-colors ${
+                  pets.includes(option)
+                    ? "border-charcoal bg-charcoal text-cream"
+                    : "border-nude text-charcoal/70 hover:border-charcoal/50"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          {pets.map((pet) => (
+            <input key={pet} type="hidden" name="pets" value={pet} />
+          ))}
         </div>
       </div>
 

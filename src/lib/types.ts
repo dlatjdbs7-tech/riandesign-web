@@ -189,6 +189,8 @@ export type Inquiry = {
   budget: string | null;
   construction_date: string | null;
   move_in_date: string | null;
+  family_members: string | null;
+  pets: string[] | null;
   construction_items: string[] | null;
   referral_source: string | null;
   floor_plan_url: string | null;
