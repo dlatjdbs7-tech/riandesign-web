@@ -5,6 +5,7 @@ import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 import FileDropInput from "./FileDropInput";
 import AddressSearch from "./AddressSearch";
+import FlexibleDateInput from "./FlexibleDateInput";
 
 const CONSTRUCTION_ITEMS = [
   "도배",
@@ -22,7 +23,7 @@ const CONSTRUCTION_ITEMS = [
 ];
 
 const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개"];
-const PET_OPTIONS = ["고양이", "강아지", "없음"];
+const PET_OPTIONS = ["고양이", "강아지", "기타", "없음"];
 
 const inputClass =
   "rounded border border-nude bg-transparent px-4 py-3 text-sm text-charcoal outline-none focus:border-gold";
@@ -139,25 +140,13 @@ export default function Contact() {
           <label htmlFor="construction_date" className={labelClass}>
             공사 예정일
           </label>
-          <input
-            id="construction_date"
-            name="construction_date"
-            type="date"
-            required
-            className={compactInputClass}
-          />
+          <FlexibleDateInput id="construction_date" name="construction_date" required />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="move_in_date" className={labelClass}>
             입주 예정일
           </label>
-          <input
-            id="move_in_date"
-            name="move_in_date"
-            type="date"
-            required
-            className={compactInputClass}
-          />
+          <FlexibleDateInput id="move_in_date" name="move_in_date" required />
         </div>
       </div>
 
