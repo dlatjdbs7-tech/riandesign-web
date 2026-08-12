@@ -5,7 +5,7 @@ import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
-import { promoteQuoteToWorkOrder } from "./actions";
+import { createInquiry, promoteQuoteToWorkOrder } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
@@ -17,6 +17,8 @@ type SiteRow = WorkOrder & {
   customers: Pick<Customer, "name" | "phone"> | null;
   profiles: Pick<Profile, "full_name"> | null;
 };
+
+const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개", "기타"];
 
 const RISK_LABEL: Record<RiskLevel, string> = { danger: "위험", caution: "주의", normal: "정상" };
 const RISK_STYLE: Record<RiskLevel, string> = {
@@ -40,12 +42,13 @@ function formatPeriod(start: string | null, end: string | null) {
 export default async function SitesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; sort?: string; new?: string }>;
+  searchParams: Promise<{ view?: string; sort?: string; new?: string; newInquiry?: string }>;
 }) {
   const params = await searchParams;
   const showCancelled = params.view === "cancelled";
   const sortOldest = params.sort === "oldest";
   const showCreateForm = params.new === "1";
+  const showInquiryForm = params.newInquiry === "1";
 
   const supabase = await createClient();
   const {
@@ -203,6 +206,12 @@ export default async function SitesPage({
         {canManage && (
           <div className="flex shrink-0 items-center gap-2">
             <Link
+              href={showInquiryForm ? "/admin/sites" : "/admin/sites?newInquiry=1"}
+              className="rounded-full bg-sky-500 px-4 py-2 text-xs font-medium text-white hover:bg-sky-600"
+            >
+              + 전화문의 등록
+            </Link>
+            <Link
               href={showCreateForm ? "/admin/sites" : "/admin/sites?new=1"}
               className="rounded-full bg-charcoal px-4 py-2 text-xs font-medium text-cream hover:bg-charcoal/80"
             >
@@ -221,6 +230,58 @@ export default async function SitesPage({
           </div>
         )}
       </div>
+
+      {showInquiryForm && canManage && (
+        <form
+          action={createInquiry}
+          className="mt-6 grid gap-3 rounded-sm border border-sky-200 bg-sky-50/40 p-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <input
+            name="name"
+            required
+            placeholder="이름"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          />
+          <input
+            name="phone"
+            required
+            placeholder="연락처"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          />
+          <input
+            name="size_py"
+            placeholder="평형 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          />
+          <input
+            name="budget"
+            placeholder="예산 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          />
+          <select
+            name="referral_source"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
+          >
+            <option value="">유입경로 선택 안 함</option>
+            {REFERRAL_SOURCES.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+          <input
+            name="message"
+            placeholder="문의 내용 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500 lg:col-span-2"
+          />
+          <button
+            type="submit"
+            className="self-start rounded-full bg-sky-500 px-6 py-2 text-sm font-medium text-white hover:bg-sky-600 lg:col-span-4"
+          >
+            전화문의 등록
+          </button>
+        </form>
+      )}
 
       {showCreateForm && canManage && (
         <form

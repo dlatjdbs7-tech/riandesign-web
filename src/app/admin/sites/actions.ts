@@ -1,7 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+
+export async function createInquiry(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  if (!name || !phone) return;
+
+  const supabase = await createClient();
+  await supabase.from("inquiries").insert({
+    name,
+    phone,
+    message: String(formData.get("message") ?? "").trim() || null,
+    size_py: String(formData.get("size_py") ?? "").trim() || null,
+    budget: String(formData.get("budget") ?? "").trim() || null,
+    referral_source: String(formData.get("referral_source") ?? "").trim() || null,
+    status: "new",
+  });
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+  redirect("/admin/sites");
+}
 
 export async function promoteQuoteToWorkOrder(quoteId: string) {
   const supabase = await createClient();
