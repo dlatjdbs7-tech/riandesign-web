@@ -498,7 +498,7 @@ export default async function SitesPage({
       ) : (
         <>
           <div className="mt-6 grid gap-4 lg:grid-cols-4">
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-slate-400" />
@@ -512,7 +512,7 @@ export default async function SitesPage({
                     key={inquiry.id}
                     className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-slate-400"
                   >
-                    <div className="flex items-center gap-1.5 overflow-hidden">
+                    <div className="flex items-center gap-1 overflow-hidden">
                       <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
                       <span className="shrink-0 text-charcoal/20">·</span>
                       {canManage ? (
@@ -534,7 +534,7 @@ export default async function SitesPage({
                           field="size_py"
                           value={inquiry.size_py ?? ""}
                           placeholder="평수"
-                          className="w-10 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          className="w-9 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
@@ -545,22 +545,21 @@ export default async function SitesPage({
                           field="floor_plan_type"
                           value={inquiry.floor_plan_type ?? ""}
                           placeholder="타입"
-                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          className="w-11 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         inquiry.floor_plan_type && (
                           <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
                         )
                       )}
-                    </div>
-                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      <span className="shrink-0 text-charcoal/20">·</span>
                       {canManage ? (
                         <InlineInquiryFieldInput
                           inquiryId={inquiry.id}
                           field="name"
                           value={inquiry.name}
                           placeholder="이름"
-                          className="w-14 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
@@ -578,7 +577,8 @@ export default async function SitesPage({
                       ) : (
                         <span className="shrink-0">{inquiry.phone ?? "-"}</span>
                       )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
                       {canManage ? (
                         <InlineInquiryFieldInput
                           inquiryId={inquiry.id}
