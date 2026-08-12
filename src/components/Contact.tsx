@@ -285,6 +285,12 @@ export default function Contact() {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div>
+          <p className="font-serif text-lg font-semibold text-charcoal">문의사항</p>
+          <p className="mt-1 text-xs text-charcoal/60">
+            문의하실 내용을 최대한 상세히 작성해 주시면 상담을 진행하는 데 큰 도움이 됩니다.
+          </p>
+        </div>
         <label htmlFor="message" className={labelClass}>
           문의 내용
         </label>
