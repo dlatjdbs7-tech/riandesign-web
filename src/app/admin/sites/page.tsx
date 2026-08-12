@@ -560,7 +560,7 @@ export default async function SitesPage({
                           field="name"
                           value={inquiry.name}
                           placeholder="이름"
-                          className="w-16 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                          className="w-14 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
@@ -573,13 +573,12 @@ export default async function SitesPage({
                           value={inquiry.phone ?? ""}
                           placeholder="연락처"
                           format="phone"
-                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          className="w-24 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
-                        <span className="min-w-0 flex-1 truncate">{inquiry.phone ?? "-"}</span>
+                        <span className="shrink-0">{inquiry.phone ?? "-"}</span>
                       )}
-                    </div>
-                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      <span className="shrink-0 text-charcoal/20">·</span>
                       {canManage ? (
                         <InlineInquiryFieldInput
                           inquiryId={inquiry.id}
@@ -587,7 +586,7 @@ export default async function SitesPage({
                           value={inquiry.budget ?? ""}
                           placeholder="예산"
                           format="number"
-                          className="w-16 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
                         />
                       ) : (
                         inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
