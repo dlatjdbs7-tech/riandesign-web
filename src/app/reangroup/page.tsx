@@ -8,6 +8,22 @@ import { toAuthEmail, USERNAME_PATTERN } from "@/lib/auth";
 import { DEPARTMENTS } from "@/lib/departments";
 import { JOB_RANKS } from "@/lib/jobRanks";
 
+function calcYearsOfService(hireDateValue: string): string {
+  if (!hireDateValue) return "";
+  const hireDate = new Date(hireDateValue);
+  if (Number.isNaN(hireDate.getTime())) return "";
+
+  const today = new Date();
+  if (hireDate.getTime() > today.getTime()) return "입사 예정";
+
+  let years = today.getFullYear() - hireDate.getFullYear();
+  const monthDiff = today.getMonth() - hireDate.getMonth();
+  const dayDiff = today.getDate() - hireDate.getDate();
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) years -= 1;
+
+  return `${years + 1}년차`;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -18,6 +34,7 @@ export default function SignupPage() {
   const [jobRank, setJobRank] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const yearsOfService = calcYearsOfService(hireDate);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +76,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <p className="text-center text-xs tracking-[0.4em] text-taupe">REAN GROUP</p>
         <h1 className="mt-3 text-center font-serif text-2xl font-semibold text-charcoal">
-          직원 회원가입
+          팀원 회원가입
         </h1>
         <p className="mt-2 text-center text-xs text-charcoal/60">
           가입 후 대표 승인이 완료되면 이용하실 수 있습니다.
@@ -125,27 +142,17 @@ export default function SignupPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="department" className="text-xs tracking-wide text-charcoal/70">
-              부서
-            </label>
-            <select
-              id="department"
-              required
-              value={department}
-              onChange={(event) => setDepartment(event.target.value)}
-              className="border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold"
-            >
-              <option value="" disabled>
-                선택해주세요
-              </option>
-              {DEPARTMENTS.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
+          {yearsOfService && (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs tracking-wide text-charcoal/70">근속년차</label>
+              <input
+                type="text"
+                readOnly
+                value={yearsOfService}
+                className="border-b border-nude bg-transparent py-2 text-sm text-charcoal/70 outline-none"
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <label htmlFor="jobRank" className="text-xs tracking-wide text-charcoal/70">
@@ -164,6 +171,28 @@ export default function SignupPage() {
               {JOB_RANKS.map((rank) => (
                 <option key={rank} value={rank}>
                   {rank}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="department" className="text-xs tracking-wide text-charcoal/70">
+              부서
+            </label>
+            <select
+              id="department"
+              required
+              value={department}
+              onChange={(event) => setDepartment(event.target.value)}
+              className="border-b border-nude bg-transparent py-2 text-sm text-charcoal outline-none focus:border-gold"
+            >
+              <option value="" disabled>
+                선택해주세요
+              </option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
                 </option>
               ))}
             </select>
