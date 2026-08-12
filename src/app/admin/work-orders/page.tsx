@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, Profile, WorkOrder } from "@/lib/types";
-import { createWorkOrder } from "./actions";
+import { createWorkOrder, deleteWorkOrder } from "./actions";
+import WorkOrderTitleCell from "@/components/admin/WorkOrderTitleCell";
 
 const STATUS_LABEL: Record<WorkOrder["status"], string> = {
   pending: "대기",
@@ -68,15 +69,23 @@ export default async function WorkOrdersPage() {
                 <th className="px-4 py-3">작업일</th>
                 <th className="px-4 py-3">담당자</th>
                 <th className="px-4 py-3">상태</th>
+                {canCreate && <th className="px-4 py-3">관리</th>}
               </tr>
             </thead>
             <tbody>
               {orders?.map((order) => (
-                <tr key={order.id} className="border-b border-nude/30 last:border-0">
+                <tr key={order.id} className="group border-b border-nude/30 last:border-0">
                   <td className="px-4 py-3">
-                    <Link href={`/admin/work-orders/${order.id}`} className="hover:text-gold">
-                      {order.title}
-                    </Link>
+                    {canCreate ? (
+                      <WorkOrderTitleCell id={order.id} title={order.title} />
+                    ) : (
+                      <Link
+                        href={`/admin/work-orders/${order.id}`}
+                        className="underline decoration-nude underline-offset-4 hover:text-gold hover:decoration-gold"
+                      >
+                        {order.title}
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-charcoal/70">
                     {order.customers ? (
@@ -103,11 +112,28 @@ export default async function WorkOrdersPage() {
                       {STATUS_LABEL[order.status]}
                     </span>
                   </td>
+                  {canCreate && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3 text-xs">
+                        <Link href={`/admin/work-orders/${order.id}`} className="text-taupe hover:text-gold">
+                          상세
+                        </Link>
+                        <form action={deleteWorkOrder.bind(null, order.id)}>
+                          <button
+                            type="submit"
+                            className="text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100"
+                          >
+                            삭제
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
               {(!orders || orders.length === 0) && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-charcoal/50">
+                  <td colSpan={canCreate ? 6 : 5} className="px-4 py-6 text-center text-charcoal/50">
                     등록된 작업지시서가 없습니다.
                   </td>
                 </tr>
