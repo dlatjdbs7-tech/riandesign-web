@@ -209,33 +209,6 @@ export default function Contact() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium text-charcoal">공사예산</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {BUDGET_RANGES.map((range) => {
-              const active = budgetRange === range.label;
-              return (
-                <button
-                  key={range.label}
-                  type="button"
-                  onClick={() => setBudgetRange(range.label)}
-                  className={`rounded border px-4 py-3 text-left transition-colors ${
-                    active
-                      ? "border-charcoal bg-charcoal text-cream"
-                      : "border-nude text-charcoal hover:border-charcoal/50"
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{range.label}</p>
-                  <p className={`mt-1 text-xs ${active ? "text-cream/70" : "text-charcoal/50"}`}>
-                    {range.desc}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-          <input type="hidden" name="budget" value={budgetRange} />
-        </div>
-
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label htmlFor="construction_date" className={labelClass}>
@@ -281,6 +254,33 @@ export default function Contact() {
             ))}
           </div>
           <input type="hidden" name="space_type" value={spaceType} />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-medium text-charcoal">공사예산</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {BUDGET_RANGES.map((range) => {
+              const active = budgetRange === range.label;
+              return (
+                <button
+                  key={range.label}
+                  type="button"
+                  onClick={() => setBudgetRange(range.label)}
+                  className={`rounded border px-4 py-3 text-left transition-colors ${
+                    active
+                      ? "border-charcoal bg-charcoal text-cream"
+                      : "border-nude text-charcoal hover:border-charcoal/50"
+                  }`}
+                >
+                  <p className="text-sm font-semibold">{range.label}</p>
+                  <p className={`mt-1 text-xs ${active ? "text-cream/70" : "text-charcoal/50"}`}>
+                    {range.desc}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <input type="hidden" name="budget" value={budgetRange} />
         </div>
       </div>
 
