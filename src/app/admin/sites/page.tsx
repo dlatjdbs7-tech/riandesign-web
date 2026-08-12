@@ -128,21 +128,52 @@ export default async function SitesPage({
   const { data: tasks } = inProgressIds.length
     ? await supabase
         .from("work_order_tasks")
-        .select("work_order_id, start_date, end_date")
+        .select("work_order_id, title, start_date, end_date")
         .in("work_order_id", inProgressIds)
-        .returns<Pick<WorkOrderTask, "work_order_id" | "start_date" | "end_date">[]>()
+        .returns<Pick<WorkOrderTask, "work_order_id" | "title" | "start_date" | "end_date">[]>()
     : { data: null };
 
-  const periodByOrder = new Map<string, { start: string | null; end: string | null }>();
+  // 공사기간은 "철거" 작업의 시작일 ~ "마감" 작업의 마지막 종료일로 잡는다.
+  // 둘 중 하나라도 없는 현장은 예전처럼 전체 공정 중 가장 이른/늦은 날짜로 대체한다.
+  const fallbackByOrder = new Map<string, { start: string | null; end: string | null }>();
+  const demolitionStartByOrder = new Map<string, string>();
+  const finishEndByOrder = new Map<string, string>();
   for (const task of tasks ?? []) {
-    const current = periodByOrder.get(task.work_order_id) ?? { start: null, end: null };
-    if (task.start_date && (!current.start || task.start_date < current.start)) {
-      current.start = task.start_date;
+    const fallback = fallbackByOrder.get(task.work_order_id) ?? { start: null, end: null };
+    if (task.start_date && (!fallback.start || task.start_date < fallback.start)) {
+      fallback.start = task.start_date;
     }
-    if (task.end_date && (!current.end || task.end_date > current.end)) {
-      current.end = task.end_date;
+    if (task.end_date && (!fallback.end || task.end_date > fallback.end)) {
+      fallback.end = task.end_date;
     }
-    periodByOrder.set(task.work_order_id, current);
+    fallbackByOrder.set(task.work_order_id, fallback);
+
+    if (task.title === "철거" && task.start_date) {
+      const current = demolitionStartByOrder.get(task.work_order_id);
+      if (!current || task.start_date < current) demolitionStartByOrder.set(task.work_order_id, task.start_date);
+    }
+    if (task.title === "마감" && task.end_date) {
+      const current = finishEndByOrder.get(task.work_order_id);
+      if (!current || task.end_date > current) finishEndByOrder.set(task.work_order_id, task.end_date);
+    }
+  }
+
+  const periodByOrder = new Map<string, { start: string | null; end: string | null }>();
+  for (const id of fallbackByOrder.keys()) {
+    const fallback = fallbackByOrder.get(id)!;
+    periodByOrder.set(id, {
+      start: demolitionStartByOrder.get(id) ?? fallback.start,
+      end: finishEndByOrder.get(id) ?? fallback.end,
+    });
+  }
+
+  const progressByOrder = new Map<string, number>();
+  for (const [id, period] of periodByOrder) {
+    if (!period.start || !period.end) continue;
+    const totalDays = daysBetweenDateStrings(period.start, period.end);
+    if (totalDays <= 0) continue;
+    const elapsedDays = daysBetweenDateStrings(period.start, todayDateString);
+    progressByOrder.set(id, Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100))));
   }
 
   return (
@@ -423,6 +454,7 @@ export default async function SitesPage({
                 const computedPeriod = periodByOrder.get(order.id);
                 const periodStart = computedPeriod?.start ?? order.work_date;
                 const periodEnd = computedPeriod?.end ?? order.work_end_date;
+                const progressPercent = progressByOrder.get(order.id) ?? order.progress_percent;
 
                 return (
                   <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-4">
@@ -457,14 +489,19 @@ export default async function SitesPage({
 
                     <div className="mt-3 flex items-center justify-between text-xs text-charcoal/60">
                       <span>공정률</span>
-                      <span className="font-medium text-charcoal">{order.progress_percent}%</span>
+                      <span className="font-medium text-charcoal">{progressPercent}%</span>
                     </div>
                     <div className="mt-1 h-2 w-full rounded-full bg-stone-100">
                       <div
                         className="h-2 rounded-full bg-sky-300"
-                        style={{ width: `${order.progress_percent}%` }}
+                        style={{ width: `${progressPercent}%` }}
                       />
                     </div>
+                    {progressByOrder.has(order.id) && (
+                      <p className="mt-0.5 text-right text-[10px] text-charcoal/40">
+                        철거~마감 기준 자동 계산
+                      </p>
+                    )}
 
                     <div className="mt-3 flex items-center justify-between text-xs text-charcoal/60">
                       <span>수금률</span>
