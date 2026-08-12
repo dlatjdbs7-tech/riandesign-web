@@ -7,6 +7,21 @@ import FileDropInput from "./FileDropInput";
 import AddressSearch from "./AddressSearch";
 import FlexibleDateInput from "./FlexibleDateInput";
 
+const CONSTRUCTION_ITEMS = [
+  "도배",
+  "바닥 [마루 or 타일]",
+  "필름 시공",
+  "욕실 리모델링",
+  "제작 가구 [씽크대, 붙박이장, 신발장 등]",
+  "조명 및 전기",
+  "베란다",
+  "확장 공사",
+  "분배기 교체",
+  "난방 배관 교체",
+  "시스템 에어컨",
+  "창호 시공",
+];
+
 const REFERRAL_SOURCES = ["유튜브", "인스타그램", "블로그", "지인소개", "인터넷검색", "기타"];
 const PET_OPTIONS = ["고양이", "강아지", "기타", "없음"];
 const SPACE_TYPES = ["아파트", "단독주택", "빌라", "주상복합", "오피스텔", "기타"];
@@ -281,6 +296,18 @@ export default function Contact() {
             })}
           </div>
           <input type="hidden" name="budget" value={budgetRange} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <p className={labelClass}>공사 내용</p>
+        <div className="flex flex-col gap-2">
+          {CONSTRUCTION_ITEMS.map((item) => (
+            <label key={item} className="flex items-start gap-2 text-xs text-charcoal/70">
+              <input type="checkbox" name="construction_items" value={item} className="mt-0.5" />
+              {item}
+            </label>
+          ))}
         </div>
       </div>
 
