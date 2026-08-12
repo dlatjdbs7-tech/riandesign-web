@@ -97,6 +97,7 @@ export default async function WorkOrderSchedulePage({
 
             <div className="mt-4">
               <ScheduleCalendarGrid
+                workOrderId={selectedOrder.id}
                 tasks={tasks ?? []}
                 todayDateString={todayDateString}
                 title={`${selectedOrder.title} 공정표`}

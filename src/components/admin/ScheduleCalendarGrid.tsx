@@ -1,6 +1,7 @@
 import { getTaskDisplayStatus } from "@/lib/taskStatus";
 import type { WorkOrderTask } from "@/lib/types";
 import ScheduleTaskChip from "@/components/admin/ScheduleTaskChip";
+import ScheduleQuickAddChip from "@/components/admin/ScheduleQuickAddChip";
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -15,10 +16,12 @@ function weekdayOf(dateStr: string) {
 }
 
 export default function ScheduleCalendarGrid({
+  workOrderId,
   tasks,
   todayDateString,
   title,
 }: {
+  workOrderId: string;
   tasks: WorkOrderTask[];
   todayDateString: string;
   title?: string;
@@ -61,7 +64,7 @@ export default function ScheduleCalendarGrid({
   return (
     <div className="overflow-hidden rounded-sm border-2 border-nude/70">
       {title && (
-        <div className="border-b-2 border-nude/70 bg-violet-200 px-4 py-1.5 text-center font-serif text-base font-semibold text-violet-900">
+        <div className="border-b-2 border-nude/70 bg-sky-200 px-4 py-1.5 text-center font-serif text-base font-semibold text-sky-900">
           {title}
         </div>
       )}
@@ -89,7 +92,7 @@ export default function ScheduleCalendarGrid({
             return (
               <div
                 key={dateStr}
-                className={`border-l border-nude/30 first:border-l-0 ${
+                className={`group border-l border-nude/30 first:border-l-0 ${
                   i === 0 ? "bg-red-50/30" : i === 6 ? "bg-sky-50/30" : ""
                 }`}
               >
@@ -126,6 +129,7 @@ export default function ScheduleCalendarGrid({
                       />
                     );
                   })}
+                  <ScheduleQuickAddChip workOrderId={workOrderId} date={dateStr} />
                 </div>
               </div>
             );
