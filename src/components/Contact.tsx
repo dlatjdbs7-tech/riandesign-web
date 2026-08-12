@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { submitInquiry } from "@/app/(marketing)/actions";
 import FileDropInput from "./FileDropInput";
@@ -35,6 +35,12 @@ export default function Contact() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pets, setPets] = useState<string[]>([]);
+  const [budget, setBudget] = useState("");
+
+  function handleBudgetChange(event: ChangeEvent<HTMLInputElement>) {
+    const digits = event.target.value.replace(/[^0-9]/g, "");
+    setBudget(digits ? Number(digits).toLocaleString("ko-KR") : "");
+  }
 
   function togglePet(option: string) {
     setPets((prev) => {
@@ -110,7 +116,21 @@ export default function Contact() {
           <label htmlFor="budget" className={labelClass}>
             예산
           </label>
-          <input id="budget" name="budget" type="text" required className={compactInputClass} />
+          <div className="relative">
+            <input
+              id="budget"
+              name="budget"
+              type="text"
+              inputMode="numeric"
+              value={budget}
+              onChange={handleBudgetChange}
+              required
+              className={`w-full pr-8 ${compactInputClass}`}
+            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-charcoal/50">
+              원
+            </span>
+          </div>
         </div>
       </div>
 
@@ -122,7 +142,7 @@ export default function Contact() {
           <input
             id="construction_date"
             name="construction_date"
-            type="text"
+            type="date"
             required
             className={compactInputClass}
           />
@@ -134,7 +154,7 @@ export default function Contact() {
           <input
             id="move_in_date"
             name="move_in_date"
-            type="text"
+            type="date"
             required
             className={compactInputClass}
           />
