@@ -14,8 +14,8 @@ export default async function ProcessPreview() {
   if (!steps || steps.length === 0) return null;
 
   return (
-    <section className="bg-beige/60 px-6 py-24 sm:px-10">
-      <div className="mx-auto max-w-6xl">
+    <section className="px-6 py-24 sm:px-10">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-14 text-center">
           <p className="text-xs tracking-[0.4em] text-taupe">PROCESS</p>
           <h2 className="mt-3 font-serif text-3xl font-semibold text-charcoal sm:text-4xl">

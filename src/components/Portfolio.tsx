@@ -31,7 +31,7 @@ export default async function Portfolio() {
     : FALLBACK_PROJECTS.map((project) => ({ ...project, imageUrl: null as string | null }));
 
   return (
-    <section id="portfolio" className="mx-auto max-w-6xl px-6 py-24 sm:px-10">
+    <section id="portfolio" className="mx-auto max-w-7xl px-6 py-24 sm:px-10">
       <div className="mb-14 text-center">
         <p className="text-xs tracking-[0.4em] text-taupe">PORTFOLIO</p>
         <h2 className="mt-3 font-serif text-3xl font-semibold text-charcoal sm:text-4xl">

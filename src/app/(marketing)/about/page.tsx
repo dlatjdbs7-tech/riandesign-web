@@ -57,7 +57,7 @@ export default async function AboutPage() {
         </h1>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:px-10">
+      <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-10">
         <div className="grid gap-12 sm:grid-cols-2 sm:items-center sm:gap-16">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -91,8 +91,8 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-beige/60 px-6 py-24 sm:px-10">
-        <div className="mx-auto max-w-6xl">
+      <section className="px-6 py-24 sm:px-10">
+        <div className="mx-auto max-w-7xl">
           <div className="mb-14 text-center">
             <p className="text-xs tracking-[0.4em] text-taupe">PHILOSOPHY</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold text-charcoal sm:text-4xl">

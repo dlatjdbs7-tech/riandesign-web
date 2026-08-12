@@ -107,7 +107,7 @@ export default function Contact() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude disabled:opacity-50"
+              className="mt-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-white transition-colors hover:opacity-90 disabled:opacity-50"
             >
               {isSubmitting ? "전송 중..." : "문의 보내기"}
             </button>

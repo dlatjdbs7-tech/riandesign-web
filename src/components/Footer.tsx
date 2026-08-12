@@ -34,7 +34,7 @@ export default async function Footer() {
 
   return (
     <footer className="border-t border-nude/60 bg-cream px-6 py-10 text-xs text-charcoal/60 sm:px-10">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-serif tracking-[0.2em] text-charcoal">{info.company_name}</p>
           <div className="flex gap-5">

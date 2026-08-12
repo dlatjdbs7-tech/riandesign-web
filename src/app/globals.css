@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
+/* reandesign.kr 실사이트에서 그대로 추출한 값 (배경/텍스트/보더/포인트 컬러) */
 :root {
-  --cream: #faf6f0;
-  --beige: #efe4d6;
-  --nude: #d9c4ac;
-  --taupe: #8b6f52;
-  --charcoal: #2b2420;
-  --gold: #a9825a;
+  --cream: #fdfcf8;
+  --beige: #f0eee9;
+  --nude: #dbdbdb;
+  --taupe: #3b3b3b;
+  --charcoal: #111111;
+  --gold: #f6a62f;
 }
 
 @theme inline {

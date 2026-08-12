@@ -24,7 +24,7 @@ export default async function ContactCTA() {
         <p className="mt-2 text-xs text-cream/50">{notice}</p>
         <Link
           href="/contact"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-gold px-8 py-3 text-sm tracking-wide text-white transition-colors hover:opacity-90"
         >
           상담 신청하기 <span aria-hidden>→</span>
         </Link>

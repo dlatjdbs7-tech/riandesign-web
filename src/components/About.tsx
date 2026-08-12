@@ -31,7 +31,7 @@ export default async function About() {
   const imageUrl = content?.about_image_url;
 
   return (
-    <section id="about" className="mx-auto max-w-6xl px-6 py-24 sm:px-10">
+    <section id="about" className="mx-auto max-w-7xl px-6 py-24 sm:px-10">
       <div className="grid gap-12 sm:grid-cols-2 sm:items-center sm:gap-16">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

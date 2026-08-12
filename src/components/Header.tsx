@@ -16,7 +16,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-nude/60 bg-cream/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-10">
         <Link href="/" className="shrink-0">
           <Image
             src="/logo.png"
@@ -42,7 +42,7 @@ export default function Header() {
 
         <Link
           href="/contact"
-          className="hidden rounded-full bg-gold px-5 py-2 text-sm tracking-wide text-charcoal transition-colors hover:bg-nude sm:inline-block"
+          className="hidden rounded-full bg-gold px-5 py-2 text-sm tracking-wide text-white transition-colors hover:bg-charcoal sm:inline-block"
         >
           상담신청
         </Link>
@@ -86,7 +86,7 @@ export default function Header() {
           ))}
           <Link
             href="/contact"
-            className="mt-2 rounded-full bg-gold px-5 py-2 text-center text-sm tracking-wide text-charcoal"
+            className="mt-2 rounded-full bg-gold px-5 py-2 text-center text-sm tracking-wide text-white"
             onClick={() => setIsMenuOpen(false)}
           >
             상담신청

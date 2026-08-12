@@ -28,7 +28,7 @@ export default async function ReviewPage() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:px-10">
+      <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-10">
         {reviews && reviews.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {reviews.map((review) => (

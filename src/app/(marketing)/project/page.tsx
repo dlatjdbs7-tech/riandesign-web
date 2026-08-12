@@ -23,7 +23,7 @@ export default async function ProjectPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:px-10">
+      <section className="mx-auto max-w-7xl px-6 pb-24 sm:px-10">
         <ProjectFilterGrid items={items ?? []} />
       </section>
     </div>

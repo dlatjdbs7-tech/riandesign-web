@@ -31,8 +31,8 @@ export default async function Services() {
   const services = items && items.length > 0 ? items : FALLBACK_SERVICES;
 
   return (
-    <section id="services" className="bg-beige/60 px-6 py-24 sm:px-10">
-      <div className="mx-auto max-w-6xl">
+    <section id="services" className="px-6 py-24 sm:px-10">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-14 text-center">
           <p className="text-xs tracking-[0.4em] text-taupe">SERVICES</p>
           <h2 className="mt-3 font-serif text-3xl font-semibold text-charcoal sm:text-4xl">
