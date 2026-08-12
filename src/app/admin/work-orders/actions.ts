@@ -43,6 +43,7 @@ export async function updateWorkOrderStatus(id: string, status: SiteStatus) {
   await supabase.from("work_orders").update({ status }).eq("id", id);
   revalidatePath("/admin/work-orders");
   revalidatePath(`/admin/work-orders/${id}`);
+  revalidatePath("/admin/sites");
 }
 
 export async function updateWorkOrderAssignee(id: string, formData: FormData) {

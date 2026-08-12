@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder, WorkOrderTask } from "@/lib/types";
-import { daysBetweenDateStrings, getKSTDateBounds } from "@/lib/date";
+import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
@@ -46,6 +46,31 @@ function formatInquiryDate(createdAt: string) {
   return d.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "2-digit", day: "2-digit" });
 }
 
+function getHalfMonthRanges(todayDateString: string) {
+  const [year, month] = todayDateString.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    first: { label: `${month}월 1일~15일`, startDay: 1, endDay: 15 },
+    second: { label: `${month}월 16일~${lastDay}일`, startDay: 16, endDay: lastDay },
+    year,
+    month,
+  };
+}
+
+function splitLeadsByHalfMonth(leads: Inquiry[] | null, todayDateString: string) {
+  const ranges = getHalfMonthRanges(todayDateString);
+  const first: Inquiry[] = [];
+  const second: Inquiry[] = [];
+  for (const lead of leads ?? []) {
+    const createdKST = new Date(lead.created_at).toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+    const [leadYear, leadMonth, leadDay] = createdKST.split("-").map(Number);
+    if (leadYear !== ranges.year || leadMonth !== ranges.month) continue;
+    if (leadDay <= 15) first.push(lead);
+    else second.push(lead);
+  }
+  return { ranges, first, second };
+}
+
 export default async function SitesPage({
   searchParams,
 }: {
@@ -75,6 +100,7 @@ export default async function SitesPage({
     { data: newInquiries },
     { data: contactedInquiries },
     { data: sentQuotes },
+    { data: pendingOrders },
     { data: inProgressOrders },
     { data: completedOrders },
     { data: cancelledOrders },
@@ -106,6 +132,12 @@ export default async function SitesPage({
       .eq("status", "sent")
       .order("quote_date", { ascending: false })
       .returns<QuoteRow[]>(),
+    supabase
+      .from("work_orders")
+      .select("*, customers(name, phone), profiles!work_orders_assignee_id_fkey(full_name)")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .returns<SiteRow[]>(),
     supabase
       .from("work_orders")
       .select("*, customers(name, phone), profiles!work_orders_assignee_id_fkey(full_name)")
@@ -208,6 +240,10 @@ export default async function SitesPage({
   }
 
   const progressByOrder = await getTaskCompletionProgress(supabase, inProgressIds, todayDateString);
+  const { ranges: halfMonthRanges, first: leadsFirstHalf, second: leadsSecondHalf } = splitLeadsByHalfMonth(
+    leadInquiries,
+    todayDateString
+  );
 
   return (
     <div>
@@ -497,133 +533,140 @@ export default async function SitesPage({
         </div>
       ) : (
         <>
-          <div className="mt-6 grid gap-4 lg:grid-cols-4">
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4 lg:col-span-2">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
-                  문의
-                </span>
-                <span className="text-xs text-charcoal/50">{leadInquiries?.length ?? 0}</span>
-              </div>
-              <div className="mt-3 flex flex-1 flex-col gap-2">
-                {leadInquiries?.map((inquiry) => (
-                  <div
-                    key={inquiry.id}
-                    className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-slate-400"
-                  >
-                    <div className="flex items-center gap-1 overflow-hidden">
-                      <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="address"
-                          value={inquiry.address ?? ""}
-                          placeholder="아파트명"
-                          className="min-w-0 flex-1 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
-                          {inquiry.address || "아파트명 미입력"}
-                        </span>
-                      )}
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="size_py"
-                          value={inquiry.size_py ?? ""}
-                          placeholder="평수"
-                          className="w-9 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
-                      )}
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="floor_plan_type"
-                          value={inquiry.floor_plan_type ?? ""}
-                          placeholder="타입"
-                          className="w-11 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        inquiry.floor_plan_type && (
-                          <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
-                        )
-                      )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="name"
-                          value={inquiry.name}
-                          placeholder="이름"
-                          className="w-12 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
-                      )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="phone"
-                          value={inquiry.phone ?? ""}
-                          placeholder="연락처"
-                          format="phone"
-                          className="w-24 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        <span className="shrink-0">{inquiry.phone ?? "-"}</span>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              { key: "first", label: halfMonthRanges.first.label, leads: leadsFirstHalf },
+              { key: "second", label: halfMonthRanges.second.label, leads: leadsSecondHalf },
+            ].map((half) => (
+              <div key={half.key} className="flex min-h-[200px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
+                    <span className="h-2 w-2 rounded-full bg-slate-400" />
+                    문의 · {half.label}
+                  </span>
+                  <span className="text-xs text-charcoal/50">{half.leads.length}</span>
+                </div>
+                <div className="mt-3 flex flex-1 flex-col gap-2">
+                  {half.leads.map((inquiry) => (
+                    <div
+                      key={inquiry.id}
+                      className="rounded-sm border border-nude/40 px-3 py-2.5 text-xs hover:border-slate-400"
+                    >
+                      <div className="flex items-center gap-1 overflow-hidden">
+                        <span className="shrink-0 text-charcoal/40">{formatInquiryDate(inquiry.created_at)}</span>
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="address"
+                            value={inquiry.address ?? ""}
+                            placeholder="아파트명"
+                            className="min-w-0 flex-1 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          <span className="min-w-0 flex-1 truncate font-medium text-charcoal">
+                            {inquiry.address || "아파트명 미입력"}
+                          </span>
+                        )}
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="size_py"
+                            value={inquiry.size_py ?? ""}
+                            placeholder="평수"
+                            className="w-9 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
+                        )}
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="floor_plan_type"
+                            value={inquiry.floor_plan_type ?? ""}
+                            placeholder="타입"
+                            className="w-11 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          inquiry.floor_plan_type && (
+                            <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
+                          )
+                        )}
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="name"
+                            value={inquiry.name}
+                            placeholder="이름"
+                            className="w-12 shrink-0 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          <span className="shrink-0 font-medium text-charcoal">{inquiry.name}</span>
+                        )}
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="phone"
+                            value={inquiry.phone ?? ""}
+                            placeholder="연락처"
+                            format="phone"
+                            className="w-24 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          <span className="shrink-0">{inquiry.phone ?? "-"}</span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="budget"
+                            value={inquiry.budget ?? ""}
+                            placeholder="예산"
+                            format="number"
+                            className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
+                        )}
+                        <span className="shrink-0 text-charcoal/20">·</span>
+                        {canManage ? (
+                          <InlineInquiryFieldInput
+                            inquiryId={inquiry.id}
+                            field="message"
+                            value={inquiry.message ?? ""}
+                            placeholder="문의 내용"
+                            className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-slate-400"
+                          />
+                        ) : (
+                          inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
+                        )}
+                      </div>
+                      {canManage && (
+                        <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-rose-100 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-200"
+                          >
+                            신규 전환 →
+                          </button>
+                        </form>
                       )}
                     </div>
-                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="budget"
-                          value={inquiry.budget ?? ""}
-                          placeholder="예산"
-                          format="number"
-                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
-                      )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="message"
-                          value={inquiry.message ?? ""}
-                          placeholder="문의 내용"
-                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-slate-400"
-                        />
-                      ) : (
-                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
-                      )}
-                    </div>
-                    {canManage && (
-                      <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
-                        <button
-                          type="submit"
-                          className="w-full rounded-sm bg-rose-100 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-200"
-                        >
-                          신규 전환 →
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                ))}
-                {(!leadInquiries || leadInquiries.length === 0) && (
-                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
-                    간단 문의 메모 없음
-                  </p>
-                )}
+                  ))}
+                  {half.leads.length === 0 && (
+                    <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
+                      간단 문의 메모 없음
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
 
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
             <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
@@ -818,6 +861,41 @@ export default async function SitesPage({
                 )}
               </div>
             </div>
+
+            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
+                  <span className="h-2 w-2 rounded-full bg-violet-500" />
+                  계약
+                </span>
+                <span className="text-xs text-charcoal/50">{pendingOrders?.length ?? 0}</span>
+              </div>
+              <div className="mt-3 flex flex-1 flex-col gap-2">
+                {pendingOrders?.map((order) => (
+                  <div key={order.id} className="rounded-sm border border-nude/40 p-3 text-sm">
+                    <p className="font-medium text-charcoal">{order.customers?.name ?? order.client_name ?? order.title}</p>
+                    <p className="mt-1 text-xs text-charcoal/50">
+                      {order.customers?.phone ?? "-"} · {formatWon(order.contract_amount)}
+                    </p>
+                    {canManage && (
+                      <form action={updateWorkOrderStatus.bind(null, order.id, "in_progress")} className="mt-2">
+                        <button
+                          type="submit"
+                          className="w-full rounded-sm bg-violet-100 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-200"
+                        >
+                          진행중 전환 →
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ))}
+                {(!pendingOrders || pendingOrders.length === 0) && (
+                  <p className="flex flex-1 items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40">
+                    계약 대기 없음
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="mt-8">
@@ -840,9 +918,6 @@ export default async function SitesPage({
                     ? Math.min(100, Math.round((totalPaid / order.contract_amount) * 100))
                     : 0;
                 const unpaid = order.contract_amount !== null ? order.contract_amount - totalPaid : null;
-                const materialDday = order.material_order_date
-                  ? daysBetweenDateStrings(todayDateString, order.material_order_date)
-                  : null;
                 const computedPeriod = periodByOrder.get(order.id);
                 const periodStart = computedPeriod?.start ?? order.work_date;
                 const periodEnd = computedPeriod?.end ?? order.work_end_date;
@@ -1176,26 +1251,6 @@ export default async function SitesPage({
 
                       <span>미수금</span>
                       <span className="text-right text-charcoal">{formatWon(unpaid)}</span>
-
-                      <span>자재 발주</span>
-                      {canManage ? (
-                        <InlineFieldInput
-                          workOrderId={order.id}
-                          field="material_order_date"
-                          type="date"
-                          value={order.material_order_date ?? ""}
-                        />
-                      ) : (
-                        <span className="text-right text-charcoal">
-                          {order.material_order_date ?? "-"}
-                          {materialDday !== null && (
-                            <span className={materialDday < 0 ? "ml-1 text-red-600" : "ml-1 text-charcoal/50"}>
-                              (D{materialDday >= 0 ? "-" : "+"}
-                              {Math.abs(materialDday)})
-                            </span>
-                          )}
-                        </span>
-                      )}
 
                       <span>담당</span>
                       {canManage ? (
