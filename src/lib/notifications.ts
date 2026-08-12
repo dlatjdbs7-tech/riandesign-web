@@ -39,7 +39,7 @@ export async function getNotificationCount(
     supabase
       .from("work_directives")
       .select("id", { count: "exact", head: true })
-      .eq("assignee_id", profile.id)
+      .or(`assignee_id.eq.${profile.id},created_by.eq.${profile.id}`)
       .neq("status", "completed"),
   ]);
 

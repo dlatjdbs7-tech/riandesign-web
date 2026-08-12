@@ -5,6 +5,8 @@ import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk } from "@/lib/risk";
 import { updateDirectiveStatus } from "../work-directives/actions";
 
+type DirectiveRow = WorkDirective & { profiles: Pick<Profile, "full_name"> | null };
+
 function ActionCard({
   title,
   href,
@@ -76,11 +78,11 @@ export default async function NotificationCenterPage() {
       .returns<Todo[]>(),
     supabase
       .from("work_directives")
-      .select("*")
-      .eq("assignee_id", user!.id)
+      .select("*, profiles!work_directives_assignee_id_fkey(full_name)")
+      .or(`assignee_id.eq.${user!.id},created_by.eq.${user!.id}`)
       .neq("status", "completed")
       .order("due_date", { ascending: true, nullsFirst: false })
-      .returns<WorkDirective[]>(),
+      .returns<DirectiveRow[]>(),
   ]);
 
   const riskOrders = (inProgressOrders ?? []).filter(
@@ -144,6 +146,7 @@ export default async function NotificationCenterPage() {
                 <span className="font-medium text-charcoal">{directive.title}</span>
                 {directive.due_date && <span className="shrink-0 text-charcoal/50">{directive.due_date}</span>}
               </div>
+              <p className="mt-0.5 text-xs text-charcoal/50">담당 {directive.profiles?.full_name ?? "미지정"}</p>
               {directive.content && (
                 <p className="mt-1 whitespace-pre-line text-xs text-charcoal/60">{directive.content}</p>
               )}
