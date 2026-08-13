@@ -2,9 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Inquiry, Profile, Quote } from "@/lib/types";
+import TrendLineChart from "@/components/admin/TrendLineChart";
 
 type Period = "1m" | "6m" | "1y";
 const PERIOD_LABEL: Record<Period, string> = { "1m": "1개월", "6m": "6개월", "1y": "1년" };
+
+// 단계(퍼널/상태)는 순서가 곧 의미인 ordinal 데이터라 한 색상의 명도 단계로 표현한다.
+// scripts/validate_palette.js "...5색..." --mode light --ordinal 로 검증 통과.
+const ORDINAL_RAMP = ["#fb923c", "#f97316", "#ea580c", "#c2410c", "#9a3412", "#7c2d12"];
 
 function monthKey(year: number, monthIndex0: number) {
   return `${year}-${String(monthIndex0 + 1).padStart(2, "0")}`;
@@ -94,7 +99,12 @@ export default async function AnalyticsPage({
     const key = isDaily ? inquiry.created_at.slice(0, 10) : inquiry.created_at.slice(0, 7);
     if (countsByBucket.has(key)) countsByBucket.set(key, (countsByBucket.get(key) ?? 0) + 1);
   });
-  const maxBucketCount = Math.max(1, ...Array.from(countsByBucket.values()));
+
+  const trendPoints = buckets.map((b) => ({
+    key: b,
+    label: isDaily ? shortDayLabel(b) : shortMonthLabel(b),
+    value: countsByBucket.get(b) ?? 0,
+  }));
 
   // 전화문의 → 방문상담 → 계약 퍼널 (선택한 기간 기준)
   const totalInquiries = inquiries?.length ?? 0;
@@ -104,11 +114,12 @@ export default async function AnalyticsPage({
   const acceptedQuotes = (quotes ?? []).filter((q) => q.status === "accepted").length;
 
   const funnel = [
-    { key: "call", label: "전화문의", count: totalInquiries, color: "bg-sky-500" },
-    { key: "visit", label: "방문상담", count: consultedInquiries, color: "bg-orange-500" },
-    { key: "contract", label: "계약", count: acceptedQuotes, color: "bg-emerald-600" },
+    { key: "call", label: "전화문의", count: totalInquiries, color: ORDINAL_RAMP[0] },
+    { key: "visit", label: "방문상담", count: consultedInquiries, color: ORDINAL_RAMP[2] },
+    { key: "contract", label: "계약", count: acceptedQuotes, color: ORDINAL_RAMP[4] },
   ];
 
+  const statusOrder: Inquiry["status"][] = ["lead", "new", "contacted", "quoted", "closed"];
   const statusCounts = { lead: 0, new: 0, contacted: 0, quoted: 0, closed: 0 } as Record<
     Inquiry["status"],
     number
@@ -152,27 +163,8 @@ export default async function AnalyticsPage({
         <h2 className="font-serif text-lg font-semibold text-charcoal">
           {PERIOD_LABEL[period]} 문의 추이 · {totalInquiries}건
         </h2>
-        <div className={`mt-6 flex h-40 items-end ${isDaily ? "gap-1" : "gap-4"}`}>
-          {buckets.map((b) => {
-            const count = countsByBucket.get(b) ?? 0;
-            const heightPct = (count / maxBucketCount) * 100;
-            return (
-              <div key={b} className="flex flex-1 flex-col items-center gap-1.5">
-                {!isDaily && <span className="text-[11px] text-charcoal/60">{count}</span>}
-                <div className="flex h-32 w-full items-end rounded-sm bg-stone-100">
-                  <div
-                    className="w-full rounded-sm bg-orange-400"
-                    style={{ height: `${Math.max(count > 0 ? 4 : 0, heightPct)}%` }}
-                    title={`${b}: ${count}건`}
-                  />
-                </div>
-                {!isDaily && <span className="text-[10px] text-charcoal/40">{shortMonthLabel(b)}</span>}
-                {isDaily && Number(b.slice(8, 10)) % 5 === 0 && (
-                  <span className="text-[9px] text-charcoal/40">{shortDayLabel(b)}</span>
-                )}
-              </div>
-            );
-          })}
+        <div className="mt-4">
+          <TrendLineChart points={trendPoints} labelEvery={isDaily ? 5 : 1} />
         </div>
       </div>
 
@@ -197,8 +189,8 @@ export default async function AnalyticsPage({
                 <span className="w-16 shrink-0 text-xs text-charcoal/70">{stage.label}</span>
                 <div className="h-7 flex-1 rounded-sm bg-stone-100">
                   <div
-                    className={`flex h-7 items-center rounded-sm px-2.5 text-xs font-semibold text-white ${stage.color}`}
-                    style={{ width: `${widthPct}%` }}
+                    className="flex h-7 items-center rounded-sm px-2.5 text-xs font-semibold text-white"
+                    style={{ width: `${widthPct}%`, backgroundColor: stage.color }}
                   >
                     {stage.count}
                   </div>
@@ -216,14 +208,17 @@ export default async function AnalyticsPage({
         <div className="rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">문의 상태별 분포</h2>
           <div className="mt-4 flex flex-col gap-3">
-            {(Object.keys(STATUS_LABEL) as Inquiry["status"][]).map((status) => {
+            {statusOrder.map((status, index) => {
               const count = statusCounts[status];
               const pct = totalInquiries > 0 ? Math.round((count / totalInquiries) * 100) : 0;
               return (
                 <div key={status} className="flex items-center gap-3">
                   <span className="w-16 shrink-0 text-xs text-charcoal/60">{STATUS_LABEL[status]}</span>
                   <div className="h-4 flex-1 rounded-sm bg-stone-100">
-                    <div className="h-4 rounded-sm bg-taupe" style={{ width: `${pct}%` }} />
+                    <div
+                      className="h-4 rounded-sm"
+                      style={{ width: `${pct}%`, backgroundColor: ORDINAL_RAMP[index] }}
+                    />
                   </div>
                   <span className="w-16 shrink-0 text-right text-xs text-charcoal/60">
                     {count}건 ({pct}%)
@@ -246,7 +241,7 @@ export default async function AnalyticsPage({
                 <div key={source} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 truncate text-xs text-charcoal/60">{source}</span>
                   <div className="h-4 flex-1 rounded-sm bg-stone-100">
-                    <div className="h-4 rounded-sm bg-sky-500" style={{ width: `${pct}%` }} />
+                    <div className="h-4 rounded-sm bg-sky-600" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="w-10 shrink-0 text-right text-xs text-charcoal/60">{count}건</span>
                 </div>
