@@ -1090,7 +1090,7 @@ export default async function SitesPage({
                             type="submit"
                             className="w-full rounded-sm bg-violet-100 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200"
                           >
-                            진행중 전환 →
+                            계약완료 →
                           </button>
                         </form>
                       </div>
