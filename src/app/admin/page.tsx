@@ -65,6 +65,7 @@ async function ManagerDashboard({
     { data: weekOrders },
     { data: weekAsRequests },
     { data: weekTodos },
+    { data: recentCompletedOrders },
     pendingAlertCount,
   ] = await Promise.all([
     supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
@@ -104,6 +105,13 @@ async function ManagerDashboard({
       .lte("due_date", weekEndDate)
       .order("due_date", { ascending: true })
       .returns<Todo[]>(),
+    supabase
+      .from("work_orders")
+      .select("*")
+      .eq("status", "completed")
+      .order("work_end_date", { ascending: false, nullsFirst: false })
+      .limit(5)
+      .returns<WorkOrder[]>(),
     getNotificationCount(supabase, profile),
   ]);
 
@@ -318,6 +326,31 @@ async function ManagerDashboard({
             )}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 font-serif text-lg font-semibold text-charcoal">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            완료된 현장 · {(recentCompletedOrders ?? []).length}
+          </h2>
+          <Link href="/admin/sites" className="text-xs text-taupe hover:text-orange-600">
+            현장관리 →
+          </Link>
+        </div>
+        <ul className="mt-3 flex flex-col gap-2 text-sm">
+          {recentCompletedOrders?.map((order) => (
+            <li key={order.id} className="flex justify-between border-b border-nude/30 pb-2 last:border-0">
+              <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
+                {order.title}
+              </Link>
+              <span className="text-charcoal/60">{order.work_end_date ?? "-"}</span>
+            </li>
+          ))}
+          {(!recentCompletedOrders || recentCompletedOrders.length === 0) && (
+            <li className="text-charcoal/50">마감된 현장이 없습니다.</li>
+          )}
+        </ul>
       </div>
     </>
   );

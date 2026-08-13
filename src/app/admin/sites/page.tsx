@@ -568,30 +568,6 @@ export default async function SitesPage({
                             {inquiry.address || "아파트명 미입력"}
                           </span>
                         )}
-                        {canManage ? (
-                          <InlineInquiryFieldInput
-                            inquiryId={inquiry.id}
-                            field="size_py"
-                            value={inquiry.size_py ?? ""}
-                            placeholder="평수"
-                            className="w-9 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                          />
-                        ) : (
-                          inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
-                        )}
-                        {canManage ? (
-                          <InlineInquiryFieldInput
-                            inquiryId={inquiry.id}
-                            field="floor_plan_type"
-                            value={inquiry.floor_plan_type ?? ""}
-                            placeholder="타입"
-                            className="w-11 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
-                          />
-                        ) : (
-                          inquiry.floor_plan_type && (
-                            <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
-                          )
-                        )}
                         <span className="shrink-0 text-charcoal/20">·</span>
                         {canManage ? (
                           <InlineInquiryFieldInput
@@ -617,8 +593,7 @@ export default async function SitesPage({
                         ) : (
                           <span className="shrink-0">{inquiry.phone ?? "-"}</span>
                         )}
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                        <span className="shrink-0 text-charcoal/20">·</span>
                         {canManage ? (
                           <InlineInquiryFieldInput
                             inquiryId={inquiry.id}
@@ -631,7 +606,34 @@ export default async function SitesPage({
                         ) : (
                           inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
                         )}
-                        <span className="shrink-0 text-charcoal/20">·</span>
+                        <div className="ml-auto flex shrink-0 items-center gap-1">
+                          {canManage ? (
+                            <InlineInquiryFieldInput
+                              inquiryId={inquiry.id}
+                              field="size_py"
+                              value={inquiry.size_py ?? ""}
+                              placeholder="평수"
+                              className="w-9 shrink-0 border-b border-transparent bg-transparent text-right text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                            />
+                          ) : (
+                            inquiry.size_py && <span className="shrink-0 text-charcoal/60">{inquiry.size_py}</span>
+                          )}
+                          {canManage ? (
+                            <InlineInquiryFieldInput
+                              inquiryId={inquiry.id}
+                              field="floor_plan_type"
+                              value={inquiry.floor_plan_type ?? ""}
+                              placeholder="타입"
+                              className="w-11 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-slate-400"
+                            />
+                          ) : (
+                            inquiry.floor_plan_type && (
+                              <span className="shrink-0 text-charcoal/60">{inquiry.floor_plan_type}</span>
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
                         {canManage ? (
                           <InlineInquiryFieldInput
                             inquiryId={inquiry.id}
@@ -667,7 +669,7 @@ export default async function SitesPage({
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-4">
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[100px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -747,7 +749,7 @@ export default async function SitesPage({
               </div>
             </div>
 
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[100px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -827,7 +829,7 @@ export default async function SitesPage({
               </div>
             </div>
 
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[100px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-sky-500" />
@@ -862,7 +864,7 @@ export default async function SitesPage({
               </div>
             </div>
 
-            <div className="flex min-h-[280px] flex-col rounded-sm border border-nude/60 bg-white p-4">
+            <div className="flex min-h-[100px] flex-col rounded-sm border border-nude/60 bg-white p-4">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-charcoal">
                   <span className="h-2 w-2 rounded-full bg-violet-500" />
@@ -1327,7 +1329,8 @@ export default async function SitesPage({
 
           <div className="mt-8">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold text-charcoal">
+              <h2 className="flex items-center gap-1.5 font-serif text-lg font-semibold text-charcoal">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
                 마감된 현장 · {completedOrders?.length ?? 0}
               </h2>
               <div className="flex gap-1 text-xs">
@@ -1346,56 +1349,68 @@ export default async function SitesPage({
               </div>
             </div>
 
-            <div className="mt-3 overflow-x-auto rounded-sm border border-nude/60 bg-white">
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
-                  <tr>
-                    <th className="px-4 py-3">현장</th>
-                    <th className="px-4 py-3">고객</th>
-                    <th className="px-4 py-3">연락처</th>
-                    <th className="px-4 py-3">계약금액</th>
-                    <th className="px-4 py-3">공사기간</th>
-                    <th className="px-4 py-3">담당</th>
-                    <th className="px-4 py-3">A/S</th>
-                    {canManage && <th className="px-4 py-3">상태</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {completedOrders?.map((order) => (
-                    <tr key={order.id} className="border-b border-nude/30 last:border-0">
-                      <td className="px-4 py-3">
-                        <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
+            <div className="mt-3 grid gap-4 lg:grid-cols-3">
+              {completedOrders?.map((order) => {
+                const totalPaid =
+                  (order.payment_contract ?? 0) +
+                  (order.payment_start ?? 0) +
+                  (order.payment_interim1 ?? 0) +
+                  (order.payment_interim2 ?? 0) +
+                  (order.payment_balance ?? 0);
+                return (
+                  <div key={order.id} className="rounded-sm border border-nude/60 bg-white p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/admin/work-orders/${order.id}`}
+                          className="font-serif text-base font-semibold text-charcoal hover:text-orange-600"
+                        >
                           {order.title}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3 text-charcoal/70">
-                        {order.customers?.name ?? order.client_name ?? "-"}
-                      </td>
-                      <td className="px-4 py-3 text-charcoal/70">{order.customers?.phone ?? "-"}</td>
-                      <td className="px-4 py-3 text-charcoal/70">{formatWon(order.contract_amount)}</td>
-                      <td className="px-4 py-3 text-charcoal/70">
+                        <div className="mt-1 flex items-center gap-1 text-xs text-charcoal/60">
+                          <span>{order.customers?.name ?? order.client_name ?? "고객 미지정"}</span>
+                          <span>· {order.customers?.phone ?? "-"}</span>
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        마감
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 items-center gap-y-1.5 text-xs text-charcoal/60">
+                      <span>계약금액</span>
+                      <span className="text-right font-medium text-charcoal">{formatWon(order.contract_amount)}</span>
+
+                      <span>완료금액</span>
+                      <span className="text-right font-medium text-charcoal">{formatWon(totalPaid)}</span>
+
+                      <span>공사기간</span>
+                      <span className="text-right text-charcoal">
                         {formatPeriod(order.work_date, order.work_end_date)}
-                      </td>
-                      <td className="px-4 py-3 text-charcoal/70">{order.profiles?.full_name ?? "-"}</td>
-                      <td className="px-4 py-3 text-charcoal/70">
+                      </span>
+
+                      <span>담당</span>
+                      <span className="text-right text-charcoal">{order.profiles?.full_name ?? "-"}</span>
+
+                      <span>A/S</span>
+                      <span className="text-right text-charcoal">
                         {order.customer_id ? (asCountByCustomer.get(order.customer_id) ?? 0) : 0}건
-                      </td>
-                      {canManage && (
-                        <td className="px-4 py-3">
-                          <SiteStatusSelect id={order.id} status={order.status} />
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                  {(!completedOrders || completedOrders.length === 0) && (
-                    <tr>
-                      <td colSpan={canManage ? 8 : 7} className="px-4 py-6 text-center text-charcoal/50">
-                        마감된 현장이 없습니다.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                      </span>
+                    </div>
+
+                    {canManage && (
+                      <div className="mt-3 border-t border-nude/40 pt-3">
+                        <SiteStatusSelect id={order.id} status={order.status} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {(!completedOrders || completedOrders.length === 0) && (
+                <p className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-nude text-center text-xs text-charcoal/40 lg:col-span-3">
+                  마감된 현장이 없습니다.
+                </p>
+              )}
             </div>
           </div>
         </>
