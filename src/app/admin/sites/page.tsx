@@ -5,7 +5,15 @@ import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
-import { createInquiry, createLeadInquiry, promoteLeadToNew, promoteQuoteToWorkOrder } from "./actions";
+import {
+  createInquiry,
+  createLeadInquiry,
+  promoteContactedToQuote,
+  promoteLeadToNew,
+  promoteNewToContacted,
+  promoteQuoteToWorkOrder,
+  toggleConsultStep,
+} from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
 import ClientNameInput from "@/components/admin/ClientNameInput";
@@ -260,19 +268,19 @@ export default async function SitesPage({
               href={showLeadForm ? "/admin/sites" : "/admin/sites?newLead=1"}
               className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500"
             >
-              + 문의 메모
+              + 문의등록
             </Link>
             <Link
               href={showInquiryForm ? "/admin/sites" : "/admin/sites?newInquiry=1"}
               className="rounded-full bg-sky-500 px-4 py-2 text-xs font-medium text-white hover:bg-sky-600"
             >
-              + 전화문의 등록
+              + 신규등록
             </Link>
             <Link
               href={showCreateForm ? "/admin/sites" : "/admin/sites?new=1"}
               className="rounded-full bg-charcoal px-4 py-2 text-xs font-medium text-cream hover:bg-charcoal/80"
             >
-              + 현장 직접 등록
+              + 계약등록
             </Link>
             <Link
               href={showCancelled ? "/admin/sites" : "/admin/sites?view=cancelled"}
@@ -333,7 +341,7 @@ export default async function SitesPage({
             type="submit"
             className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500 lg:col-span-4 lg:w-fit"
           >
-            문의 기록
+            문의 등록
           </button>
         </form>
       )}
@@ -398,7 +406,7 @@ export default async function SitesPage({
             type="submit"
             className="self-start rounded-full bg-sky-500 px-6 py-2 text-sm font-medium text-white hover:bg-sky-600 lg:col-span-4"
           >
-            전화문의 등록
+            신규 등록
           </button>
         </form>
       )}
@@ -408,7 +416,7 @@ export default async function SitesPage({
           action={createWorkOrder}
           className="mt-6 grid gap-3 rounded-sm border border-nude/60 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4"
         >
-          <input type="hidden" name="status" value="in_progress" />
+          <input type="hidden" name="status" value="pending" />
           <input
             name="title"
             required
@@ -476,7 +484,7 @@ export default async function SitesPage({
             type="submit"
             className="self-start rounded-full bg-orange-300 px-6 py-2 text-sm font-medium text-orange-900 hover:bg-orange-400 lg:col-span-4"
           >
-            현장 등록
+            계약 등록
           </button>
         </form>
       )}
@@ -739,6 +747,16 @@ export default async function SitesPage({
                         </>
                       )}
                     </div>
+                    {canManage && (
+                      <form action={promoteNewToContacted.bind(null, inquiry.id)} className="mt-1.5">
+                        <button
+                          type="submit"
+                          className="w-full rounded-sm bg-amber-100 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200"
+                        >
+                          상담 전환 →
+                        </button>
+                      </form>
+                    )}
                   </div>
                 ))}
                 {(!newInquiries || newInquiries.length === 0) && (
@@ -819,6 +837,44 @@ export default async function SitesPage({
                         </>
                       )}
                     </div>
+                    {canManage && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <form action={toggleConsultStep.bind(null, inquiry.id, 1)}>
+                          <button
+                            type="submit"
+                            className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
+                              inquiry.consulted_1
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-stone-100 text-charcoal/50"
+                            }`}
+                          >
+                            1차 상담{inquiry.consulted_1 && " ✓"}
+                          </button>
+                        </form>
+                        <form action={toggleConsultStep.bind(null, inquiry.id, 2)}>
+                          <button
+                            type="submit"
+                            className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
+                              inquiry.consulted_2
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-stone-100 text-charcoal/50"
+                            }`}
+                          >
+                            2차 상담{inquiry.consulted_2 && " ✓"}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                    {canManage && (
+                      <form action={promoteContactedToQuote.bind(null, inquiry.id)} className="mt-1.5">
+                        <button
+                          type="submit"
+                          className="w-full rounded-sm bg-sky-100 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-200"
+                        >
+                          견적 전환 →
+                        </button>
+                      </form>
+                    )}
                   </div>
                 ))}
                 {(!contactedInquiries || contactedInquiries.length === 0) && (

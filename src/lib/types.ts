@@ -180,7 +180,7 @@ export type Category = {
   created_at: string;
 };
 
-export type InquiryStatus = "lead" | "new" | "contacted" | "closed";
+export type InquiryStatus = "lead" | "new" | "contacted" | "quoted" | "closed";
 export type Inquiry = {
   id: string;
   name: string;
@@ -203,6 +203,8 @@ export type Inquiry = {
   floor_plan_url: string | null;
   reference_url: string | null;
   portfolio_url: string | null;
+  consulted_1: boolean;
+  consulted_2: boolean;
   created_at: string;
 };
 

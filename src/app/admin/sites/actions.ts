@@ -62,6 +62,53 @@ export async function promoteLeadToNew(inquiryId: string) {
   revalidatePath("/admin/analytics");
 }
 
+export async function promoteNewToContacted(inquiryId: string) {
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+}
+
+export async function toggleConsultStep(inquiryId: string, step: 1 | 2) {
+  const supabase = await createClient();
+  const field = step === 1 ? "consulted_1" : "consulted_2";
+  const { data: inquiry } = await supabase.from("inquiries").select(field).eq("id", inquiryId).single();
+  if (!inquiry) return;
+
+  await supabase
+    .from("inquiries")
+    .update({ [field]: !inquiry[field as keyof typeof inquiry] })
+    .eq("id", inquiryId);
+
+  revalidatePath("/admin/sites");
+}
+
+export async function promoteContactedToQuote(inquiryId: string) {
+  const supabase = await createClient();
+  const { data: inquiry } = await supabase.from("inquiries").select("*").eq("id", inquiryId).single();
+  if (!inquiry) return;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  await supabase.from("quotes").insert({
+    title: inquiry.address || inquiry.name,
+    amount: null,
+    status: "sent",
+    memo: [inquiry.name, inquiry.phone, inquiry.message].filter(Boolean).join(" · ") || null,
+    created_by: user?.id,
+  });
+
+  await supabase.from("inquiries").update({ status: "quoted" }).eq("id", inquiryId);
+
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+}
+
 export async function updateInquiryField(
   inquiryId: string,
   field: "name" | "address" | "size_py" | "floor_plan_type" | "phone" | "budget" | "message",

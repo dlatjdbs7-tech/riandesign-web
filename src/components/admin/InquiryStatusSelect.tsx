@@ -8,6 +8,7 @@ const STATUS_LABEL: Record<InquiryStatus, string> = {
   lead: "문의",
   new: "신규",
   contacted: "연락완료",
+  quoted: "견적발송",
   closed: "종결",
 };
 
