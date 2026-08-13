@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
+function revalidatePipeline() {
+  revalidatePath("/admin/sites");
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/analytics");
+}
+
 export async function createInquiry(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim() || "미정";
   const phone = String(formData.get("phone") ?? "").trim();
@@ -22,9 +28,7 @@ export async function createInquiry(formData: FormData) {
     ...(inquiryDate ? { created_at: new Date(`${inquiryDate}T12:00:00+09:00`).toISOString() } : {}),
   });
 
-  revalidatePath("/admin/sites");
-  revalidatePath("/admin/inquiries");
-  revalidatePath("/admin/analytics");
+  revalidatePipeline();
   redirect("/admin/sites");
 }
 
@@ -43,28 +47,32 @@ export async function createLeadInquiry(formData: FormData) {
     status: "lead",
   });
 
-  revalidatePath("/admin/sites");
-  revalidatePath("/admin/inquiries");
-  revalidatePath("/admin/analytics");
+  revalidatePipeline();
   redirect("/admin/sites");
 }
 
 export async function promoteLeadToNew(inquiryId: string) {
   const supabase = await createClient();
   await supabase.from("inquiries").update({ status: "new" }).eq("id", inquiryId);
+  revalidatePipeline();
+}
 
-  revalidatePath("/admin/sites");
-  revalidatePath("/admin/inquiries");
-  revalidatePath("/admin/analytics");
+export async function revertNewToLead(inquiryId: string) {
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status: "lead" }).eq("id", inquiryId);
+  revalidatePipeline();
 }
 
 export async function promoteNewToContacted(inquiryId: string) {
   const supabase = await createClient();
   await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+  revalidatePipeline();
+}
 
-  revalidatePath("/admin/sites");
-  revalidatePath("/admin/inquiries");
-  revalidatePath("/admin/analytics");
+export async function revertContactedToNew(inquiryId: string) {
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status: "new" }).eq("id", inquiryId);
+  revalidatePipeline();
 }
 
 export async function toggleConsultStep(inquiryId: string, step: 1 | 2) {
@@ -81,6 +89,27 @@ export async function toggleConsultStep(inquiryId: string, step: 1 | 2) {
   revalidatePath("/admin/sites");
 }
 
+function buildQuoteMemo(inquiry: {
+  address: string | null;
+  size_py: string | null;
+  floor_plan_type: string | null;
+  name: string;
+  phone: string | null;
+  budget: string | null;
+  message: string | null;
+}) {
+  const lines = [
+    inquiry.address && `아파트: ${inquiry.address}`,
+    (inquiry.size_py || inquiry.floor_plan_type) &&
+      `평형: ${[inquiry.size_py, inquiry.floor_plan_type].filter(Boolean).join(" ")}`,
+    `성함: ${inquiry.name}`,
+    inquiry.phone && `연락처: ${inquiry.phone}`,
+    inquiry.budget && `예산: ${inquiry.budget}`,
+    inquiry.message && `상담내용: ${inquiry.message}`,
+  ].filter(Boolean);
+  return lines.join("\n") || null;
+}
+
 export async function promoteContactedToQuote(inquiryId: string) {
   const supabase = await createClient();
   const { data: inquiry } = await supabase.from("inquiries").select("*").eq("id", inquiryId).single();
@@ -92,17 +121,23 @@ export async function promoteContactedToQuote(inquiryId: string) {
 
   await supabase.from("quotes").insert({
     title: inquiry.address || inquiry.name,
+    inquiry_id: inquiry.id,
     amount: null,
     status: "sent",
-    memo: [inquiry.name, inquiry.phone, inquiry.message].filter(Boolean).join(" · ") || null,
+    memo: buildQuoteMemo(inquiry),
     created_by: user?.id,
   });
 
   await supabase.from("inquiries").update({ status: "quoted" }).eq("id", inquiryId);
 
-  revalidatePath("/admin/sites");
-  revalidatePath("/admin/inquiries");
-  revalidatePath("/admin/analytics");
+  revalidatePipeline();
+}
+
+export async function revertQuoteToContacted(quoteId: string, inquiryId: string) {
+  const supabase = await createClient();
+  await supabase.from("quotes").delete().eq("id", quoteId);
+  await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+  revalidatePipeline();
 }
 
 export async function updateInquiryField(
@@ -124,6 +159,15 @@ export async function updateInquiryField(
   revalidatePath("/admin/inquiries");
 }
 
+export async function updateQuoteMemo(quoteId: string, memo: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("quotes")
+    .update({ memo: memo.trim() || null })
+    .eq("id", quoteId);
+  revalidatePath("/admin/sites");
+}
+
 export async function promoteQuoteToWorkOrder(quoteId: string) {
   const supabase = await createClient();
   const {
@@ -143,11 +187,21 @@ export async function promoteQuoteToWorkOrder(quoteId: string) {
   await supabase.from("work_orders").insert({
     title: quote.title,
     customer_id: quote.customer_id,
+    quote_id: quote.id,
     contract_amount: quote.amount,
+    schedule_notes: quote.memo,
     status: "pending",
     created_by: user?.id,
   });
 
-  revalidatePath("/admin/sites");
+  revalidatePipeline();
+  revalidatePath("/admin/quotes");
+}
+
+export async function revertWorkOrderToQuote(workOrderId: string, quoteId: string) {
+  const supabase = await createClient();
+  await supabase.from("work_orders").delete().eq("id", workOrderId);
+  await supabase.from("quotes").update({ status: "sent" }).eq("id", quoteId);
+  revalidatePipeline();
   revalidatePath("/admin/quotes");
 }

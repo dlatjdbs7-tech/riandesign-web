@@ -4,7 +4,7 @@ import type { AsRequest, Customer, Inquiry, Profile, Quote, WorkOrder, WorkOrder
 import { getKSTDateBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
-import { createWorkOrder, updateWorkOrderStatus } from "../work-orders/actions";
+import { createWorkOrder, updateWorkOrderScheduleNotes, updateWorkOrderStatus } from "../work-orders/actions";
 import {
   createInquiry,
   createLeadInquiry,
@@ -12,10 +12,16 @@ import {
   promoteLeadToNew,
   promoteNewToContacted,
   promoteQuoteToWorkOrder,
+  revertContactedToNew,
+  revertNewToLead,
+  revertQuoteToContacted,
+  revertWorkOrderToQuote,
   toggleConsultStep,
+  updateQuoteMemo,
 } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
 import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
+import InlineActionInput from "@/components/admin/InlineActionInput";
 import ClientNameInput from "@/components/admin/ClientNameInput";
 import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
@@ -738,22 +744,65 @@ export default async function SitesPage({
                       <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
                         {inquiry.name}
                       </Link>
-                      {inquiry.message && (
-                        <>
-                          <span className="shrink-0 text-charcoal/20">·</span>
-                          <span className="truncate">{inquiry.message}</span>
-                        </>
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="phone"
+                          value={inquiry.phone ?? ""}
+                          placeholder="연락처"
+                          format="phone"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate">{inquiry.phone ?? "-"}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="budget"
+                          value={inquiry.budget ?? ""}
+                          placeholder="예산"
+                          format="number"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
+                      )}
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="message"
+                          value={inquiry.message ?? ""}
+                          placeholder="메모"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
                       )}
                     </div>
                     {canManage && (
-                      <form action={promoteNewToContacted.bind(null, inquiry.id)} className="mt-1.5">
-                        <button
-                          type="submit"
-                          className="w-full rounded-sm bg-amber-100 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-200"
-                        >
-                          상담 전환 →
-                        </button>
-                      </form>
+                      <div className="mt-1.5 flex gap-1.5">
+                        <form action={revertNewToLead.bind(null, inquiry.id)} className="w-14 shrink-0">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200"
+                          >
+                            ← 되돌리기
+                          </button>
+                        </form>
+                        <form action={promoteNewToContacted.bind(null, inquiry.id)} className="flex-1">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-amber-100 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-200"
+                          >
+                            상담 전환 →
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -828,11 +877,44 @@ export default async function SitesPage({
                       <Link href="/admin/inquiries" className="shrink-0 font-medium text-charcoal hover:underline">
                         {inquiry.name}
                       </Link>
-                      {inquiry.message && (
-                        <>
-                          <span className="shrink-0 text-charcoal/20">·</span>
-                          <span className="truncate">{inquiry.message}</span>
-                        </>
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="phone"
+                          value={inquiry.phone ?? ""}
+                          placeholder="연락처"
+                          format="phone"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        <span className="min-w-0 flex-1 truncate">{inquiry.phone ?? "-"}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="budget"
+                          value={inquiry.budget ?? ""}
+                          placeholder="예산"
+                          format="number"
+                          className="w-12 shrink-0 border-b border-transparent bg-transparent text-charcoal/60 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
+                      )}
+                      <span className="shrink-0 text-charcoal/20">·</span>
+                      {canManage ? (
+                        <InlineInquiryFieldInput
+                          inquiryId={inquiry.id}
+                          field="message"
+                          value={inquiry.message ?? ""}
+                          placeholder="메모"
+                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
+                        />
+                      ) : (
+                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
                       )}
                     </div>
                     {canManage && (
@@ -864,14 +946,24 @@ export default async function SitesPage({
                       </div>
                     )}
                     {canManage && (
-                      <form action={promoteContactedToQuote.bind(null, inquiry.id)} className="mt-1.5">
-                        <button
-                          type="submit"
-                          className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
-                        >
-                          견적 전환 →
-                        </button>
-                      </form>
+                      <div className="mt-1.5 flex gap-1.5">
+                        <form action={revertContactedToNew.bind(null, inquiry.id)} className="w-14 shrink-0">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200"
+                          >
+                            ← 되돌리기
+                          </button>
+                        </form>
+                        <form action={promoteContactedToQuote.bind(null, inquiry.id)} className="flex-1">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
+                          >
+                            견적 전환 →
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -898,15 +990,46 @@ export default async function SitesPage({
                     <p className="mt-1 text-xs text-charcoal/50">
                       {quote.customers?.phone ?? "-"} · {formatWon(quote.amount)}
                     </p>
+                    {canManage ? (
+                      <InlineActionInput
+                        id={quote.id}
+                        value={quote.memo ?? ""}
+                        placeholder="메모 (전달할 내용을 적어두세요)"
+                        action={updateQuoteMemo}
+                        multiline
+                        rows={3}
+                        className="mt-2 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-2 text-xs text-charcoal/70 outline-none focus:border-sky-400"
+                      />
+                    ) : (
+                      quote.memo && (
+                        <p className="mt-2 whitespace-pre-wrap rounded-sm bg-beige/20 p-2 text-xs text-charcoal/60">
+                          {quote.memo}
+                        </p>
+                      )
+                    )}
                     {canManage && (
-                      <form action={promoteQuoteToWorkOrder.bind(null, quote.id)} className="mt-2">
-                        <button
-                          type="submit"
-                          className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
+                      <div className="mt-2 flex gap-1.5">
+                        <form
+                          action={revertQuoteToContacted.bind(null, quote.id, quote.inquiry_id ?? "")}
+                          className="w-14 shrink-0"
                         >
-                          계약 진행 →
-                        </button>
-                      </form>
+                          <button
+                            type="submit"
+                            disabled={!quote.inquiry_id}
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200 disabled:opacity-40"
+                          >
+                            ← 되돌리기
+                          </button>
+                        </form>
+                        <form action={promoteQuoteToWorkOrder.bind(null, quote.id)} className="flex-1">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
+                          >
+                            계약 진행 →
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -933,15 +1056,46 @@ export default async function SitesPage({
                     <p className="mt-1 text-xs text-charcoal/50">
                       {order.customers?.phone ?? "-"} · {formatWon(order.contract_amount)}
                     </p>
+                    {canManage ? (
+                      <InlineActionInput
+                        id={order.id}
+                        value={order.schedule_notes ?? ""}
+                        placeholder="메모 (전달할 내용을 적어두세요)"
+                        action={updateWorkOrderScheduleNotes}
+                        multiline
+                        rows={3}
+                        className="mt-2 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-2 text-xs text-charcoal/70 outline-none focus:border-violet-400"
+                      />
+                    ) : (
+                      order.schedule_notes && (
+                        <p className="mt-2 whitespace-pre-wrap rounded-sm bg-beige/20 p-2 text-xs text-charcoal/60">
+                          {order.schedule_notes}
+                        </p>
+                      )
+                    )}
                     {canManage && (
-                      <form action={updateWorkOrderStatus.bind(null, order.id, "in_progress")} className="mt-2">
-                        <button
-                          type="submit"
-                          className="w-full rounded-sm bg-violet-100 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200"
+                      <div className="mt-2 flex gap-1.5">
+                        <form
+                          action={revertWorkOrderToQuote.bind(null, order.id, order.quote_id ?? "")}
+                          className="w-14 shrink-0"
                         >
-                          진행중 전환 →
-                        </button>
-                      </form>
+                          <button
+                            type="submit"
+                            disabled={!order.quote_id}
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200 disabled:opacity-40"
+                          >
+                            ← 되돌리기
+                          </button>
+                        </form>
+                        <form action={updateWorkOrderStatus.bind(null, order.id, "in_progress")} className="flex-1">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-violet-100 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200"
+                          >
+                            진행중 전환 →
+                          </button>
+                        </form>
+                      </div>
                     )}
                   </div>
                 ))}

@@ -57,6 +57,7 @@ export type WorkOrder = {
   client_name: string | null;
   site_address: string | null;
   customer_id: string | null;
+  quote_id: string | null;
   work_date: string | null;
   work_end_date: string | null;
   description: string | null;
@@ -110,6 +111,7 @@ export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected";
 export type Quote = {
   id: string;
   customer_id: string | null;
+  inquiry_id: string | null;
   title: string;
   amount: number | null;
   status: QuoteStatus;

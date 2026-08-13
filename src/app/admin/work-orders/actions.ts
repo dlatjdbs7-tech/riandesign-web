@@ -116,6 +116,10 @@ export async function updateWorkOrderField(
   revalidatePath(`/admin/work-orders/${id}`);
 }
 
+export async function updateWorkOrderScheduleNotes(id: string, value: string) {
+  await updateWorkOrderField(id, "schedule_notes", value);
+}
+
 export async function updateWorkOrderProgress(id: string, formData: FormData) {
   const percent = Math.max(0, Math.min(100, Number(formData.get("progress_percent")) || 0));
   const supabase = await createClient();
