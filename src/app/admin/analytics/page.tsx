@@ -60,7 +60,7 @@ export default async function AnalyticsPage({
   const periodStart = new Date(now);
   if (period === "1m") periodStart.setDate(periodStart.getDate() - 29);
   else if (period === "6m") periodStart.setMonth(periodStart.getMonth() - 5, 1);
-  else periodStart.setMonth(periodStart.getMonth() - 11, 1);
+  else periodStart.setMonth(0, 1); // 1년 보기는 롤링 12개월이 아니라 올해 1월~12월 달력 기준
   periodStart.setHours(0, 0, 0, 0);
 
   const [{ data: inquiries }, { data: quotes }] = await Promise.all([
@@ -178,7 +178,7 @@ export default async function AnalyticsPage({
             </span>
           </span>
         </div>
-        <div className="mt-5 flex flex-col gap-3">
+        <div className="mt-5 flex flex-col gap-2">
           {funnel.map((stage, index) => {
             const prev = index > 0 ? funnel[index - 1].count : null;
             const pctOfFirst = funnel[0].count > 0 ? Math.round((stage.count / funnel[0].count) * 100) : 0;
@@ -187,9 +187,9 @@ export default async function AnalyticsPage({
             return (
               <div key={stage.key} className="flex items-center gap-3">
                 <span className="w-16 shrink-0 text-xs text-charcoal/70">{stage.label}</span>
-                <div className="h-7 flex-1 rounded-sm bg-stone-100">
+                <div className="h-5 flex-1 rounded-sm bg-stone-100">
                   <div
-                    className="flex h-7 items-center rounded-sm px-2.5 text-xs font-semibold text-white"
+                    className="flex h-5 items-center rounded-sm px-2 text-[11px] font-semibold text-white"
                     style={{ width: `${widthPct}%`, backgroundColor: stage.color }}
                   >
                     {stage.count}
@@ -207,16 +207,16 @@ export default async function AnalyticsPage({
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div className="rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">문의 상태별 분포</h2>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-2">
             {statusOrder.map((status, index) => {
               const count = statusCounts[status];
               const pct = totalInquiries > 0 ? Math.round((count / totalInquiries) * 100) : 0;
               return (
                 <div key={status} className="flex items-center gap-3">
                   <span className="w-16 shrink-0 text-xs text-charcoal/60">{STATUS_LABEL[status]}</span>
-                  <div className="h-4 flex-1 rounded-sm bg-stone-100">
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
                     <div
-                      className="h-4 rounded-sm"
+                      className="h-3 rounded-sm"
                       style={{ width: `${pct}%`, backgroundColor: ORDINAL_RAMP[index] }}
                     />
                   </div>
@@ -234,14 +234,14 @@ export default async function AnalyticsPage({
 
         <div className="rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">유입경로</h2>
-          <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-2">
             {referralList.slice(0, 6).map(([source, count]) => {
               const pct = Math.round((count / maxReferralCount) * 100);
               return (
                 <div key={source} className="flex items-center gap-3">
                   <span className="w-20 shrink-0 truncate text-xs text-charcoal/60">{source}</span>
-                  <div className="h-4 flex-1 rounded-sm bg-stone-100">
-                    <div className="h-4 rounded-sm bg-sky-600" style={{ width: `${pct}%` }} />
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
+                    <div className="h-3 rounded-sm bg-sky-600" style={{ width: `${pct}%` }} />
                   </div>
                   <span className="w-10 shrink-0 text-right text-xs text-charcoal/60">{count}건</span>
                 </div>
