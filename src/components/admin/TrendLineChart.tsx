@@ -24,10 +24,10 @@ export default function TrendLineChart({
   const gradientId = useId();
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  const width = 800;
-  const height = 200;
-  const padTop = 12;
-  const padBottom = 28;
+  const width = 1000;
+  const height = 130;
+  const padTop = 22;
+  const padBottom = 24;
   const padLeft = 4;
   const padRight = 4;
   const plotW = width - padLeft - padRight;
@@ -52,7 +52,19 @@ export default function TrendLineChart({
   const gridValues = [0, 0.5, 1].map((f) => Math.round(maxValue * f));
 
   const hovered = hoverIndex !== null ? coords[hoverIndex] : null;
-  const last = coords[coords.length - 1];
+
+  // 봉우리(직전/직후보다 높거나 같은 값)에만 값을 직접 표시한다 — 점마다 라벨을 달면 읽히지 않는다.
+  const peakIndices = new Set(
+    coords
+      .map((c, i) => {
+        if (c.value <= 0) return -1;
+        const prev = i > 0 ? coords[i - 1].value : -Infinity;
+        const next = i < coords.length - 1 ? coords[i + 1].value : -Infinity;
+        const isPeak = c.value >= prev && c.value >= next && (c.value > prev || c.value > next);
+        return isPeak ? i : -1;
+      })
+      .filter((i) => i >= 0)
+  );
 
   function handleMove(event: React.PointerEvent<SVGRectElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -97,25 +109,29 @@ export default function TrendLineChart({
         <path d={areaPath} fill={`url(#${gradientId})`} />
         <path d={linePath} fill="none" stroke="#ea580c" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
 
-        {last && (
-          <>
-            <circle cx={last.x} cy={last.y} r={4} fill="#ea580c" stroke="#fff" strokeWidth={2} />
-            <text
-              x={Math.min(last.x, width - 30)}
-              y={last.y - 10}
-              fontSize={11}
-              fontWeight={600}
-              fill="#c2410c"
-              textAnchor="end"
-            >
-              {last.value}
-            </text>
-          </>
-        )}
+        {coords.map((c, i) => {
+          const isLast = i === coords.length - 1;
+          if (!isLast && !peakIndices.has(i)) return null;
+          return (
+            <g key={c.key}>
+              <circle cx={c.x} cy={c.y} r={isLast ? 4 : 3} fill="#ea580c" stroke="#fff" strokeWidth={2} />
+              <text
+                x={Math.min(Math.max(c.x, 14), width - 14)}
+                y={Math.max(c.y - 8, 11)}
+                fontSize={10}
+                fontWeight={isLast ? 600 : 500}
+                fill={isLast ? "#c2410c" : "#9a5b3a"}
+                textAnchor="middle"
+              >
+                {c.value}
+              </text>
+            </g>
+          );
+        })}
 
         {coords.map((c, i) =>
           labelEvery === 1 || i % labelEvery === 0 || i === coords.length - 1 ? (
-            <text key={c.key} x={c.x} y={height - 8} fontSize={9} fill="#a8a29e" textAnchor="middle">
+            <text key={c.key} x={c.x} y={height - 6} fontSize={9} fill="#a8a29e" textAnchor="middle">
               {c.label}
             </text>
           ) : null

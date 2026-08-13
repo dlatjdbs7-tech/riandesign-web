@@ -656,7 +656,7 @@ export default async function SitesPage({
                         <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
                           <button
                             type="submit"
-                            className="w-full rounded-sm bg-rose-100 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-200"
+                            className="w-full rounded-sm bg-rose-100 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-200"
                           >
                             신규 전환 →
                           </button>
@@ -749,7 +749,7 @@ export default async function SitesPage({
                       <form action={promoteNewToContacted.bind(null, inquiry.id)} className="mt-1.5">
                         <button
                           type="submit"
-                          className="w-full rounded-sm bg-amber-100 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200"
+                          className="w-full rounded-sm bg-amber-100 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-200"
                         >
                           상담 전환 →
                         </button>
@@ -867,7 +867,7 @@ export default async function SitesPage({
                       <form action={promoteContactedToQuote.bind(null, inquiry.id)} className="mt-1.5">
                         <button
                           type="submit"
-                          className="w-full rounded-sm bg-sky-100 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-200"
+                          className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
                         >
                           견적 전환 →
                         </button>
@@ -902,7 +902,7 @@ export default async function SitesPage({
                       <form action={promoteQuoteToWorkOrder.bind(null, quote.id)} className="mt-2">
                         <button
                           type="submit"
-                          className="w-full rounded-sm bg-sky-100 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-200"
+                          className="w-full rounded-sm bg-sky-100 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-200"
                         >
                           계약 진행 →
                         </button>
@@ -937,7 +937,7 @@ export default async function SitesPage({
                       <form action={updateWorkOrderStatus.bind(null, order.id, "in_progress")} className="mt-2">
                         <button
                           type="submit"
-                          className="w-full rounded-sm bg-violet-100 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-200"
+                          className="w-full rounded-sm bg-violet-100 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200"
                         >
                           진행중 전환 →
                         </button>
