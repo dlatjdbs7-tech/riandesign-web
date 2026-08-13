@@ -318,8 +318,7 @@ export default async function SitesPage({
           />
           <input
             name="name"
-            required
-            placeholder="이름"
+            placeholder="성함 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
           <FormattedPhoneInput
@@ -353,8 +352,7 @@ export default async function SitesPage({
         >
           <input
             name="name"
-            required
-            placeholder="이름"
+            placeholder="성함 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-sky-500"
           />
           <FormattedPhoneInput
@@ -436,7 +434,7 @@ export default async function SitesPage({
           </select>
           <input
             name="client_name"
-            placeholder="고객명 (등록 고객이 없을 때만 입력)"
+            placeholder="성함 (선택, 등록 고객이 없을 때만 입력)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-orange-400"
           />
           <input

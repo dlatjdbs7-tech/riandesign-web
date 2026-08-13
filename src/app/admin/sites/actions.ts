@@ -5,9 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 export async function createInquiry(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
+  const name = String(formData.get("name") ?? "").trim() || "미정";
   const phone = String(formData.get("phone") ?? "").trim();
   const inquiryDate = String(formData.get("inquiry_date") ?? "").trim();
 
@@ -31,9 +29,7 @@ export async function createInquiry(formData: FormData) {
 }
 
 export async function createLeadInquiry(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
+  const name = String(formData.get("name") ?? "").trim() || "미정";
   const phone = String(formData.get("phone") ?? "").trim();
   const supabase = await createClient();
   await supabase.from("inquiries").insert({
