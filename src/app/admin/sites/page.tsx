@@ -17,6 +17,7 @@ import {
   revertQuoteToContacted,
   revertWorkOrderToQuote,
   toggleConsultStep,
+  updateInquiryMessage,
   updateQuoteMemo,
 } from "./actions";
 import SiteStatusSelect from "@/components/admin/SiteStatusSelect";
@@ -645,19 +646,23 @@ export default async function SitesPage({
                           )}
                         </div>
                       </div>
-                      <div className="mt-1 flex items-center gap-1.5 overflow-hidden text-charcoal/40">
-                        {canManage ? (
-                          <InlineInquiryFieldInput
-                            inquiryId={inquiry.id}
-                            field="message"
-                            value={inquiry.message ?? ""}
-                            placeholder="문의 내용"
-                            className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-slate-400"
-                          />
-                        ) : (
-                          inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
-                        )}
-                      </div>
+                      {canManage ? (
+                        <InlineActionInput
+                          id={inquiry.id}
+                          value={inquiry.message ?? ""}
+                          placeholder="문의 내용을 적어두세요"
+                          action={updateInquiryMessage}
+                          multiline
+                          rows={2}
+                          className="mt-1 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-1.5 text-[11px] text-charcoal/70 outline-none focus:border-slate-400"
+                        />
+                      ) : (
+                        inquiry.message && (
+                          <p className="mt-1 whitespace-pre-wrap rounded-sm bg-beige/20 p-1.5 text-[11px] text-charcoal/60">
+                            {inquiry.message}
+                          </p>
+                        )
+                      )}
                       {canManage && (
                         <form action={promoteLeadToNew.bind(null, inquiry.id)} className="mt-1.5">
                           <button
@@ -771,19 +776,24 @@ export default async function SitesPage({
                       ) : (
                         inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
                       )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="message"
-                          value={inquiry.message ?? ""}
-                          placeholder="메모"
-                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
-                      )}
                     </div>
+                    {canManage ? (
+                      <InlineActionInput
+                        id={inquiry.id}
+                        value={inquiry.message ?? ""}
+                        placeholder="메모 (전달할 내용을 적어두세요)"
+                        action={updateInquiryMessage}
+                        multiline
+                        rows={2}
+                        className="mt-1.5 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-1.5 text-[11px] text-charcoal/70 outline-none focus:border-orange-400"
+                      />
+                    ) : (
+                      inquiry.message && (
+                        <p className="mt-1.5 whitespace-pre-wrap rounded-sm bg-beige/20 p-1.5 text-[11px] text-charcoal/60">
+                          {inquiry.message}
+                        </p>
+                      )
+                    )}
                     {canManage && (
                       <div className="mt-1.5 flex gap-1.5">
                         <form action={revertNewToLead.bind(null, inquiry.id)} className="w-14 shrink-0">
@@ -904,19 +914,24 @@ export default async function SitesPage({
                       ) : (
                         inquiry.budget && <span className="shrink-0 text-charcoal/60">{inquiry.budget}</span>
                       )}
-                      <span className="shrink-0 text-charcoal/20">·</span>
-                      {canManage ? (
-                        <InlineInquiryFieldInput
-                          inquiryId={inquiry.id}
-                          field="message"
-                          value={inquiry.message ?? ""}
-                          placeholder="메모"
-                          className="min-w-0 flex-1 border-b border-transparent bg-transparent text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
-                        />
-                      ) : (
-                        inquiry.message && <span className="min-w-0 flex-1 truncate">{inquiry.message}</span>
-                      )}
                     </div>
+                    {canManage ? (
+                      <InlineActionInput
+                        id={inquiry.id}
+                        value={inquiry.message ?? ""}
+                        placeholder="메모 (전달할 내용을 적어두세요)"
+                        action={updateInquiryMessage}
+                        multiline
+                        rows={2}
+                        className="mt-1.5 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-1.5 text-[11px] text-charcoal/70 outline-none focus:border-orange-400"
+                      />
+                    ) : (
+                      inquiry.message && (
+                        <p className="mt-1.5 whitespace-pre-wrap rounded-sm bg-beige/20 p-1.5 text-[11px] text-charcoal/60">
+                          {inquiry.message}
+                        </p>
+                      )
+                    )}
                     {canManage && (
                       <div className="mt-1.5 flex items-center gap-2">
                         <form action={toggleConsultStep.bind(null, inquiry.id, 1)}>

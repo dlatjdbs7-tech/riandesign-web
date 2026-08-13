@@ -98,16 +98,16 @@ function buildQuoteMemo(inquiry: {
   budget: string | null;
   message: string | null;
 }) {
-  const lines = [
+  const parts = [
     inquiry.address && `아파트: ${inquiry.address}`,
     (inquiry.size_py || inquiry.floor_plan_type) &&
       `평형: ${[inquiry.size_py, inquiry.floor_plan_type].filter(Boolean).join(" ")}`,
     `성함: ${inquiry.name}`,
     inquiry.phone && `연락처: ${inquiry.phone}`,
     inquiry.budget && `예산: ${inquiry.budget}`,
-    inquiry.message && `상담내용: ${inquiry.message}`,
   ].filter(Boolean);
-  return lines.join("\n") || null;
+  const summary = parts.join(" · ");
+  return [summary, inquiry.message && `상담내용: ${inquiry.message}`].filter(Boolean).join("\n") || null;
 }
 
 export async function promoteContactedToQuote(inquiryId: string) {
@@ -173,6 +173,10 @@ export async function updateInquiryField(
 
   revalidatePath("/admin/sites");
   revalidatePath("/admin/inquiries");
+}
+
+export async function updateInquiryMessage(inquiryId: string, value: string) {
+  await updateInquiryField(inquiryId, "message", value);
 }
 
 export async function updateQuoteMemo(quoteId: string, memo: string) {
