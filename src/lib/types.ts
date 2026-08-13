@@ -140,6 +140,9 @@ export type AsRequest = {
   description: string | null;
   status: AsStatus;
   request_date: string;
+  caller_name: string | null;
+  phone: string | null;
+  address: string | null;
   created_at: string;
 };
 

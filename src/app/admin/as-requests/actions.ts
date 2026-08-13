@@ -16,6 +16,9 @@ export async function createAsRequest(formData: FormData) {
   await supabase.from("as_requests").insert({
     title,
     customer_id: String(formData.get("customer_id") ?? "") || null,
+    caller_name: String(formData.get("caller_name") ?? "").trim() || null,
+    phone: String(formData.get("phone") ?? "").trim() || null,
+    address: String(formData.get("address") ?? "").trim() || null,
     description: String(formData.get("description") ?? "").trim() || null,
     request_date:
       String(formData.get("request_date") ?? "") || new Date().toISOString().slice(0, 10),
