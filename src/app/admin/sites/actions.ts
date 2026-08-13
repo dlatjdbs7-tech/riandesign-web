@@ -135,11 +135,24 @@ export async function promoteContactedToQuote(inquiryId: string) {
 
 export async function revertQuoteToContacted(quoteId: string, inquiryId: string) {
   const supabase = await createClient();
-  await supabase.from("quotes").delete().eq("id", quoteId);
-  // 견적등록이 문의 파이프라인을 거치지 않고 직접 등록된 경우 되돌아갈 문의가 없어 견적만 취소한다.
+
   if (inquiryId) {
     await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+  } else {
+    // 견적이 문의 파이프라인을 거치지 않고 직접 등록된 경우, 삭제 전 내용을 새 문의로 복원해 데이터가 사라지지 않게 한다.
+    const { data: quote } = await supabase.from("quotes").select("*").eq("id", quoteId).single();
+    if (quote) {
+      await supabase.from("inquiries").insert({
+        name: "미정",
+        address: quote.title,
+        message: quote.memo,
+        budget: quote.amount ? String(quote.amount) : null,
+        status: "contacted",
+      });
+    }
   }
+
+  await supabase.from("quotes").delete().eq("id", quoteId);
   revalidatePipeline();
 }
 
@@ -203,11 +216,24 @@ export async function promoteQuoteToWorkOrder(quoteId: string) {
 
 export async function revertWorkOrderToQuote(workOrderId: string, quoteId: string) {
   const supabase = await createClient();
-  await supabase.from("work_orders").delete().eq("id", workOrderId);
-  // 계약등록이 견적 파이프라인을 거치지 않고 직접 등록된 경우 되돌아갈 견적이 없어 등록만 취소한다.
+
   if (quoteId) {
     await supabase.from("quotes").update({ status: "sent" }).eq("id", quoteId);
+  } else {
+    // 계약이 견적 파이프라인을 거치지 않고 직접 등록된 경우, 삭제 전 내용을 새 견적으로 복원해 데이터가 사라지지 않게 한다.
+    const { data: order } = await supabase.from("work_orders").select("*").eq("id", workOrderId).single();
+    if (order) {
+      await supabase.from("quotes").insert({
+        title: order.title,
+        customer_id: order.customer_id,
+        amount: order.contract_amount,
+        memo: order.schedule_notes,
+        status: "sent",
+      });
+    }
   }
+
+  await supabase.from("work_orders").delete().eq("id", workOrderId);
   revalidatePipeline();
   revalidatePath("/admin/quotes");
 }
