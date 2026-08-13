@@ -1015,8 +1015,7 @@ export default async function SitesPage({
                         >
                           <button
                             type="submit"
-                            disabled={!quote.inquiry_id}
-                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200 disabled:opacity-40"
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200"
                           >
                             ← 되돌리기
                           </button>
@@ -1081,8 +1080,7 @@ export default async function SitesPage({
                         >
                           <button
                             type="submit"
-                            disabled={!order.quote_id}
-                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200 disabled:opacity-40"
+                            className="w-full rounded-sm bg-stone-100 py-1 text-[11px] font-medium text-charcoal/60 hover:bg-stone-200"
                           >
                             ← 되돌리기
                           </button>

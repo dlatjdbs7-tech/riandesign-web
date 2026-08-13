@@ -136,7 +136,10 @@ export async function promoteContactedToQuote(inquiryId: string) {
 export async function revertQuoteToContacted(quoteId: string, inquiryId: string) {
   const supabase = await createClient();
   await supabase.from("quotes").delete().eq("id", quoteId);
-  await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+  // 견적등록이 문의 파이프라인을 거치지 않고 직접 등록된 경우 되돌아갈 문의가 없어 견적만 취소한다.
+  if (inquiryId) {
+    await supabase.from("inquiries").update({ status: "contacted" }).eq("id", inquiryId);
+  }
   revalidatePipeline();
 }
 
@@ -201,7 +204,10 @@ export async function promoteQuoteToWorkOrder(quoteId: string) {
 export async function revertWorkOrderToQuote(workOrderId: string, quoteId: string) {
   const supabase = await createClient();
   await supabase.from("work_orders").delete().eq("id", workOrderId);
-  await supabase.from("quotes").update({ status: "sent" }).eq("id", quoteId);
+  // 계약등록이 견적 파이프라인을 거치지 않고 직접 등록된 경우 되돌아갈 견적이 없어 등록만 취소한다.
+  if (quoteId) {
+    await supabase.from("quotes").update({ status: "sent" }).eq("id", quoteId);
+  }
   revalidatePipeline();
   revalidatePath("/admin/quotes");
 }
