@@ -1005,9 +1005,13 @@ export default async function SitesPage({
                 {sentQuotes?.map((quote) => (
                   <div key={quote.id} className="rounded-sm border border-nude/40 p-3 text-sm">
                     <p className="font-medium text-charcoal">{quote.customers?.name ?? quote.title}</p>
-                    <p className="mt-1 text-xs text-charcoal/50">
-                      {quote.customers?.phone ?? "-"} · {formatWon(quote.amount)}
-                    </p>
+                    {(quote.customers?.phone || quote.amount !== null) && (
+                      <p className="mt-1 text-xs text-charcoal/50">
+                        {[quote.customers?.phone, quote.amount !== null ? formatWon(quote.amount) : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                     {quote.inquiries &&
                       (() => {
                         const summary = [
@@ -1088,9 +1092,13 @@ export default async function SitesPage({
                 {pendingOrders?.map((order) => (
                   <div key={order.id} className="rounded-sm border border-nude/40 p-3 text-sm">
                     <p className="font-medium text-charcoal">{order.customers?.name ?? order.client_name ?? order.title}</p>
-                    <p className="mt-1 text-xs text-charcoal/50">
-                      {order.customers?.phone ?? "-"} · {formatWon(order.contract_amount)}
-                    </p>
+                    {(order.customers?.phone || order.contract_amount !== null) && (
+                      <p className="mt-1 text-xs text-charcoal/50">
+                        {[order.customers?.phone, order.contract_amount !== null ? formatWon(order.contract_amount) : null]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                     {canManage ? (
                       <InlineActionInput
                         id={order.id}
