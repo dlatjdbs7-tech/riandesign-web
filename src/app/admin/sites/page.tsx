@@ -29,7 +29,10 @@ import InlineFieldInput from "@/components/admin/InlineFieldInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
 import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
 
-type QuoteRow = Quote & { customers: Pick<Customer, "name" | "phone"> | null };
+type QuoteRow = Quote & {
+  customers: Pick<Customer, "name" | "phone"> | null;
+  inquiries: Pick<Inquiry, "address" | "size_py" | "floor_plan_type" | "name" | "phone" | "budget"> | null;
+};
 type SiteRow = WorkOrder & {
   customers: Pick<Customer, "name" | "phone"> | null;
   profiles: Pick<Profile, "full_name"> | null;
@@ -143,7 +146,7 @@ export default async function SitesPage({
       .returns<Inquiry[]>(),
     supabase
       .from("quotes")
-      .select("*, customers(name, phone)")
+      .select("*, customers(name, phone), inquiries(address, size_py, floor_plan_type, name, phone, budget)")
       .eq("status", "sent")
       .order("quote_date", { ascending: false })
       .returns<QuoteRow[]>(),
@@ -1005,6 +1008,24 @@ export default async function SitesPage({
                     <p className="mt-1 text-xs text-charcoal/50">
                       {quote.customers?.phone ?? "-"} · {formatWon(quote.amount)}
                     </p>
+                    {quote.inquiries &&
+                      (() => {
+                        const summary = [
+                          quote.inquiries.address && `아파트: ${quote.inquiries.address}`,
+                          (quote.inquiries.size_py || quote.inquiries.floor_plan_type) &&
+                            `평형: ${[quote.inquiries.size_py, quote.inquiries.floor_plan_type]
+                              .filter(Boolean)
+                              .join(" ")}`,
+                          quote.inquiries.name && `성함: ${quote.inquiries.name}`,
+                          quote.inquiries.phone && `연락처: ${quote.inquiries.phone}`,
+                          quote.inquiries.budget && `예산: ${quote.inquiries.budget}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ");
+                        return (
+                          summary && <p className="mt-1 text-[11px] text-charcoal/50">{summary}</p>
+                        );
+                      })()}
                     {canManage ? (
                       <InlineActionInput
                         id={quote.id}
@@ -1012,8 +1033,8 @@ export default async function SitesPage({
                         placeholder="메모 (전달할 내용을 적어두세요)"
                         action={updateQuoteMemo}
                         multiline
-                        rows={3}
-                        className="mt-2 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-2 text-xs text-charcoal/70 outline-none focus:border-sky-400"
+                        rows={2}
+                        className="mt-2 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-1.5 text-[11px] text-charcoal/70 outline-none focus:border-sky-400"
                       />
                     ) : (
                       quote.memo && (

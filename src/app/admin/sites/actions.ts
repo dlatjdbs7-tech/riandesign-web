@@ -89,27 +89,6 @@ export async function toggleConsultStep(inquiryId: string, step: 1 | 2) {
   revalidatePath("/admin/sites");
 }
 
-function buildQuoteMemo(inquiry: {
-  address: string | null;
-  size_py: string | null;
-  floor_plan_type: string | null;
-  name: string;
-  phone: string | null;
-  budget: string | null;
-  message: string | null;
-}) {
-  const parts = [
-    inquiry.address && `아파트: ${inquiry.address}`,
-    (inquiry.size_py || inquiry.floor_plan_type) &&
-      `평형: ${[inquiry.size_py, inquiry.floor_plan_type].filter(Boolean).join(" ")}`,
-    `성함: ${inquiry.name}`,
-    inquiry.phone && `연락처: ${inquiry.phone}`,
-    inquiry.budget && `예산: ${inquiry.budget}`,
-  ].filter(Boolean);
-  const summary = parts.join(" · ");
-  return [summary, inquiry.message && `상담내용: ${inquiry.message}`].filter(Boolean).join("\n") || null;
-}
-
 export async function promoteContactedToQuote(inquiryId: string) {
   const supabase = await createClient();
   const { data: inquiry } = await supabase.from("inquiries").select("*").eq("id", inquiryId).single();
@@ -119,12 +98,14 @@ export async function promoteContactedToQuote(inquiryId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 아파트/평형/성함/연락처/예산은 연결된 문의(inquiry_id)에서 그대로 조회해 보여주므로,
+  // 메모는 상담 중 남긴 실제 내용만 옮겨서 순수 메모칸으로 비워둔다.
   await supabase.from("quotes").insert({
     title: inquiry.address || inquiry.name,
     inquiry_id: inquiry.id,
     amount: null,
     status: "sent",
-    memo: buildQuoteMemo(inquiry),
+    memo: inquiry.message?.trim() || null,
     created_by: user?.id,
   });
 
