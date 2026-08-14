@@ -131,7 +131,14 @@ export default function TrendLineChart({
 
         {coords.map((c, i) =>
           labelEvery === 1 || i % labelEvery === 0 || i === coords.length - 1 ? (
-            <text key={c.key} x={c.x} y={height - 6} fontSize={9} fill="#a8a29e" textAnchor="middle">
+            <text
+              key={c.key}
+              x={Math.min(Math.max(c.x, 14), width - 14)}
+              y={height - 6}
+              fontSize={9}
+              fill="#a8a29e"
+              textAnchor="middle"
+            >
               {c.label}
             </text>
           ) : null
