@@ -92,6 +92,7 @@ export type WorkLog = {
   work_order_id: string | null;
   author_id: string;
   log_date: string;
+  week_start_date: string | null;
   content: string;
   created_at: string;
 };

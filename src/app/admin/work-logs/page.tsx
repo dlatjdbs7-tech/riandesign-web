@@ -1,80 +1,113 @@
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { Profile, WorkLog, WorkOrder } from "@/lib/types";
-import { formatKST } from "@/lib/date";
-import { addWorkLog } from "@/app/admin/work-orders/actions";
+import type { Profile, WorkLog } from "@/lib/types";
+import { formatKST, getKSTWeekBounds } from "@/lib/date";
+import { upsertWeeklyWorkLog } from "./actions";
 
-type WorkLogRow = WorkLog & {
-  profiles: Pick<Profile, "full_name" | "department"> | null;
-  work_orders: Pick<WorkOrder, "id" | "title"> | null;
-};
+type WeeklyLogRow = WorkLog & { profiles: Pick<Profile, "full_name" | "department"> | null };
+
+function formatWeekRange(weekStartDate: string) {
+  const start = new Date(`${weekStartDate}T00:00:00Z`);
+  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+  return `${fmt(start)} ~ ${fmt(end)}`;
+}
 
 export default async function WorkLogsPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: me } = await supabase.from("profiles").select("*").eq("id", user!.id).single<Profile>();
+  const canManage = me?.role === "owner" || me?.role === "manager";
 
-  const { data: logs } = await supabase
-    .from("work_logs")
-    .select("*, profiles(full_name, department), work_orders(id, title)")
-    .order("log_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(50)
-    .returns<WorkLogRow[]>();
+  const { weekStartDate } = getKSTWeekBounds();
+
+  const [{ data: myWeekLog }, { data: logs }] = await Promise.all([
+    supabase
+      .from("work_logs")
+      .select("content")
+      .eq("author_id", user!.id)
+      .eq("week_start_date", weekStartDate)
+      .maybeSingle<Pick<WorkLog, "content">>(),
+    supabase
+      .from("work_logs")
+      .select("*, profiles(full_name, department)")
+      .not("week_start_date", "is", null)
+      .order("week_start_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .returns<WeeklyLogRow[]>(),
+  ]);
 
   return (
     <div>
       <h1 className="font-serif text-2xl font-semibold text-charcoal">업무일지</h1>
       <p className="mt-2 text-sm text-charcoal/60">
-        특정 작업지시서와 관련 없는 일반 업무 내용은 여기에 기록합니다.
+        한 주간 진행한 업무를 정리해서 대표에게 보고합니다. 한 주에 한 건씩 작성하며, 다시 제출하면 이번 주 내용이
+        수정됩니다.
       </p>
 
       <form
-        action={addWorkLog.bind(null, null)}
+        action={upsertWeeklyWorkLog.bind(null, weekStartDate)}
         className="mt-6 flex flex-col gap-3 rounded-sm border border-nude/60 bg-white p-4"
       >
-        <input
-          name="log_date"
-          type="date"
-          defaultValue={new Date().toISOString().slice(0, 10)}
-          className="w-40 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-gold"
-        />
+        <span className="text-sm font-medium text-charcoal">이번 주 ({formatWeekRange(weekStartDate)})</span>
         <textarea
           name="content"
-          rows={3}
+          rows={5}
           required
-          placeholder="오늘의 업무 내용을 기록하세요."
-          className="resize-none border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-gold"
+          defaultValue={myWeekLog?.content ?? ""}
+          placeholder="이번 주 진행한 업무 내용을 정리해서 기록하세요."
+          className="resize-none rounded-sm border border-nude/40 bg-beige/20 p-3 text-sm outline-none focus:border-gold"
         />
         <button
           type="submit"
           className="self-start rounded-full bg-charcoal px-5 py-2 text-xs tracking-wide text-cream hover:bg-gold"
         >
-          업무일지 작성
+          {myWeekLog ? "이번 주 보고서 수정" : "이번 주 보고서 제출"}
         </button>
       </form>
 
-      <div className="mt-6 flex flex-col gap-3">
-        {logs?.map((log) => (
-          <div key={log.id} className="rounded-sm border border-nude/60 bg-white p-4 text-sm">
-            <div className="flex justify-between text-xs text-charcoal/50">
-              <span>
-                {log.profiles?.full_name ?? "-"} · {log.profiles?.department ?? "-"}
-              </span>
-              <span>{formatKST(log.created_at)}</span>
-            </div>
-            {log.work_orders && (
-              <Link
-                href={`/admin/work-orders/${log.work_orders.id}`}
-                className="mt-1 inline-block text-xs text-gold hover:underline"
-              >
-                관련 작업지시서: {log.work_orders.title}
-              </Link>
+      <div className="mt-8 overflow-x-auto rounded-sm border border-nude/60 bg-white">
+        <table className="w-full min-w-[640px] text-left text-sm">
+          <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
+            <tr>
+              <th className="w-28 px-4 py-3">주차</th>
+              {canManage && <th className="w-24 px-4 py-3">작성자</th>}
+              {canManage && <th className="w-24 px-4 py-3">부서</th>}
+              <th className="px-4 py-3">내용</th>
+              <th className="w-40 px-4 py-3 text-right">제출일</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs?.map((log) => (
+              <tr key={log.id} className="border-b border-nude/30 align-top last:border-0">
+                <td className="whitespace-nowrap px-4 py-3 text-charcoal/70">
+                  {formatWeekRange(log.week_start_date!)}
+                </td>
+                {canManage && (
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-charcoal">
+                    {log.profiles?.full_name ?? "-"}
+                  </td>
+                )}
+                {canManage && (
+                  <td className="whitespace-nowrap px-4 py-3 text-charcoal/60">{log.profiles?.department ?? "-"}</td>
+                )}
+                <td className="whitespace-pre-line px-4 py-3 text-charcoal/80">{log.content}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right text-xs text-charcoal/40">
+                  {formatKST(log.created_at)}
+                </td>
+              </tr>
+            ))}
+            {(!logs || logs.length === 0) && (
+              <tr>
+                <td colSpan={canManage ? 5 : 3} className="px-4 py-10 text-center text-sm text-charcoal/40">
+                  제출된 업무일지가 없습니다.
+                </td>
+              </tr>
             )}
-            <p className="mt-2 whitespace-pre-line text-charcoal/80">{log.content}</p>
-          </div>
-        ))}
-        {(!logs || logs.length === 0) && (
-          <p className="text-sm text-charcoal/50">등록된 업무일지가 없습니다.</p>
-        )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
