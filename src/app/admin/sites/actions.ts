@@ -32,7 +32,7 @@ export async function createInquiry(formData: FormData) {
   redirect("/admin/sites");
 }
 
-export async function createLeadInquiry(formData: FormData) {
+export async function createLeadInquiry(redirectTo: string, formData: FormData) {
   const name = String(formData.get("name") ?? "").trim() || "미정";
   const phone = String(formData.get("phone") ?? "").trim();
   const supabase = await createClient();
@@ -48,7 +48,7 @@ export async function createLeadInquiry(formData: FormData) {
   });
 
   revalidatePipeline();
-  redirect("/admin/sites");
+  redirect(redirectTo);
 }
 
 export async function promoteLeadToNew(inquiryId: string) {

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { Inquiry } from "@/lib/types";
+import type { Inquiry, Profile } from "@/lib/types";
 import { formatKST } from "@/lib/date";
 import { deleteInquiry } from "./actions";
+import { createLeadInquiry } from "../sites/actions";
 import InquiryStatusSelect from "@/components/admin/InquiryStatusSelect";
+import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
+import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
 
 function hasExtraDetails(i: Inquiry) {
   return Boolean(
@@ -21,8 +24,21 @@ function hasExtraDetails(i: Inquiry) {
   );
 }
 
-export default async function InquiriesPage() {
+export default async function InquiriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ new?: string }>;
+}) {
+  const params = await searchParams;
+  const showLeadForm = params.new === "1";
+
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: me } = await supabase.from("profiles").select("*").eq("id", user!.id).single<Profile>();
+  const canManage = me?.role === "owner" || me?.role === "manager";
+
   const { data: inquiries } = await supabase
     .from("inquiries")
     .select("*")
@@ -39,13 +55,72 @@ export default async function InquiriesPage() {
             바꾸면 현장관리 파이프라인에도 그대로 반영됩니다.
           </p>
         </div>
-        <Link
-          href="/admin/sites"
-          className="shrink-0 rounded-full border border-nude bg-white px-4 py-2 text-xs font-medium text-charcoal/70 hover:border-orange-300 hover:text-orange-600"
-        >
-          현장관리 파이프라인에서 보기 →
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {canManage && (
+            <Link
+              href={showLeadForm ? "/admin/inquiries" : "/admin/inquiries?new=1"}
+              className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500"
+            >
+              {showLeadForm ? "닫기" : "+ 문의 수기 등록"}
+            </Link>
+          )}
+          <Link
+            href="/admin/sites"
+            className="rounded-full border border-nude bg-white px-4 py-2 text-xs font-medium text-charcoal/70 hover:border-orange-300 hover:text-orange-600"
+          >
+            현장관리 파이프라인에서 보기 →
+          </Link>
+        </div>
       </div>
+
+      {showLeadForm && canManage && (
+        <form
+          action={createLeadInquiry.bind(null, "/admin/inquiries")}
+          className="mt-6 grid gap-3 rounded-sm border border-rose-200 bg-rose-50/40 p-5 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <input
+            name="address"
+            placeholder="아파트명 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="size_py"
+            placeholder="평수 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="floor_plan_type"
+            placeholder="타입 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="name"
+            placeholder="성함 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <FormattedPhoneInput
+            name="phone"
+            placeholder="연락처 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <FormattedNumberInput
+            name="budget"
+            placeholder="예산 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <input
+            name="message"
+            placeholder="어떤 문의였는지 간단히 (선택)"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          />
+          <button
+            type="submit"
+            className="rounded-full bg-rose-400 px-4 py-2 text-xs font-medium text-white hover:bg-rose-500 lg:col-span-4 lg:w-fit"
+          >
+            문의 등록
+          </button>
+        </form>
+      )}
 
       <div className="mt-6 flex flex-col gap-3">
         {inquiries?.map((i) => (

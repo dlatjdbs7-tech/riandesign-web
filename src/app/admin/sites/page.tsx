@@ -308,7 +308,7 @@ export default async function SitesPage({
 
       {showLeadForm && canManage && (
         <form
-          action={createLeadInquiry}
+          action={createLeadInquiry.bind(null, "/admin/sites")}
           className="mt-6 grid gap-3 rounded-sm border border-rose-200 bg-rose-50/40 p-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           <input
