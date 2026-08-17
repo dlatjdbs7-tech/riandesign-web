@@ -3,10 +3,12 @@ import { createClient } from "@/utils/supabase/server";
 import type { Inquiry, Profile } from "@/lib/types";
 import { formatKST } from "@/lib/date";
 import { deleteInquiry } from "./actions";
-import { createLeadInquiry } from "../sites/actions";
+import { createLeadInquiry, updateInquiryMessage } from "../sites/actions";
 import InquiryStatusSelect from "@/components/admin/InquiryStatusSelect";
 import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
+import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
+import InlineActionInput from "@/components/admin/InlineActionInput";
 
 function hasExtraDetails(i: Inquiry) {
   return Boolean(
@@ -127,8 +129,29 @@ export default async function InquiriesPage({
           <div key={i.id} className="rounded-sm border border-nude/60 bg-white p-4 text-sm">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-charcoal">{i.name}</span>
-                <span className="text-charcoal/70">{i.phone ?? "연락처 미입력"}</span>
+                {canManage ? (
+                  <InlineInquiryFieldInput
+                    inquiryId={i.id}
+                    field="name"
+                    value={i.name}
+                    placeholder="성함"
+                    className="w-20 border-b border-transparent bg-transparent font-medium text-charcoal outline-none hover:border-nude focus:border-rose-400"
+                  />
+                ) : (
+                  <span className="font-medium text-charcoal">{i.name}</span>
+                )}
+                {canManage ? (
+                  <InlineInquiryFieldInput
+                    inquiryId={i.id}
+                    field="phone"
+                    value={i.phone ?? ""}
+                    placeholder="연락처"
+                    format="phone"
+                    className="w-28 border-b border-transparent bg-transparent text-charcoal/70 outline-none hover:border-nude focus:border-rose-400"
+                  />
+                ) : (
+                  <span className="text-charcoal/70">{i.phone ?? "연락처 미입력"}</span>
+                )}
                 {i.referral_source && (
                   <span className="rounded-full bg-beige/50 px-2 py-0.5 text-[11px] text-charcoal/60">
                     {i.referral_source}
@@ -141,21 +164,69 @@ export default async function InquiriesPage({
               </div>
             </div>
 
-            {(i.address || i.size_py || i.floor_plan_type || i.budget) && (
-              <p className="mt-1.5 text-xs text-charcoal/50">
-                {[
-                  i.address,
-                  [i.size_py, i.floor_plan_type].filter(Boolean).join(" ") || null,
-                  i.budget && `예산 ${i.budget}`,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
+            {canManage ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1 text-xs text-charcoal/50">
+                <InlineInquiryFieldInput
+                  inquiryId={i.id}
+                  field="address"
+                  value={i.address ?? ""}
+                  placeholder="아파트명"
+                  className="w-32 border-b border-transparent bg-transparent outline-none hover:border-nude focus:border-rose-400"
+                />
+                <span className="text-charcoal/20">·</span>
+                <InlineInquiryFieldInput
+                  inquiryId={i.id}
+                  field="size_py"
+                  value={i.size_py ?? ""}
+                  placeholder="평수"
+                  className="w-12 border-b border-transparent bg-transparent outline-none hover:border-nude focus:border-rose-400"
+                />
+                <InlineInquiryFieldInput
+                  inquiryId={i.id}
+                  field="floor_plan_type"
+                  value={i.floor_plan_type ?? ""}
+                  placeholder="타입"
+                  className="w-14 border-b border-transparent bg-transparent outline-none hover:border-nude focus:border-rose-400"
+                />
+                <span className="text-charcoal/20">·</span>
+                <InlineInquiryFieldInput
+                  inquiryId={i.id}
+                  field="budget"
+                  value={i.budget ?? ""}
+                  placeholder="예산"
+                  format="number"
+                  className="w-20 border-b border-transparent bg-transparent outline-none hover:border-nude focus:border-rose-400"
+                />
+              </div>
+            ) : (
+              (i.address || i.size_py || i.floor_plan_type || i.budget) && (
+                <p className="mt-1.5 text-xs text-charcoal/50">
+                  {[
+                    i.address,
+                    [i.size_py, i.floor_plan_type].filter(Boolean).join(" ") || null,
+                    i.budget && `예산 ${i.budget}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )
             )}
 
-            <p className="mt-2 whitespace-pre-wrap rounded-sm bg-beige/20 p-3 text-charcoal/80">
-              {i.message || "작성된 문의 내용이 없습니다."}
-            </p>
+            {canManage ? (
+              <InlineActionInput
+                id={i.id}
+                value={i.message ?? ""}
+                placeholder="문의 내용을 적어두세요"
+                action={updateInquiryMessage}
+                multiline
+                rows={2}
+                className="mt-2 w-full resize-none rounded-sm border border-nude/40 bg-beige/20 p-2 text-xs text-charcoal/80 outline-none focus:border-rose-400"
+              />
+            ) : (
+              <p className="mt-2 whitespace-pre-wrap rounded-sm bg-beige/20 p-3 text-charcoal/80">
+                {i.message || "작성된 문의 내용이 없습니다."}
+              </p>
+            )}
 
             {hasExtraDetails(i) && (
               <details className="mt-2">
