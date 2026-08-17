@@ -25,6 +25,7 @@ export const MENU_GROUPS: MenuGroup[] = [
       { key: "/admin/as-requests", label: "AS관리" },
       { key: "/admin/quotes", label: "견적서", hidden: true },
       { key: "/admin/customer-pages", label: "고객페이지", dividerBefore: true },
+      { key: "/admin/inquiries", label: "상담접수" },
       { key: "/admin/transactions", label: "거래명세서", hidden: true },
     ],
   },
@@ -58,7 +59,6 @@ export const MENU_GROUPS: MenuGroup[] = [
     label: "MARKETING",
     items: [
       { key: "/admin/site-management", label: "사이트관리" },
-      { key: "/admin/inquiries", label: "접수관리" },
       { key: "/admin/portfolio", label: "포트폴리오" },
       { key: "/admin/process", label: "시공프로세스" },
       { key: "/admin/reviews", label: "고객후기" },

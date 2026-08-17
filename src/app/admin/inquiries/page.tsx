@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Inquiry } from "@/lib/types";
 import { formatKST } from "@/lib/date";
@@ -14,17 +15,31 @@ export default async function InquiriesPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">접수관리</h1>
-      <p className="mt-2 text-sm text-charcoal/60">홈페이지 상담 신청 폼으로 접수된 문의입니다.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold text-charcoal">상담접수</h1>
+          <p className="mt-2 text-sm text-charcoal/60">
+            홈페이지, 블로그, 인스타그램, 지인소개 등 모든 경로로 들어온 상담 문의가 여기 한곳에 모입니다. 상태를
+            바꾸면 현장관리 파이프라인에도 그대로 반영됩니다.
+          </p>
+        </div>
+        <Link
+          href="/admin/sites"
+          className="shrink-0 rounded-full border border-nude bg-white px-4 py-2 text-xs font-medium text-charcoal/70 hover:border-orange-300 hover:text-orange-600"
+        >
+          현장관리 파이프라인에서 보기 →
+        </Link>
+      </div>
 
       <div className="mt-6 overflow-x-auto rounded-sm border border-nude/60 bg-white">
-        <table className="w-full min-w-[720px] text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-nude/60 text-xs tracking-wide text-charcoal/60">
             <tr>
               <th className="px-4 py-3">이름</th>
               <th className="px-4 py-3">연락처</th>
               <th className="px-4 py-3">평형</th>
               <th className="px-4 py-3">예산</th>
+              <th className="px-4 py-3">유입경로</th>
               <th className="px-4 py-3">접수일</th>
               <th className="px-4 py-3">상태</th>
               <th className="px-4 py-3" />
@@ -37,6 +52,7 @@ export default async function InquiriesPage() {
                 <td className="px-4 py-3 text-charcoal/70">{i.phone ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{i.size_py ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{i.budget ?? "-"}</td>
+                <td className="px-4 py-3 text-charcoal/70">{i.referral_source ?? "-"}</td>
                 <td className="px-4 py-3 text-charcoal/70">{formatKST(i.created_at)}</td>
                 <td className="px-4 py-3">
                   <InquiryStatusSelect id={i.id} status={i.status} />
@@ -52,7 +68,7 @@ export default async function InquiriesPage() {
             ))}
             {(!inquiries || inquiries.length === 0) && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-charcoal/50">
+                <td colSpan={8} className="px-4 py-6 text-center text-charcoal/50">
                   접수된 문의가 없습니다.
                 </td>
               </tr>
