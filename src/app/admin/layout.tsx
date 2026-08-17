@@ -62,10 +62,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select("id", { count: "exact", head: true })
     .neq("status", "completed");
 
+  // 아직 신규로 넘기지 않은 "문의" 상태 = 확인 안 한 상담접수 건수. 관리자가 수기로 등록한 것도 동일하게 집계된다.
+  const { count: newInquiryCount } = await supabase
+    .from("inquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "lead");
+
   const notificationCount = await getNotificationCount(supabase, { id: profile.id, role: profile.role });
 
   const badges: Record<string, number> = {
     "/admin/field-management": pendingDirectiveCount ?? 0,
+    "/admin/inquiries": newInquiryCount ?? 0,
     "/admin/notification-center": notificationCount,
   };
 
