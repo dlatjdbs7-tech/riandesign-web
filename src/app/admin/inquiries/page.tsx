@@ -41,6 +41,9 @@ export default async function InquiriesPage({
   const { data: me } = await supabase.from("profiles").select("*").eq("id", user!.id).single<Profile>();
   const canManage = me?.role === "owner" || me?.role === "manager";
 
+  // 이 화면을 열람한 시점을 기록해 사이드바 뱃지를 카톡처럼 확인 즉시 지운다.
+  await supabase.from("profiles").update({ last_viewed_inquiries_at: new Date().toISOString() }).eq("id", user!.id);
+
   const { data: inquiries } = await supabase
     .from("inquiries")
     .select("*")

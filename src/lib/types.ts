@@ -12,6 +12,7 @@ export type Profile = {
   status: ApprovalStatus;
   team_id: string | null;
   job_rank: string | null;
+  last_viewed_inquiries_at: string | null;
   created_at: string;
 };
 

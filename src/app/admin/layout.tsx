@@ -62,11 +62,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select("id", { count: "exact", head: true })
     .neq("status", "completed");
 
-  // 아직 신규로 넘기지 않은 "문의" 상태 = 확인 안 한 상담접수 건수. 관리자가 수기로 등록한 것도 동일하게 집계된다.
+  // 내가 상담접수를 마지막으로 연 시각 이후 새로 들어온 건수 = 카톡처럼 내가 확인하면 사라지는 뱃지.
   const { count: newInquiryCount } = await supabase
     .from("inquiries")
     .select("id", { count: "exact", head: true })
-    .eq("status", "lead");
+    .gt("created_at", profile.last_viewed_inquiries_at ?? "1970-01-01T00:00:00Z");
 
   const notificationCount = await getNotificationCount(supabase, { id: profile.id, role: profile.role });
 
