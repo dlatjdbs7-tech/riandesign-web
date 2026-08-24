@@ -184,7 +184,7 @@ export type Category = {
   created_at: string;
 };
 
-export type InquiryStatus = "lead" | "new" | "contacted" | "quoted" | "closed";
+export type InquiryStatus = "lead" | "new" | "contacted" | "quoted" | "closed" | "simple_inquiry";
 export type Inquiry = {
   id: string;
   name: string;

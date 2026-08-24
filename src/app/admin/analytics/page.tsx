@@ -32,6 +32,7 @@ const STATUS_LABEL: Record<Inquiry["status"], string> = {
   contacted: "연락완료",
   quoted: "견적발송",
   closed: "종결",
+  simple_inquiry: "단순문의",
 };
 
 export default async function AnalyticsPage({
@@ -119,11 +120,15 @@ export default async function AnalyticsPage({
     { key: "contract", label: "계약", count: acceptedQuotes, color: ORDINAL_RAMP[4] },
   ];
 
-  const statusOrder: Inquiry["status"][] = ["lead", "new", "contacted", "quoted", "closed"];
-  const statusCounts = { lead: 0, new: 0, contacted: 0, quoted: 0, closed: 0 } as Record<
-    Inquiry["status"],
-    number
-  >;
+  const statusOrder: Inquiry["status"][] = ["lead", "new", "contacted", "quoted", "closed", "simple_inquiry"];
+  const statusCounts = {
+    lead: 0,
+    new: 0,
+    contacted: 0,
+    quoted: 0,
+    closed: 0,
+    simple_inquiry: 0,
+  } as Record<Inquiry["status"], number>;
   (inquiries ?? []).forEach((inquiry) => {
     statusCounts[inquiry.status] += 1;
   });

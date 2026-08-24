@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<InquiryStatus, string> = {
   contacted: "연락완료",
   quoted: "견적발송",
   closed: "종결",
+  simple_inquiry: "단순문의",
 };
 
 export default function InquiryStatusSelect({ id, status }: { id: string; status: InquiryStatus }) {
