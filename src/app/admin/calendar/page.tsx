@@ -2,30 +2,43 @@ import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Profile, ScheduleEvent, Todo, WorkOrder } from "@/lib/types";
 import { getKSTCurrentYearMonth, getKSTDateBounds, getMonthGridWeeks } from "@/lib/date";
-import { createScheduleEvent, deleteScheduleEvent } from "./actions";
+import { deleteScheduleEvent } from "./actions";
+import AddEventModal from "@/components/admin/AddEventModal";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 type CalendarEvent = {
   id: string;
   title: string;
-  type: "work_order" | "as_request" | "todo" | "event";
+  type: "work_order" | "as_request" | "todo" | "미팅" | "수금" | "행사" | "촬영";
   href: string | null;
   createdBy?: string | null;
+  time?: string | null;
+  siteName?: string | null;
+  team?: string | null;
+  meetingType?: string | null;
 };
+
+const CALENDAR_EVENT_TYPES = ["미팅", "수금", "행사", "촬영"] as const;
 
 const TYPE_STYLE: Record<CalendarEvent["type"], string> = {
   work_order: "bg-charcoal text-cream",
   as_request: "bg-red-100 text-red-700",
   todo: "bg-orange-100 text-orange-800",
-  event: "bg-stone-200 text-charcoal",
+  "미팅": "bg-rose-100 text-rose-700",
+  "수금": "bg-amber-100 text-amber-700",
+  "행사": "bg-sky-100 text-sky-700",
+  "촬영": "bg-violet-100 text-violet-700",
 };
 
 const TYPE_LEGEND: { type: CalendarEvent["type"]; label: string }[] = [
   { type: "work_order", label: "작업지시서" },
   { type: "as_request", label: "AS" },
   { type: "todo", label: "할일" },
-  { type: "event", label: "일정" },
+  { type: "미팅", label: "미팅" },
+  { type: "수금", label: "수금" },
+  { type: "행사", label: "행사" },
+  { type: "촬영", label: "촬영" },
 ];
 
 function pad(n: number) {
@@ -126,7 +139,17 @@ export default async function CalendarPage({
     addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos" })
   );
   events?.forEach((e) =>
-    addEvent(e.event_date, { id: e.id, title: e.title, type: "event", href: null, createdBy: e.created_by })
+    addEvent(e.event_date, {
+      id: e.id,
+      title: e.title,
+      type: e.category,
+      href: null,
+      createdBy: e.created_by,
+      time: e.event_time,
+      siteName: e.site_name,
+      team: e.team,
+      meetingType: e.meeting_type,
+    })
   );
 
   const weeks = getMonthGridWeeks(year, month);
@@ -137,12 +160,15 @@ export default async function CalendarPage({
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-semibold text-charcoal">캘린더</h1>
         <div className="flex items-center gap-4">
-          {TYPE_LEGEND.map((legend) => (
-            <span key={legend.type} className="flex items-center gap-1.5 text-xs text-charcoal/60">
-              <span className={`h-2.5 w-2.5 rounded-full ${TYPE_STYLE[legend.type].split(" ")[0]}`} />
-              {legend.label}
-            </span>
-          ))}
+          <div className="flex items-center gap-4">
+            {TYPE_LEGEND.map((legend) => (
+              <span key={legend.type} className="flex items-center gap-1.5 text-xs text-charcoal/60">
+                <span className={`h-2.5 w-2.5 rounded-full ${TYPE_STYLE[legend.type].split(" ")[0]}`} />
+                {legend.label}
+              </span>
+            ))}
+          </div>
+          <AddEventModal defaultDate={selectedDate ?? todayDateString} />
         </div>
       </div>
 
@@ -243,15 +269,22 @@ export default async function CalendarPage({
                   {TYPE_LEGEND.find((l) => l.type === event.type)?.label}
                 </span>
               );
-              const canDelete = event.type === "event" && (canManageAnyEvent || event.createdBy === user!.id);
+              const isCalendarEvent = (CALENDAR_EVENT_TYPES as readonly string[]).includes(event.type);
+              const canDelete = isCalendarEvent && (canManageAnyEvent || event.createdBy === user!.id);
+              const detail = [event.time, event.meetingType, event.siteName, event.team]
+                .filter(Boolean)
+                .join(" · ");
 
-              if (event.type === "event") {
+              if (isCalendarEvent) {
                 return (
                   <div
                     key={`${event.type}-${event.id}`}
                     className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm"
                   >
-                    <span>{event.title}</span>
+                    <div>
+                      <span>{event.title}</span>
+                      {detail && <p className="mt-0.5 text-xs text-charcoal/50">{detail}</p>}
+                    </div>
                     <span className="flex items-center gap-2">
                       {badge}
                       {canDelete && (
@@ -281,36 +314,6 @@ export default async function CalendarPage({
               <p className="text-sm text-charcoal/50">이 날짜에 등록된 일정이 없습니다.</p>
             )}
           </div>
-
-          <form
-            action={createScheduleEvent}
-            className="mt-4 flex flex-wrap items-end gap-2 border-t border-nude/40 pt-4"
-          >
-            <input type="hidden" name="event_date" value={selectedDate} />
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-charcoal/50">일정 제목</label>
-              <input
-                name="title"
-                required
-                placeholder="예: 고객 미팅"
-                className="w-40 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-orange-400"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-charcoal/50">메모 (선택)</label>
-              <input
-                name="memo"
-                placeholder="장소, 참석자 등"
-                className="w-48 border-b border-nude bg-transparent py-1 text-sm outline-none focus:border-orange-400"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-sm bg-orange-300 px-4 py-1.5 text-xs font-medium text-orange-900 hover:bg-orange-400"
-            >
-              일정 추가
-            </button>
-          </form>
         </div>
       )}
     </div>

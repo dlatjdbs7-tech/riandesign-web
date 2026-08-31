@@ -305,11 +305,18 @@ export type WorkOrderPhoto = {
   created_at: string;
 };
 
+export type CalendarEventCategory = "미팅" | "수금" | "행사" | "촬영";
+
 export type ScheduleEvent = {
   id: string;
   title: string;
   event_date: string;
   memo: string | null;
+  category: CalendarEventCategory;
+  meeting_type: string | null;
+  event_time: string | null;
+  site_name: string | null;
+  team: string | null;
   created_by: string | null;
   created_at: string;
 };
