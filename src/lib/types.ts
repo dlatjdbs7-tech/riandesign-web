@@ -305,6 +305,13 @@ export type WorkOrderPhoto = {
   created_at: string;
 };
 
+export type PageView = {
+  id: string;
+  visitor_id: string;
+  path: string;
+  created_at: string;
+};
+
 export type CalendarEventCategory = "미팅" | "수금" | "행사" | "촬영";
 
 export type ScheduleEvent = {

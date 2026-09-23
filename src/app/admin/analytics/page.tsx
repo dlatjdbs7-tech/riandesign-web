@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import type { Inquiry, Profile, Quote } from "@/lib/types";
+import type { Inquiry, PageView, Profile, Quote } from "@/lib/types";
 import TrendLineChart from "@/components/admin/TrendLineChart";
 
 type Period = "1m" | "6m" | "1y";
@@ -64,7 +64,7 @@ export default async function AnalyticsPage({
   else periodStart.setMonth(0, 1); // 1년 보기는 롤링 12개월이 아니라 올해 1월~12월 달력 기준
   periodStart.setHours(0, 0, 0, 0);
 
-  const [{ data: inquiries }, { data: quotes }] = await Promise.all([
+  const [{ data: inquiries }, { data: quotes }, { data: pageViews }] = await Promise.all([
     supabase
       .from("inquiries")
       .select("*")
@@ -76,6 +76,11 @@ export default async function AnalyticsPage({
       .select("*")
       .gte("quote_date", periodStart.toISOString().slice(0, 10))
       .returns<Quote[]>(),
+    supabase
+      .from("page_views")
+      .select("visitor_id, path, created_at")
+      .gte("created_at", periodStart.toISOString())
+      .returns<Pick<PageView, "visitor_id" | "path" | "created_at">[]>(),
   ]);
 
   // 트렌드: 1개월은 일 단위, 6개월·1년은 월 단위로 묶는다.
@@ -107,18 +112,38 @@ export default async function AnalyticsPage({
     value: countsByBucket.get(b) ?? 0,
   }));
 
-  // 전화문의 → 방문상담 → 계약 퍼널 (선택한 기간 기준)
+  // 홈페이지 방문 추이 — 문의 추이와 동일한 버킷 단위로 집계한다.
+  const totalVisits = pageViews?.length ?? 0;
+  const uniqueVisitors = new Set((pageViews ?? []).map((p) => p.visitor_id)).size;
+
+  const visitCountsByBucket = new Map<string, number>(buckets.map((b) => [b, 0]));
+  (pageViews ?? []).forEach((pv) => {
+    const key = isDaily ? pv.created_at.slice(0, 10) : pv.created_at.slice(0, 7);
+    if (visitCountsByBucket.has(key)) visitCountsByBucket.set(key, (visitCountsByBucket.get(key) ?? 0) + 1);
+  });
+  const visitTrendPoints = buckets.map((b) => ({
+    key: b,
+    label: isDaily ? shortDayLabel(b) : shortMonthLabel(b),
+    value: visitCountsByBucket.get(b) ?? 0,
+  }));
+
+  // 방문 → 문의 → 상담 → 계약 퍼널 (선택한 기간 기준)
   const totalInquiries = inquiries?.length ?? 0;
   const consultedInquiries = (inquiries ?? []).filter(
     (i) => i.status === "contacted" || i.status === "quoted" || i.status === "closed"
   ).length;
   const acceptedQuotes = (quotes ?? []).filter((q) => q.status === "accepted").length;
 
-  const funnel = [
-    { key: "call", label: "전화문의", count: totalInquiries, color: ORDINAL_RAMP[0] },
-    { key: "visit", label: "방문상담", count: consultedInquiries, color: ORDINAL_RAMP[2] },
-    { key: "contract", label: "계약", count: acceptedQuotes, color: ORDINAL_RAMP[4] },
+  const funnelBase = [
+    { key: "visit", label: "홈페이지 방문", count: totalVisits },
+    { key: "call", label: "상담접수", count: totalInquiries },
+    { key: "consulted", label: "상담진행", count: consultedInquiries },
+    { key: "contract", label: "계약", count: acceptedQuotes },
   ];
+  const funnel = funnelBase.map((stage, i) => ({
+    ...stage,
+    color: ORDINAL_RAMP[Math.round((i * (ORDINAL_RAMP.length - 1)) / (funnelBase.length - 1))],
+  }));
 
   const statusOrder: Inquiry["status"][] = ["lead", "new", "contacted", "quoted", "closed", "simple_inquiry"];
   const statusCounts = {
@@ -164,6 +189,34 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "총 방문", value: `${totalVisits}건`, caption: "홈페이지 페이지뷰" },
+          { label: "순방문", value: `${uniqueVisitors}명`, caption: "고유 방문자" },
+          { label: "상담접수", value: `${totalInquiries}건`, caption: "문의 등록" },
+          {
+            label: "계약전환율",
+            value: `${totalVisits > 0 ? Math.round((acceptedQuotes / totalVisits) * 100) : 0}%`,
+            caption: `계약 ${acceptedQuotes}건 · 방문 대비`,
+          },
+        ].map((card) => (
+          <div key={card.label} className="rounded-sm border border-nude/60 bg-white p-5">
+            <p className="text-xs tracking-wide text-charcoal/60">{card.label}</p>
+            <p className="mt-2 font-serif text-2xl text-charcoal">{card.value}</p>
+            <p className="mt-1 text-xs text-charcoal/40">{card.caption}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
+        <h2 className="font-serif text-lg font-semibold text-charcoal">
+          {PERIOD_LABEL[period]} 홈페이지 방문 추이 · {totalVisits}건
+        </h2>
+        <div className="mt-4">
+          <TrendLineChart points={visitTrendPoints} labelEvery={isDaily ? 5 : 1} />
+        </div>
+      </div>
+
       <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
         <h2 className="font-serif text-lg font-semibold text-charcoal">
           {PERIOD_LABEL[period]} 문의 추이 · {totalInquiries}건
@@ -175,11 +228,14 @@ export default async function AnalyticsPage({
 
       <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-semibold text-charcoal">전화문의 → 방문상담 → 계약</h2>
+          <h2 className="font-serif text-lg font-semibold text-charcoal">방문 → 상담접수 → 상담진행 → 계약</h2>
           <span className="text-xs text-charcoal/60">
             {PERIOD_LABEL[period]} 전환율{" "}
             <span className="font-semibold text-orange-600">
-              {funnel[0].count > 0 ? Math.round((funnel[2].count / funnel[0].count) * 100) : 0}%
+              {funnel[0].count > 0
+                ? Math.round((funnel[funnel.length - 1].count / funnel[0].count) * 100)
+                : 0}
+              %
             </span>
           </span>
         </div>

@@ -1,6 +1,26 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+
+const VISITOR_COOKIE = "visitor_id";
+
+// 로그인 없는 방문자를 쿠키 기반 익명 id로 구분해 총 방문/순방문 집계에 쓴다.
+export async function logPageView(path: string) {
+  const cookieStore = await cookies();
+  let visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
+  if (!visitorId) {
+    visitorId = crypto.randomUUID();
+    cookieStore.set(VISITOR_COOKIE, visitorId, {
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+      sameSite: "lax",
+    });
+  }
+
+  const supabase = await createClient();
+  await supabase.from("page_views").insert({ visitor_id: visitorId, path });
+}
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
   // Server Action을 <form action>이 아니라 클라이언트에서 함수처럼 직접 호출하면
