@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Profile, Todo, WorkOrder } from "@/lib/types";
-import { daysBetweenDateStrings, getKSTDateBounds, getKSTWeekBounds } from "@/lib/date";
+import { daysBetweenDateStrings, getKSTCurrentYearMonth, getKSTDateBounds, getKSTWeekBounds, getMonthDateRange } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getFinishTaskInfo, getTaskCompletionProgress } from "@/lib/schedulePeriod";
 import { getNotificationCount } from "@/lib/notifications";
@@ -115,6 +115,75 @@ async function ManagerDashboard({
     getNotificationCount(supabase, profile),
   ]);
 
+  const { year: curYear, month: curMonth } = getKSTCurrentYearMonth();
+  const { start: curStart, end: curEnd, prevYear, prevMonth } = getMonthDateRange(curYear, curMonth);
+  const { start: prevStart, end: prevEnd } = getMonthDateRange(prevYear, prevMonth);
+  const prevEndExclusive = `${prevEnd}T23:59:59.999Z`;
+  const curEndExclusive = `${curEnd}T23:59:59.999Z`;
+  const prevStartInclusive = `${prevStart}T00:00:00.000Z`;
+  const curStartInclusive = `${curStart}T00:00:00.000Z`;
+
+  const [
+    { count: curInquiryCount },
+    { count: prevInquiryCount },
+    { count: curContractCount },
+    { count: prevContractCount },
+    { count: curAsCount },
+    { count: prevAsCount },
+    { count: curCompletedCount },
+    { count: prevCompletedCount },
+  ] = await Promise.all([
+    supabase
+      .from("inquiries")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", curStartInclusive)
+      .lte("created_at", curEndExclusive),
+    supabase
+      .from("inquiries")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", prevStartInclusive)
+      .lte("created_at", prevEndExclusive),
+    supabase
+      .from("work_orders")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", curStartInclusive)
+      .lte("created_at", curEndExclusive),
+    supabase
+      .from("work_orders")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", prevStartInclusive)
+      .lte("created_at", prevEndExclusive),
+    supabase
+      .from("as_requests")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", curStartInclusive)
+      .lte("created_at", curEndExclusive),
+    supabase
+      .from("as_requests")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", prevStartInclusive)
+      .lte("created_at", prevEndExclusive),
+    supabase
+      .from("work_orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "completed")
+      .gte("work_end_date", curStart)
+      .lte("work_end_date", curEnd),
+    supabase
+      .from("work_orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "completed")
+      .gte("work_end_date", prevStart)
+      .lte("work_end_date", prevEnd),
+  ]);
+
+  const monthComparisonSteps = [
+    { label: "신규문의", count: curInquiryCount ?? 0, prevCount: prevInquiryCount ?? 0 },
+    { label: "신규계약", count: curContractCount ?? 0, prevCount: prevContractCount ?? 0 },
+    { label: "AS접수", count: curAsCount ?? 0, prevCount: prevAsCount ?? 0 },
+    { label: "현장완료", count: curCompletedCount ?? 0, prevCount: prevCompletedCount ?? 0 },
+  ];
+
   const cards = [
     {
       label: "신규 상담문의",
@@ -207,6 +276,37 @@ async function ManagerDashboard({
             />
           ))}
         </div>
+      </div>
+
+      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
+        <h2 className="font-serif text-lg font-semibold text-charcoal">
+          전월 대비 · {curMonth}월
+        </h2>
+        <div className="mt-4 flex flex-col gap-2">
+          {monthComparisonSteps.map((step) => {
+            const percent =
+              step.prevCount > 0 ? (step.count / step.prevCount) * 100 : step.count > 0 ? 100 : 0;
+            return (
+              <div key={step.label} className="flex items-center gap-3">
+                <span className="w-16 shrink-0 text-xs text-charcoal/60">{step.label}</span>
+                <div className="h-6 flex-1 rounded-sm bg-stone-100">
+                  <div
+                    className="flex h-6 items-center rounded-sm bg-orange-300 px-2 text-xs font-medium text-orange-900"
+                    style={{ width: `${Math.max(step.count > 0 ? 8 : 0, Math.min(100, percent))}%` }}
+                  >
+                    {step.count}
+                  </div>
+                </div>
+                <span className="w-16 shrink-0 text-right text-xs text-charcoal/60">
+                  {step.prevCount > 0 ? `${Math.round(percent)}%` : "-"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[11px] text-charcoal/40">
+          지난달({prevMonth}월) 대비 이번달 건수 비율. 문의·계약·AS는 접수일 기준, 완료는 준공일 기준.
+        </p>
       </div>
 
       <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">

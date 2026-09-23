@@ -36,6 +36,23 @@ export function getKSTCurrentYearMonth() {
   return { year: kstNow.getUTCFullYear(), month: kstNow.getUTCMonth() + 1 };
 }
 
+// year/month(1-12)의 시작일~마지막일 문자열과, 그 직전 달의 year/month를 함께 반환한다.
+export function getMonthDateRange(year: number, month: number) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const start = `${year}-${pad(month)}-01`;
+  const end = `${year}-${pad(month)}-${pad(lastDay)}`;
+
+  let prevYear = year;
+  let prevMonth = month - 1;
+  if (prevMonth === 0) {
+    prevMonth = 12;
+    prevYear -= 1;
+  }
+
+  return { start, end, prevYear, prevMonth };
+}
+
 const toDateStr = (dt: Date) =>
   `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
 
