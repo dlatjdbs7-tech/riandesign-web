@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import type { Inquiry, PageView, Profile, Quote } from "@/lib/types";
+import type { Inquiry, PageView, PortfolioItem, Profile, Quote } from "@/lib/types";
 import TrendLineChart from "@/components/admin/TrendLineChart";
 
 type Period = "1m" | "6m" | "1y";
@@ -98,7 +98,7 @@ export default async function AnalyticsPage({
   else periodStart.setMonth(0, 1); // 1년 보기는 롤링 12개월이 아니라 올해 1월~12월 달력 기준
   periodStart.setHours(0, 0, 0, 0);
 
-  const [{ data: inquiries }, { data: quotes }, { data: pageViews }] = await Promise.all([
+  const [{ data: inquiries }, { data: quotes }, { data: pageViews }, { data: portfolioItems }] = await Promise.all([
     supabase
       .from("inquiries")
       .select("*")
@@ -115,7 +115,13 @@ export default async function AnalyticsPage({
       .select("visitor_id, path, referrer_host, utm_source, created_at")
       .gte("created_at", periodStart.toISOString())
       .returns<Pick<PageView, "visitor_id" | "path" | "referrer_host" | "utm_source" | "created_at">[]>(),
+    supabase.from("portfolio_items").select("id, title").returns<Pick<PortfolioItem, "id" | "title">[]>(),
   ]);
+
+  // 포트폴리오 카드를 열어본 기록(path가 "/project#id")은 실제 페이지 이동이 아니므로
+  // 총 방문/인기 페이지 등 방문 지표에서는 빼고, 인기 포트폴리오 집계에만 쓴다.
+  const realPageViews = (pageViews ?? []).filter((pv) => !pv.path.includes("#"));
+  const portfolioViewEvents = (pageViews ?? []).filter((pv) => pv.path.includes("#"));
 
   // 트렌드: 1개월은 일 단위, 6개월·1년은 월 단위로 묶는다.
   const isDaily = period === "1m";
@@ -147,11 +153,11 @@ export default async function AnalyticsPage({
   }));
 
   // 홈페이지 방문 추이 — 문의 추이와 동일한 버킷 단위로 집계한다.
-  const totalVisits = pageViews?.length ?? 0;
-  const uniqueVisitors = new Set((pageViews ?? []).map((p) => p.visitor_id)).size;
+  const totalVisits = realPageViews.length;
+  const uniqueVisitors = new Set(realPageViews.map((p) => p.visitor_id)).size;
 
   const visitCountsByBucket = new Map<string, number>(buckets.map((b) => [b, 0]));
-  (pageViews ?? []).forEach((pv) => {
+  realPageViews.forEach((pv) => {
     const key = isDaily ? pv.created_at.slice(0, 10) : pv.created_at.slice(0, 7);
     if (visitCountsByBucket.has(key)) visitCountsByBucket.set(key, (visitCountsByBucket.get(key) ?? 0) + 1);
   });
@@ -163,7 +169,7 @@ export default async function AnalyticsPage({
 
   // 유입 출처 — referrer/UTM 자동 감지 (고객이 직접 고르는 아래 "유입경로"와는 다른 데이터).
   const sourceCounts = new Map<string, number>();
-  (pageViews ?? []).forEach((pv) => {
+  realPageViews.forEach((pv) => {
     const key = classifySource(pv);
     sourceCounts.set(key, (sourceCounts.get(key) ?? 0) + 1);
   });
@@ -172,13 +178,26 @@ export default async function AnalyticsPage({
 
   // 인기 페이지 — 페이지뷰가 많은 순.
   const pathCounts = new Map<string, number>();
-  (pageViews ?? []).forEach((pv) => {
+  realPageViews.forEach((pv) => {
     pathCounts.set(pv.path, (pathCounts.get(pv.path) ?? 0) + 1);
   });
   const pathList = Array.from(pathCounts.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8);
   const maxPathCount = Math.max(1, ...pathList.map(([, c]) => c));
+
+  // 인기 포트폴리오 — 카드를 열어본 횟수가 많은 순.
+  const portfolioTitleById = new Map((portfolioItems ?? []).map((p) => [p.id, p.title]));
+  const portfolioCounts = new Map<string, number>();
+  portfolioViewEvents.forEach((pv) => {
+    const itemId = pv.path.split("#")[1];
+    if (itemId) portfolioCounts.set(itemId, (portfolioCounts.get(itemId) ?? 0) + 1);
+  });
+  const portfolioList = Array.from(portfolioCounts.entries())
+    .map(([id, count]) => ({ id, count, title: portfolioTitleById.get(id) ?? "삭제된 항목" }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+  const maxPortfolioCount = Math.max(1, ...portfolioList.map((p) => p.count));
 
   // 방문 → 문의 → 상담 → 계약 퍼널 (선택한 기간 기준)
   const totalInquiries = inquiries?.length ?? 0;
@@ -270,7 +289,7 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">유입 출처</h2>
           <p className="mt-1 text-xs text-charcoal/40">어느 사이트를 타고 들어왔나 (referrer·UTM 자동 감지)</p>
@@ -310,6 +329,28 @@ export default async function AnalyticsPage({
               );
             })}
             {pathList.length === 0 && <p className="text-sm text-charcoal/40">이 기간에 기록된 방문이 없습니다.</p>}
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-nude/60 bg-white p-5">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">인기 포트폴리오</h2>
+          <p className="mt-1 text-xs text-charcoal/40">어떤 시공사례를 많이 열어봤나</p>
+          <div className="mt-4 flex flex-col gap-2">
+            {portfolioList.map((item) => {
+              const pct = Math.round((item.count / maxPortfolioCount) * 100);
+              return (
+                <div key={item.id} className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 truncate text-xs text-charcoal/60">{item.title}</span>
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
+                    <div className="h-3 rounded-sm bg-rose-500" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-10 shrink-0 text-right text-xs text-charcoal/60">{item.count}건</span>
+                </div>
+              );
+            })}
+            {portfolioList.length === 0 && (
+              <p className="text-sm text-charcoal/40">아직 조회된 포트폴리오가 없습니다.</p>
+            )}
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 const VISITOR_COOKIE = "visitor_id";
 
 // 로그인 없는 방문자를 쿠키 기반 익명 id로 구분해 총 방문/순방문 집계에 쓴다.
-export async function logPageView(path: string, referrerHost: string | null, utmSource: string | null) {
+async function ensureVisitorId() {
   const cookieStore = await cookies();
   let visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
   if (!visitorId) {
@@ -17,7 +17,11 @@ export async function logPageView(path: string, referrerHost: string | null, utm
       sameSite: "lax",
     });
   }
+  return visitorId;
+}
 
+export async function logPageView(path: string, referrerHost: string | null, utmSource: string | null) {
+  const visitorId = await ensureVisitorId();
   const supabase = await createClient();
   await supabase.from("page_views").insert({
     visitor_id: visitorId,
@@ -25,6 +29,14 @@ export async function logPageView(path: string, referrerHost: string | null, utm
     referrer_host: referrerHost || null,
     utm_source: utmSource || null,
   });
+}
+
+// 포트폴리오 카드를 열어본 것도 페이지 이동은 아니지만 조회로 기록한다.
+// path에 "#"을 넣어 실제 페이지 이동(인기 페이지 집계)과 구분한다.
+export async function logPortfolioView(itemId: string) {
+  const visitorId = await ensureVisitorId();
+  const supabase = await createClient();
+  await supabase.from("page_views").insert({ visitor_id: visitorId, path: `/project#${itemId}` });
 }
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
