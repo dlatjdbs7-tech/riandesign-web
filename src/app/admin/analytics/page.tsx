@@ -26,6 +26,40 @@ function shortMonthLabel(key: string) {
   return `${Number(m)}월`;
 }
 
+// 방문 시 자동으로 잡힌 referrer/UTM을 보기 좋은 이름으로 묶는다.
+function classifySource(pv: { referrer_host: string | null; utm_source: string | null }) {
+  const utm = pv.utm_source?.toLowerCase();
+  if (utm) {
+    if (utm.includes("naver")) return "네이버";
+    if (utm.includes("google")) return "구글";
+    if (utm.includes("meta") || utm.includes("facebook") || utm.includes("fb")) return "메타";
+    if (utm.includes("instagram")) return "인스타그램";
+    if (utm.includes("kakao")) return "카카오";
+    return pv.utm_source as string;
+  }
+  const host = pv.referrer_host?.toLowerCase();
+  if (!host) return "직접 방문";
+  if (host.includes("google")) return "구글";
+  if (host.includes("naver")) return "네이버";
+  if (host.includes("facebook")) return "페이스북";
+  if (host.includes("instagram")) return "인스타그램";
+  if (host.includes("daum") || host.includes("kakao")) return "카카오";
+  return host;
+}
+
+const PATH_LABEL: Record<string, string> = {
+  "/": "홈",
+  "/about": "소개",
+  "/project": "포트폴리오",
+  "/process": "시공프로세스",
+  "/review": "고객후기",
+  "/contact": "상담신청",
+  "/privacy": "개인정보처리방침",
+};
+function labelForPath(path: string) {
+  return PATH_LABEL[path] ?? path;
+}
+
 const STATUS_LABEL: Record<Inquiry["status"], string> = {
   lead: "문의",
   new: "신규",
@@ -78,9 +112,9 @@ export default async function AnalyticsPage({
       .returns<Quote[]>(),
     supabase
       .from("page_views")
-      .select("visitor_id, path, created_at")
+      .select("visitor_id, path, referrer_host, utm_source, created_at")
       .gte("created_at", periodStart.toISOString())
-      .returns<Pick<PageView, "visitor_id" | "path" | "created_at">[]>(),
+      .returns<Pick<PageView, "visitor_id" | "path" | "referrer_host" | "utm_source" | "created_at">[]>(),
   ]);
 
   // 트렌드: 1개월은 일 단위, 6개월·1년은 월 단위로 묶는다.
@@ -126,6 +160,25 @@ export default async function AnalyticsPage({
     label: isDaily ? shortDayLabel(b) : shortMonthLabel(b),
     value: visitCountsByBucket.get(b) ?? 0,
   }));
+
+  // 유입 출처 — referrer/UTM 자동 감지 (고객이 직접 고르는 아래 "유입경로"와는 다른 데이터).
+  const sourceCounts = new Map<string, number>();
+  (pageViews ?? []).forEach((pv) => {
+    const key = classifySource(pv);
+    sourceCounts.set(key, (sourceCounts.get(key) ?? 0) + 1);
+  });
+  const sourceList = Array.from(sourceCounts.entries()).sort((a, b) => b[1] - a[1]);
+  const totalSourceCount = sourceList.reduce((sum, [, c]) => sum + c, 0);
+
+  // 인기 페이지 — 페이지뷰가 많은 순.
+  const pathCounts = new Map<string, number>();
+  (pageViews ?? []).forEach((pv) => {
+    pathCounts.set(pv.path, (pathCounts.get(pv.path) ?? 0) + 1);
+  });
+  const pathList = Array.from(pathCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+  const maxPathCount = Math.max(1, ...pathList.map(([, c]) => c));
 
   // 방문 → 문의 → 상담 → 계약 퍼널 (선택한 기간 기준)
   const totalInquiries = inquiries?.length ?? 0;
@@ -217,6 +270,50 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div className="rounded-sm border border-nude/60 bg-white p-5">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">유입 출처</h2>
+          <p className="mt-1 text-xs text-charcoal/40">어느 사이트를 타고 들어왔나 (referrer·UTM 자동 감지)</p>
+          <div className="mt-4 flex flex-col gap-2">
+            {sourceList.slice(0, 6).map(([source, count]) => {
+              const pct = totalSourceCount > 0 ? Math.round((count / totalSourceCount) * 100) : 0;
+              return (
+                <div key={source} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 truncate text-xs text-charcoal/60">{source}</span>
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
+                    <div className="h-3 rounded-sm bg-emerald-600" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-16 shrink-0 text-right text-xs text-charcoal/60">
+                    {count}건 · {pct}%
+                  </span>
+                </div>
+              );
+            })}
+            {sourceList.length === 0 && <p className="text-sm text-charcoal/40">이 기간에 기록된 방문이 없습니다.</p>}
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-nude/60 bg-white p-5">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">인기 페이지</h2>
+          <p className="mt-1 text-xs text-charcoal/40">어떤 페이지를 많이 봤나</p>
+          <div className="mt-4 flex flex-col gap-2">
+            {pathList.map(([path, count]) => {
+              const pct = Math.round((count / maxPathCount) * 100);
+              return (
+                <div key={path} className="flex items-center gap-3">
+                  <span className="w-24 shrink-0 truncate text-xs text-charcoal/60">{labelForPath(path)}</span>
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
+                    <div className="h-3 rounded-sm bg-violet-600" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-10 shrink-0 text-right text-xs text-charcoal/60">{count}건</span>
+                </div>
+              );
+            })}
+            {pathList.length === 0 && <p className="text-sm text-charcoal/40">이 기간에 기록된 방문이 없습니다.</p>}
+          </div>
+        </div>
+      </div>
+
       <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
         <h2 className="font-serif text-lg font-semibold text-charcoal">
           {PERIOD_LABEL[period]} 문의 추이 · {totalInquiries}건
@@ -294,7 +391,8 @@ export default async function AnalyticsPage({
         </div>
 
         <div className="rounded-sm border border-nude/60 bg-white p-5">
-          <h2 className="font-serif text-lg font-semibold text-charcoal">유입경로</h2>
+          <h2 className="font-serif text-lg font-semibold text-charcoal">유입경로 (문의 응답)</h2>
+          <p className="mt-1 text-xs text-charcoal/40">고객이 상담폼에서 직접 고른 경로</p>
           <div className="mt-4 flex flex-col gap-2">
             {referralList.slice(0, 6).map(([source, count]) => {
               const pct = Math.round((count / maxReferralCount) * 100);

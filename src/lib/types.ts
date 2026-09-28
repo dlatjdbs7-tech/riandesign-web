@@ -309,6 +309,8 @@ export type PageView = {
   id: string;
   visitor_id: string;
   path: string;
+  referrer_host: string | null;
+  utm_source: string | null;
   created_at: string;
 };
 

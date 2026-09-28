@@ -11,7 +11,16 @@ export default function PageViewTracker() {
   useEffect(() => {
     if (lastLogged.current === pathname) return;
     lastLogged.current = pathname;
-    logPageView(pathname).catch(() => {});
+
+    let referrerHost: string | null = null;
+    try {
+      referrerHost = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : null;
+    } catch {
+      referrerHost = null;
+    }
+    const utmSource = new URLSearchParams(window.location.search).get("utm_source");
+
+    logPageView(pathname, referrerHost, utmSource).catch(() => {});
   }, [pathname]);
 
   return null;

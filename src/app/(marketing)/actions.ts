@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 const VISITOR_COOKIE = "visitor_id";
 
 // 로그인 없는 방문자를 쿠키 기반 익명 id로 구분해 총 방문/순방문 집계에 쓴다.
-export async function logPageView(path: string) {
+export async function logPageView(path: string, referrerHost: string | null, utmSource: string | null) {
   const cookieStore = await cookies();
   let visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
   if (!visitorId) {
@@ -19,7 +19,12 @@ export async function logPageView(path: string) {
   }
 
   const supabase = await createClient();
-  await supabase.from("page_views").insert({ visitor_id: visitorId, path });
+  await supabase.from("page_views").insert({
+    visitor_id: visitorId,
+    path,
+    referrer_host: referrerHost || null,
+    utm_source: utmSource || null,
+  });
 }
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
