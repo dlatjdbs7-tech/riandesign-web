@@ -419,7 +419,10 @@ export default async function CalendarPage({
 
           {selectedDate && (
             <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
-              <h2 className="font-serif text-lg font-semibold text-charcoal">{selectedDate} 일정</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold text-charcoal">{selectedDate} 일정</h2>
+                <AddEventModal defaultDate={selectedDate} />
+              </div>
               <div className="mt-3 flex flex-col gap-2">
                 {selectedEvents.map((event) => {
                   const badge = (
