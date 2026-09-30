@@ -66,6 +66,8 @@ function lastDayOfMonth(year: number, month: number) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
+const TEAMS = ["전체", "디자인팀", "시공팀"] as const;
+
 // start~end를 [lo, hi] 범위로 잘라 그 사이의 날짜 문자열 배열을 반환한다 (UTC 고정으로 시간대 밀림 방지).
 function eachDateClamped(start: string, end: string, lo: string, hi: string) {
   const s = start < lo ? lo : start;
@@ -83,7 +85,7 @@ function eachDateClamped(start: string, end: string, lo: string, hi: string) {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string; month?: string; date?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; date?: string; team?: string }>;
 }) {
   const params = await searchParams;
   const current = getKSTCurrentYearMonth();
@@ -92,6 +94,7 @@ export default async function CalendarPage({
   const year = Number(params.year) || current.year;
   const month = Number(params.month) || current.month;
   const selectedDate = params.date ?? null;
+  const selectedTeam = (TEAMS as readonly string[]).includes(params.team ?? "") ? (params.team as string) : "전체";
 
   const monthStart = `${year}-${pad(month)}-01`;
   const monthEnd = `${year}-${pad(month)}-${pad(lastDayOfMonth(year, month))}`;
@@ -107,6 +110,17 @@ export default async function CalendarPage({
   if (nextMonth === 13) {
     nextMonth = 1;
     nextYear += 1;
+  }
+
+  function calendarHref(overrides: { year?: number; month?: number; date?: string | null; team?: string }) {
+    const qs = new URLSearchParams();
+    qs.set("year", String(overrides.year ?? year));
+    qs.set("month", String(overrides.month ?? month));
+    const d = overrides.date !== undefined ? overrides.date : selectedDate;
+    if (d) qs.set("date", d);
+    const t = overrides.team ?? selectedTeam;
+    if (t !== "전체") qs.set("team", t);
+    return `/admin/calendar?${qs.toString()}`;
   }
 
   const supabase = await createClient();
@@ -129,13 +143,14 @@ export default async function CalendarPage({
     { data: activeOrders },
     { data: teamTodos },
     { data: myTodos },
+    { data: allProfiles },
   ] = await Promise.all([
     supabase
       .from("work_orders")
-      .select("id, title, work_date, status")
+      .select("id, title, work_date, status, assignee_id")
       .gte("work_date", monthStart)
       .lte("work_date", monthEnd)
-      .returns<Pick<WorkOrder, "id" | "title" | "work_date" | "status">[]>(),
+      .returns<Pick<WorkOrder, "id" | "title" | "work_date" | "status" | "assignee_id">[]>(),
     supabase
       .from("as_requests")
       .select("id, title, request_date, status")
@@ -144,10 +159,10 @@ export default async function CalendarPage({
       .returns<Pick<AsRequest, "id" | "title" | "request_date" | "status">[]>(),
     supabase
       .from("todos")
-      .select("id, title, due_date, status")
+      .select("id, title, due_date, status, assignee_id")
       .gte("due_date", monthStart)
       .lte("due_date", monthEnd)
-      .returns<Pick<Todo, "id" | "title" | "due_date" | "status">[]>(),
+      .returns<Pick<Todo, "id" | "title" | "due_date" | "status" | "assignee_id">[]>(),
     supabase
       .from("calendar_events")
       .select("*")
@@ -157,10 +172,10 @@ export default async function CalendarPage({
     // 공정표(work_order_tasks)가 이번 달과 겹치는 것만 — 캘린더에 현장별 색으로 표시하기 위함.
     supabase
       .from("work_order_tasks")
-      .select("*, work_orders(id, title)")
+      .select("*, work_orders(id, title, assignee_id)")
       .lte("start_date", monthEnd)
       .gte("end_date", monthStart)
-      .returns<(WorkOrderTask & { work_orders: Pick<WorkOrder, "id" | "title"> | null })[]>(),
+      .returns<(WorkOrderTask & { work_orders: Pick<WorkOrder, "id" | "title" | "assignee_id"> | null })[]>(),
     // 진행중인 현장 전체 — 좌측 색상 범례 및 방문 참고용 주소 목록.
     supabase
       .from("work_orders")
@@ -186,9 +201,14 @@ export default async function CalendarPage({
       .order("due_date", { ascending: true, nullsFirst: false })
       .limit(10)
       .returns<Pick<Todo, "id" | "title" | "status" | "due_date">[]>(),
+    // 담당자의 부서(팀) 조회용 — 전체/디자인팀/시공팀 필터에 쓴다.
+    supabase.from("profiles").select("id, department").returns<Pick<Profile, "id" | "department">[]>(),
   ]);
 
   const siteColorMap = new Map((activeOrders ?? []).map((o, i) => [o.id, SITE_PALETTE[i % SITE_PALETTE.length]]));
+  const departmentById = new Map((allProfiles ?? []).map((p) => [p.id, p.department]));
+  const matchesTeam = (department: string | null | undefined) =>
+    selectedTeam === "전체" || department === selectedTeam;
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   const addEvent = (date: string | null, event: CalendarEvent) => {
@@ -198,21 +218,25 @@ export default async function CalendarPage({
     eventsByDate.set(date, list);
   };
 
-  workOrders?.forEach((o) =>
+  workOrders?.forEach((o) => {
+    if (!matchesTeam(departmentById.get(o.assignee_id ?? ""))) return;
     addEvent(o.work_date, {
       id: o.id,
       title: o.title,
       type: "work_order",
       href: `/admin/work-orders/${o.id}`,
-    })
-  );
+    });
+  });
+  // AS는 담당자 개념이 없어 팀 필터와 무관하게 항상 표시한다.
   asRequests?.forEach((a) =>
     addEvent(a.request_date, { id: a.id, title: a.title, type: "as_request", href: "/admin/as-requests" })
   );
-  todos?.forEach((t) =>
-    addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos" })
-  );
-  events?.forEach((e) =>
+  todos?.forEach((t) => {
+    if (!matchesTeam(departmentById.get(t.assignee_id ?? ""))) return;
+    addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos" });
+  });
+  events?.forEach((e) => {
+    if (selectedTeam !== "전체" && e.team !== selectedTeam) return;
     addEvent(e.event_date, {
       id: e.id,
       title: e.title,
@@ -223,10 +247,11 @@ export default async function CalendarPage({
       siteName: e.site_name,
       team: e.team,
       meetingType: e.meeting_type,
-    })
-  );
+    });
+  });
   tasks?.forEach((t) => {
     if (!t.start_date || !t.end_date || !t.work_orders) return;
+    if (!matchesTeam(departmentById.get(t.work_orders.assignee_id ?? ""))) return;
     const color = siteColorMap.get(t.work_order_id);
     eachDateClamped(t.start_date, t.end_date, monthStart, monthEnd).forEach((d) =>
       addEvent(d, {
@@ -253,6 +278,19 @@ export default async function CalendarPage({
                 <span className={`h-2.5 w-2.5 rounded-full ${TYPE_STYLE[legend.type].split(" ")[0]}`} />
                 {legend.label}
               </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 rounded-full border border-nude/60 bg-white p-1">
+            {TEAMS.map((t) => (
+              <Link
+                key={t}
+                href={calendarHref({ team: t })}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  selectedTeam === t ? "bg-charcoal text-cream" : "text-charcoal/60 hover:bg-beige/60"
+                }`}
+              >
+                {t}
+              </Link>
             ))}
           </div>
           <AddEventModal defaultDate={selectedDate ?? todayDateString} />
@@ -292,7 +330,7 @@ export default async function CalendarPage({
         <div className="xl:order-2">
           <div className="flex items-center justify-between">
             <Link
-              href={`/admin/calendar?year=${prevYear}&month=${prevMonth}`}
+              href={calendarHref({ year: prevYear, month: prevMonth, date: null })}
               className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
             >
               ← 이전
@@ -301,12 +339,15 @@ export default async function CalendarPage({
               <h2 className="font-serif text-xl text-charcoal">
                 {year}년 {month}월
               </h2>
-              <Link href="/admin/calendar" className="text-xs text-taupe hover:text-gold">
+              <Link
+                href={calendarHref({ year: current.year, month: current.month, date: null })}
+                className="text-xs text-taupe hover:text-gold"
+              >
                 오늘
               </Link>
             </div>
             <Link
-              href={`/admin/calendar?year=${nextYear}&month=${nextMonth}`}
+              href={calendarHref({ year: nextYear, month: nextMonth, date: null })}
               className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
             >
               다음 →
@@ -334,7 +375,7 @@ export default async function CalendarPage({
                   return (
                     <Link
                       key={cell.dateString}
-                      href={`/admin/calendar?year=${year}&month=${month}&date=${cell.dateString}`}
+                      href={calendarHref({ date: cell.dateString })}
                       className={`flex min-h-[92px] flex-col gap-1 border-r border-nude/20 p-1.5 text-left last:border-r-0 hover:bg-beige/30 ${
                         !cell.isCurrentMonth ? "bg-cream/40" : ""
                       } ${isSelected ? "ring-2 ring-inset ring-gold" : ""}`}
