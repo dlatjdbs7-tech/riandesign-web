@@ -6,6 +6,9 @@ import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getTaskCompletionProgress, wasScheduleRecentlyUpdated } from "@/lib/schedulePeriod";
 import { createWorkOrder, updateWorkOrderScheduleNotes, updateWorkOrderStatus } from "../work-orders/actions";
 import {
+  closeInquiryAtStage,
+  closeQuote,
+  closeWorkOrderAtContractStage,
   createInquiry,
   createLeadInquiry,
   promoteContactedToQuote,
@@ -828,6 +831,14 @@ export default async function SitesPage({
                             상담 전환 →
                           </button>
                         </form>
+                        <form action={closeInquiryAtStage.bind(null, inquiry.id, "new")} className="w-12 shrink-0">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-red-50 py-1 text-[11px] font-medium text-red-600 hover:bg-red-100"
+                          >
+                            마감
+                          </button>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -994,6 +1005,17 @@ export default async function SitesPage({
                             견적 전환 →
                           </button>
                         </form>
+                        <form
+                          action={closeInquiryAtStage.bind(null, inquiry.id, "contacted")}
+                          className="w-12 shrink-0"
+                        >
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-red-50 py-1 text-[11px] font-medium text-red-600 hover:bg-red-100"
+                          >
+                            마감
+                          </button>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -1081,6 +1103,14 @@ export default async function SitesPage({
                             계약 진행 →
                           </button>
                         </form>
+                        <form action={closeQuote.bind(null, quote.id)} className="w-12 shrink-0">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-red-50 py-1 text-[11px] font-medium text-red-600 hover:bg-red-100"
+                          >
+                            마감
+                          </button>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -1148,6 +1178,14 @@ export default async function SitesPage({
                             className="w-full rounded-sm bg-violet-100 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200"
                           >
                             계약완료 →
+                          </button>
+                        </form>
+                        <form action={closeWorkOrderAtContractStage.bind(null, order.id)} className="w-12 shrink-0">
+                          <button
+                            type="submit"
+                            className="w-full rounded-sm bg-red-50 py-1 text-[11px] font-medium text-red-600 hover:bg-red-100"
+                          >
+                            마감
                           </button>
                         </form>
                       </div>

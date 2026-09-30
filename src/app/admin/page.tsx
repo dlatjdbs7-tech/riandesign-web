@@ -13,6 +13,9 @@ const RISK_STYLE: Record<RiskLevel, string> = {
   normal: "bg-emerald-100 text-emerald-700",
 };
 
+// 신규→상담→견적→계약 순서를 명도로 표현하는 ordinal 팔레트 (유입분석과 동일).
+const CLOSED_STAGE_RAMP = ["#fb923c", "#f97316", "#ea580c", "#c2410c"];
+
 function FunnelBar({
   label,
   count,
@@ -67,6 +70,10 @@ async function ManagerDashboard({
     { data: weekTodos },
     { data: recentCompletedOrders },
     pendingAlertCount,
+    { count: closedAtNewCount },
+    { count: closedAtContactedCount },
+    { count: closedAtQuoteCount },
+    { count: closedAtContractCount },
   ] = await Promise.all([
     supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
     supabase.from("work_orders").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
@@ -113,7 +120,31 @@ async function ManagerDashboard({
       .limit(5)
       .returns<WorkOrder[]>(),
     getNotificationCount(supabase, profile),
+    supabase
+      .from("inquiries")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "closed")
+      .eq("closed_stage", "new"),
+    supabase
+      .from("inquiries")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "closed")
+      .eq("closed_stage", "contacted"),
+    supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "rejected"),
+    supabase
+      .from("work_orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "cancelled")
+      .eq("cancelled_at_stage", "contract"),
   ]);
+
+  const closedByStage = [
+    { label: "신규", count: closedAtNewCount ?? 0 },
+    { label: "상담", count: closedAtContactedCount ?? 0 },
+    { label: "견적", count: closedAtQuoteCount ?? 0 },
+    { label: "계약", count: closedAtContractCount ?? 0 },
+  ];
+  const totalClosedCount = closedByStage.reduce((sum, s) => sum + s.count, 0);
 
   const { year: curYear, month: curMonth } = getKSTCurrentYearMonth();
   const { start: curStart, end: curEnd, prevYear, prevMonth } = getMonthDateRange(curYear, curMonth);
@@ -307,6 +338,46 @@ async function ManagerDashboard({
         <p className="mt-3 text-[11px] text-charcoal/40">
           지난달({prevMonth}월) 대비 이번달 건수 비율. 문의·계약·AS는 접수일 기준, 완료는 준공일 기준.
         </p>
+      </div>
+
+      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">마감 현황</h2>
+          <span className="text-xs text-charcoal/60">
+            누적 마감 <span className="font-semibold text-red-600">{totalClosedCount}건</span>
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-charcoal/40">
+          신규·상담·견적·계약 단계에서 &ldquo;마감&rdquo; 처리된 누적 건수 · 자세히 보기는{" "}
+          <Link href="/admin/analytics" className="text-orange-600 hover:underline">
+            유입분석
+          </Link>
+        </p>
+        <div className="mt-4 flex gap-3">
+          {closedByStage.map((stage) => (
+            <div key={stage.label} className="flex-1 rounded-sm bg-stone-50 px-3 py-2 text-center">
+              <p className="text-xs text-charcoal/50">{stage.label}</p>
+              <p className="mt-1 font-serif text-lg text-charcoal">{stage.count}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
+          {totalClosedCount > 0 && (
+            <div className="flex h-full">
+              {closedByStage.map((stage, index) =>
+                stage.count > 0 ? (
+                  <div
+                    key={stage.label}
+                    style={{
+                      width: `${(stage.count / totalClosedCount) * 100}%`,
+                      backgroundColor: CLOSED_STAGE_RAMP[index],
+                    }}
+                  />
+                ) : null
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">

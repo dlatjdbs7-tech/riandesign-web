@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import type { Inquiry, PageView, PortfolioItem, Profile, Quote } from "@/lib/types";
+import type { Inquiry, PageView, PortfolioItem, Profile, Quote, WorkOrder } from "@/lib/types";
 import TrendLineChart from "@/components/admin/TrendLineChart";
 import { classifyTrafficSource } from "@/lib/trafficSource";
 import { DIRECT_INQUIRY_SOURCES } from "@/lib/referralSources";
@@ -79,7 +79,8 @@ export default async function AnalyticsPage({
   else periodStart.setMonth(0, 1); // 1년 보기는 롤링 12개월이 아니라 올해 1월~12월 달력 기준
   periodStart.setHours(0, 0, 0, 0);
 
-  const [{ data: inquiries }, { data: quotes }, { data: pageViews }, { data: portfolioItems }] = await Promise.all([
+  const [{ data: inquiries }, { data: quotes }, { data: closedWorkOrders }, { data: pageViews }, { data: portfolioItems }] =
+    await Promise.all([
     supabase
       .from("inquiries")
       .select("*")
@@ -91,6 +92,14 @@ export default async function AnalyticsPage({
       .select("*")
       .gte("quote_date", periodStart.toISOString().slice(0, 10))
       .returns<Quote[]>(),
+    // 계약(pending) 단계에서 마감된 건 — 유입분석의 "마감 단계별 분석"에 쓴다.
+    supabase
+      .from("work_orders")
+      .select("id, created_at")
+      .eq("status", "cancelled")
+      .eq("cancelled_at_stage", "contract")
+      .gte("created_at", periodStart.toISOString())
+      .returns<Pick<WorkOrder, "id" | "created_at">[]>(),
     supabase
       .from("page_views")
       .select("visitor_id, path, referrer_host, utm_source, created_at")
@@ -233,6 +242,24 @@ export default async function AnalyticsPage({
   });
   const autoSourceList = Array.from(autoSourceCounts.entries()).sort((a, b) => b[1] - a[1]);
   const maxAutoSourceCount = Math.max(1, ...autoSourceList.map(([, c]) => c));
+
+  // 마감 단계별 분석 — 현장관리 파이프라인에서 어느 단계에 "마감"됐는지.
+  const closedByStage = [
+    {
+      key: "new",
+      label: "신규 마감",
+      count: (inquiries ?? []).filter((i) => i.status === "closed" && i.closed_stage === "new").length,
+    },
+    {
+      key: "contacted",
+      label: "상담 마감",
+      count: (inquiries ?? []).filter((i) => i.status === "closed" && i.closed_stage === "contacted").length,
+    },
+    { key: "quoted", label: "견적 마감", count: (quotes ?? []).filter((q) => q.status === "rejected").length },
+    { key: "contract", label: "계약 마감", count: closedWorkOrders?.length ?? 0 },
+  ];
+  const maxClosedCount = Math.max(1, ...closedByStage.map((s) => s.count));
+  const totalClosedCount = closedByStage.reduce((sum, s) => sum + s.count, 0);
 
   return (
     <div>
@@ -473,6 +500,42 @@ export default async function AnalyticsPage({
               <p className="text-sm text-charcoal/40">이 기간에 등록된 상담문의가 없습니다.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">마감 단계별 분석</h2>
+          <span className="text-xs text-charcoal/60">
+            {PERIOD_LABEL[period]} 총 마감 <span className="font-semibold text-red-600">{totalClosedCount}건</span>
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-charcoal/40">
+          현장관리 파이프라인에서 &ldquo;마감&rdquo; 처리된 건이 어느 단계에서 끊겼는지 보여줍니다.
+        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          {closedByStage.map((stage, index) => {
+            const pct = Math.round((stage.count / maxClosedCount) * 100);
+            return (
+              <div key={stage.key} className="flex items-center gap-3">
+                <span className="w-16 shrink-0 text-xs text-charcoal/70">{stage.label}</span>
+                <div className="h-5 flex-1 rounded-sm bg-stone-100">
+                  <div
+                    className="flex h-5 items-center rounded-sm px-2 text-[11px] font-semibold text-white"
+                    style={{
+                      width: `${Math.max(stage.count > 0 ? 6 : 0, pct)}%`,
+                      backgroundColor: ORDINAL_RAMP[index],
+                    }}
+                  >
+                    {stage.count}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {totalClosedCount === 0 && (
+            <p className="text-sm text-charcoal/40">이 기간에 마감 처리된 건이 없습니다.</p>
+          )}
         </div>
       </div>
     </div>

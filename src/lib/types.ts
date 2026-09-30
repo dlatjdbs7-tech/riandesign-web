@@ -84,6 +84,7 @@ export type WorkOrder = {
   payment_balance_vat_included: boolean;
   material_order_date: string | null;
   schedule_notes: string | null;
+  cancelled_at_stage: string | null;
   created_by: string | null;
   created_at: string;
 };
@@ -208,6 +209,7 @@ export type Inquiry = {
   reference_url: string | null;
   portfolio_url: string | null;
   auto_source: string | null;
+  closed_stage: string | null;
   consulted_1: boolean;
   consulted_2: boolean;
   created_at: string;

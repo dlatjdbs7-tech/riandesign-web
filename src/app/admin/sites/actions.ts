@@ -76,6 +76,14 @@ export async function revertContactedToNew(inquiryId: string) {
   revalidatePipeline();
 }
 
+// 신규/상담 단계에서 더 진행하지 않기로 한 건을 마감 처리한다. 어느 단계에서
+// 마감됐는지 closed_stage에 남겨야 유입분석에서 단계별로 구분해 집계할 수 있다.
+export async function closeInquiryAtStage(inquiryId: string, stage: "new" | "contacted") {
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status: "closed", closed_stage: stage }).eq("id", inquiryId);
+  revalidatePipeline();
+}
+
 export async function toggleConsultStep(inquiryId: string, step: 1 | 2) {
   const supabase = await createClient();
   const field = step === 1 ? "consulted_1" : "consulted_2";
@@ -170,6 +178,13 @@ export async function updateQuoteMemo(quoteId: string, memo: string) {
   revalidatePath("/admin/sites");
 }
 
+// 견적 단계에서 더 진행하지 않기로 한 건을 마감 처리한다.
+export async function closeQuote(quoteId: string) {
+  const supabase = await createClient();
+  await supabase.from("quotes").update({ status: "rejected" }).eq("id", quoteId);
+  revalidatePipeline();
+}
+
 export async function promoteQuoteToWorkOrder(quoteId: string) {
   const supabase = await createClient();
   const {
@@ -222,4 +237,16 @@ export async function revertWorkOrderToQuote(workOrderId: string, quoteId: strin
   await supabase.from("work_orders").delete().eq("id", workOrderId);
   revalidatePipeline();
   revalidatePath("/admin/quotes");
+}
+
+// 계약(체결 전 대기) 단계에서 더 진행하지 않기로 한 건을 마감 처리한다.
+// 이미 진행중으로 넘어간 뒤의 취소와 구분하기 위해 cancelled_at_stage를 남긴다.
+export async function closeWorkOrderAtContractStage(workOrderId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("work_orders")
+    .update({ status: "cancelled", cancelled_at_stage: "contract" })
+    .eq("id", workOrderId);
+  revalidatePipeline();
+  revalidatePath("/admin/work-orders");
 }
