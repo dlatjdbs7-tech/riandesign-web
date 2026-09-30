@@ -1,35 +1,10 @@
 import { headers } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, CustomerProject, CustomerProjectPhoto, WorkOrder, WorkOrderPhoto } from "@/lib/types";
-import {
-  addManualProjectPhoto,
-  addProjectPhoto,
-  createManualProject,
-  deleteManualProject,
-  deleteManualProjectPhoto,
-  deleteProjectPhoto,
-} from "./actions";
-import CopyLinkButton from "@/components/admin/CopyLinkButton";
+import { createManualProject } from "./actions";
+import CustomerPageGrid, { type ProjectCard } from "@/components/admin/CustomerPageGrid";
 
-const STATUS_LABEL: Record<WorkOrder["status"], string> = {
-  pending: "대기",
-  in_progress: "진행중",
-  completed: "완료",
-  cancelled: "취소",
-  on_hold: "보류",
-};
-
-type WorkOrderRow = WorkOrder & { customers: Pick<Customer, "name"> | null };
-
-type ProjectCard = {
-  id: string;
-  title: string;
-  status: WorkOrder["status"];
-  customerLabel: string;
-  isManual: boolean;
-  photos: { id: string; image_url: string; caption: string | null }[];
-  createdAt: string;
-};
+type WorkOrderRow = WorkOrder & { customers: Pick<Customer, "name" | "phone"> | null };
 
 export default async function CustomerPagesPage() {
   const supabase = await createClient();
@@ -41,7 +16,7 @@ export default async function CustomerPagesPage() {
     await Promise.all([
       supabase
         .from("work_orders")
-        .select("*, customers(name)")
+        .select("*, customers(name, phone)")
         .order("created_at", { ascending: false })
         .returns<WorkOrderRow[]>(),
       supabase
@@ -81,6 +56,8 @@ export default async function CustomerPagesPage() {
       title: order.title,
       status: order.status,
       customerLabel: order.customers?.name ?? order.client_name ?? "고객 미지정",
+      customerPhone: order.customers?.phone ?? null,
+      siteAddress: order.site_address,
       isManual: false,
       photos: photosByOrder.get(order.id) ?? [],
       createdAt: order.created_at,
@@ -90,6 +67,8 @@ export default async function CustomerPagesPage() {
       title: project.title,
       status: project.status,
       customerLabel: project.customer_name ?? "고객 미지정",
+      customerPhone: null,
+      siteAddress: null,
       isManual: true,
       photos: photosByManualProject.get(project.id) ?? [],
       createdAt: project.created_at,
@@ -143,119 +122,7 @@ export default async function CustomerPagesPage() {
         </form>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {cards.map((card) => {
-          const publicUrl = `${origin}/project/${card.id}`;
-
-          return (
-            <div key={card.id} className="rounded-sm border border-nude/60 bg-white p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-xs ${
-                        card.status === "completed"
-                          ? "text-emerald-700"
-                          : card.status === "in_progress"
-                            ? "text-orange-600"
-                            : "text-charcoal/60"
-                      }`}
-                    >
-                      {STATUS_LABEL[card.status]}
-                    </span>
-                    {card.isManual && (
-                      <span className="rounded-sm bg-stone-100 px-1.5 py-0.5 text-[10px] text-charcoal/50">
-                        직접등록
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="font-serif text-lg font-semibold text-charcoal">{card.title}</h2>
-                  <p className="text-sm text-charcoal/60">{card.customerLabel}</p>
-                </div>
-                {card.isManual && (
-                  <form action={deleteManualProject.bind(null, card.id)}>
-                    <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                      삭제
-                    </button>
-                  </form>
-                )}
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <a
-                  href={publicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-charcoal px-4 py-1.5 text-xs text-cream hover:bg-orange-400"
-                >
-                  고객페이지 열기 ↗
-                </a>
-                <CopyLinkButton url={publicUrl} />
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs text-charcoal/50">현장 사진 · {card.photos.length}</p>
-                {card.photos.length > 0 && (
-                  <div className="mt-2 flex gap-2 overflow-x-auto">
-                    {card.photos.map((photo) => (
-                      <div key={photo.id} className="relative shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo.image_url}
-                          alt={photo.caption ?? ""}
-                          className="h-16 w-16 rounded-sm border border-nude/60 object-cover"
-                        />
-                        <form
-                          action={(card.isManual ? deleteManualProjectPhoto : deleteProjectPhoto).bind(
-                            null,
-                            photo.id
-                          )}
-                        >
-                          <button
-                            type="submit"
-                            className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-charcoal text-[10px] text-cream"
-                          >
-                            ×
-                          </button>
-                        </form>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <form
-                  action={(card.isManual ? addManualProjectPhoto : addProjectPhoto).bind(null, card.id)}
-                  className="mt-3 flex flex-col gap-2"
-                >
-                  <input
-                    name="image_url"
-                    placeholder="사진 이미지 URL"
-                    required
-                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
-                  />
-                  <input
-                    name="caption"
-                    placeholder="설명 (선택)"
-                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
-                  />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full border border-charcoal/30 px-4 py-1 text-xs text-charcoal hover:border-charcoal"
-                  >
-                    + 사진 등록
-                  </button>
-                </form>
-              </div>
-            </div>
-          );
-        })}
-
-        {cards.length === 0 && (
-          <p className="text-sm text-charcoal/50">
-            등록된 프로젝트가 없습니다. 작업지시서를 등록하거나, 위에서 새 프로젝트 페이지를 바로 만들어보세요.
-          </p>
-        )}
-      </div>
+      <CustomerPageGrid cards={cards} origin={origin} />
     </div>
   );
 }
