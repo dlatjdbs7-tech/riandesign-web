@@ -43,6 +43,8 @@ export async function createScheduleItem(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
+  const amountRaw = String(formData.get("amount") ?? "").replace(/,/g, "").trim();
+
   await supabase.from("calendar_events").insert({
     title,
     event_date: eventDate,
@@ -51,6 +53,7 @@ export async function createScheduleItem(formData: FormData) {
     event_time: String(formData.get("event_time") ?? "").trim() || null,
     site_name: String(formData.get("site_name") ?? "").trim() || null,
     team: String(formData.get("team") ?? "").trim() || null,
+    amount: category === "수금" && amountRaw ? Number(amountRaw) : null,
     memo: String(formData.get("memo") ?? "").trim() || null,
     created_by: user.id,
   });

@@ -327,6 +327,7 @@ export type ScheduleEvent = {
   event_time: string | null;
   site_name: string | null;
   team: string | null;
+  amount: number | null;
   created_by: string | null;
   created_at: string;
 };

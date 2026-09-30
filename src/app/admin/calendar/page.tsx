@@ -20,8 +20,14 @@ type CalendarEvent = {
   siteName?: string | null;
   team?: string | null;
   meetingType?: string | null;
+  amount?: number | null;
   colorClass?: string;
 };
+
+function formatWon(amount: number | null | undefined) {
+  if (amount === null || amount === undefined) return null;
+  return `${amount.toLocaleString()}원`;
+}
 
 const CALENDAR_EVENT_TYPES = ["미팅", "수금", "행사", "촬영"] as const;
 
@@ -247,6 +253,7 @@ export default async function CalendarPage({
       siteName: e.site_name,
       team: e.team,
       meetingType: e.meeting_type,
+      amount: e.amount,
     });
   });
   tasks?.forEach((t) => {
@@ -264,8 +271,55 @@ export default async function CalendarPage({
     );
   });
 
+  // 이번 달 중요 일정 — 미팅/수금/행사/촬영/AS만 모아 날짜순으로 한눈에 보여준다 (좌측 사이드바용).
+  type ImportantItem = {
+    id: string;
+    type: CalendarEvent["type"];
+    date: string;
+    time: string | null;
+    title: string;
+    siteName: string | null;
+    amount: number | null;
+    completed: boolean;
+  };
+  const importantSchedule: ImportantItem[] = [];
+  events?.forEach((e) => {
+    if (selectedTeam !== "전체" && e.team !== selectedTeam) return;
+    importantSchedule.push({
+      id: e.id,
+      type: e.category,
+      date: e.event_date,
+      time: e.event_time,
+      title: e.title,
+      siteName: e.site_name,
+      amount: e.amount,
+      completed: e.event_date < todayDateString,
+    });
+  });
+  asRequests?.forEach((a) => {
+    importantSchedule.push({
+      id: a.id,
+      type: "as_request",
+      date: a.request_date,
+      time: null,
+      title: a.title,
+      siteName: null,
+      amount: null,
+      completed: a.status === "completed",
+    });
+  });
+  importantSchedule.sort((a, b) => (a.date === b.date ? (a.time ?? "").localeCompare(b.time ?? "") : a.date.localeCompare(b.date)));
+
+  const collectedAmount = importantSchedule
+    .filter((i) => i.type === "수금" && i.completed)
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const upcomingAmount = importantSchedule
+    .filter((i) => i.type === "수금" && !i.completed)
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+
   const weeks = getMonthGridWeeks(year, month);
-  const selectedEvents = selectedDate ? (eventsByDate.get(selectedDate) ?? []) : [];
+  const effectiveDate = selectedDate ?? todayDateString;
+  const selectedEvents = eventsByDate.get(effectiveDate) ?? [];
 
   return (
     <div>
@@ -297,10 +351,10 @@ export default async function CalendarPage({
         </div>
       </div>
       <p className="mt-1.5 text-xs text-charcoal/40">
-        현장 공정은 현장별 색상(왼쪽 진행 현장 참고) · 날짜를 클릭해 추가 · 팀 할일은 오른쪽에서
+        현장 공정은 현장별 색상(왼쪽 진행 현장 참고) · 날짜를 클릭해 추가 · 진행 현장·중요 일정·할일은 왼쪽에서
       </p>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[220px_1fr_300px]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4 xl:order-1">
           <div className="rounded-sm border border-nude/60 bg-white p-4">
             <h3 className="text-sm font-semibold text-charcoal">진행 현장</h3>
@@ -325,163 +379,53 @@ export default async function CalendarPage({
               )}
             </div>
           </div>
-        </div>
 
-        <div className="xl:order-2">
-          <div className="flex items-center justify-between">
-            <Link
-              href={calendarHref({ year: prevYear, month: prevMonth, date: null })}
-              className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
-            >
-              ← 이전
-            </Link>
-            <div className="flex items-center gap-3">
-              <h2 className="font-serif text-xl text-charcoal">
-                {year}년 {month}월
-              </h2>
-              <Link
-                href={calendarHref({ year: current.year, month: current.month, date: null })}
-                className="text-xs text-taupe hover:text-gold"
-              >
-                오늘
-              </Link>
-            </div>
-            <Link
-              href={calendarHref({ year: nextYear, month: nextMonth, date: null })}
-              className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
-            >
-              다음 →
-            </Link>
-          </div>
-
-          <div className="mt-6 overflow-hidden rounded-sm border border-nude/60 bg-white">
-            <div className="grid grid-cols-7 border-b border-nude/60 bg-beige/40 text-center text-xs tracking-wide text-charcoal/60">
-              {WEEKDAYS.map((day, i) => (
-                <div key={day} className={`py-2 ${i === 0 ? "text-red-600" : i === 6 ? "text-blue-600" : ""}`}>
-                  {day}
+          <div className="rounded-sm border border-nude/60 bg-white p-4">
+            <h3 className="text-sm font-semibold text-charcoal">{month}월 중요 일정</h3>
+            <p className="mt-1 text-xs text-charcoal/40">미팅·수금·행사·촬영·AS·연차</p>
+            <div className="mt-3 flex max-h-[420px] flex-col gap-2 overflow-y-auto">
+              {importantSchedule.map((item) => (
+                <div key={`${item.type}-${item.id}`} className="border-b border-nude/20 pb-2 last:border-0">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`rounded-sm px-1.5 py-0.5 text-[10px] ${TYPE_STYLE[item.type]}`}>
+                      {TYPE_LEGEND.find((l) => l.type === item.type)?.label}
+                    </span>
+                    <span className="text-charcoal/50">
+                      {item.date.slice(5)}
+                      {item.time ? ` ${item.time}` : ""}
+                    </span>
+                    {item.completed && (
+                      <span className="rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700">
+                        완료
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 truncate text-sm text-charcoal">{item.title}</p>
+                  {(item.siteName || item.amount) && (
+                    <p className="truncate text-xs text-charcoal/50">
+                      {[item.siteName, formatWon(item.amount)].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
                 </div>
               ))}
+              {importantSchedule.length === 0 && (
+                <p className="text-xs text-charcoal/40">이번 달 중요 일정이 없습니다.</p>
+              )}
             </div>
-
-            {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-7 border-b border-nude/30 last:border-0">
-                {week.map((cell, dayIndex) => {
-                  const events = eventsByDate.get(cell.dateString) ?? [];
-                  const isToday = cell.dateString === todayDateString;
-                  const isSelected = cell.dateString === selectedDate;
-                  const visibleEvents = events.slice(0, 3);
-                  const extraCount = events.length - visibleEvents.length;
-
-                  return (
-                    <Link
-                      key={cell.dateString}
-                      href={calendarHref({ date: cell.dateString })}
-                      className={`flex min-h-[92px] flex-col gap-1 border-r border-nude/20 p-1.5 text-left last:border-r-0 hover:bg-beige/30 ${
-                        !cell.isCurrentMonth ? "bg-cream/40" : ""
-                      } ${isSelected ? "ring-2 ring-inset ring-gold" : ""}`}
-                    >
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                          isToday
-                            ? "bg-charcoal text-cream"
-                            : !cell.isCurrentMonth
-                              ? "text-charcoal/30"
-                              : dayIndex === 0
-                                ? "text-red-600"
-                                : dayIndex === 6
-                                  ? "text-blue-600"
-                                  : "text-charcoal"
-                        }`}
-                      >
-                        {cell.day}
-                      </span>
-                      <div className="flex flex-col gap-0.5">
-                        {visibleEvents.map((event) => (
-                          <span
-                            key={`${event.type}-${event.id}`}
-                            className={`truncate rounded-sm px-1.5 py-0.5 text-[10px] leading-tight ${
-                              event.colorClass ?? TYPE_STYLE[event.type]
-                            }`}
-                          >
-                            {event.title}
-                          </span>
-                        ))}
-                        {extraCount > 0 && (
-                          <span className="px-1.5 text-[10px] text-charcoal/50">+{extraCount}건 더</span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
+            {(collectedAmount > 0 || upcomingAmount > 0) && (
+              <div className="mt-3 border-t border-nude/30 pt-3 text-xs">
+                <div className="flex items-center justify-between text-emerald-700">
+                  <span>입금 완료</span>
+                  <span className="font-medium">{formatWon(collectedAmount)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-charcoal/60">
+                  <span>{month}월 수금 예정</span>
+                  <span className="font-medium">{formatWon(upcomingAmount)}</span>
+                </div>
               </div>
-            ))}
+            )}
           </div>
 
-          {selectedDate && (
-            <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="font-serif text-lg font-semibold text-charcoal">{selectedDate} 일정</h2>
-                <AddEventModal defaultDate={selectedDate} />
-              </div>
-              <div className="mt-3 flex flex-col gap-2">
-                {selectedEvents.map((event) => {
-                  const badge = (
-                    <span
-                      className={`rounded-sm px-2 py-0.5 text-[10px] ${event.colorClass ?? TYPE_STYLE[event.type]}`}
-                    >
-                      {event.type === "site_task" ? "공정표" : TYPE_LEGEND.find((l) => l.type === event.type)?.label}
-                    </span>
-                  );
-                  const isCalendarEvent = (CALENDAR_EVENT_TYPES as readonly string[]).includes(event.type);
-                  const canDelete = isCalendarEvent && (canManageAnyEvent || event.createdBy === user!.id);
-                  const detail = [event.time, event.meetingType, event.siteName, event.team]
-                    .filter(Boolean)
-                    .join(" · ");
-
-                  if (isCalendarEvent) {
-                    return (
-                      <div
-                        key={`${event.type}-${event.id}`}
-                        className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm"
-                      >
-                        <div>
-                          <span>{event.title}</span>
-                          {detail && <p className="mt-0.5 text-xs text-charcoal/50">{detail}</p>}
-                        </div>
-                        <span className="flex items-center gap-2">
-                          {badge}
-                          {canDelete && (
-                            <form action={deleteScheduleEvent.bind(null, event.id)}>
-                              <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                                삭제
-                              </button>
-                            </form>
-                          )}
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <Link
-                      key={`${event.type}-${event.id}`}
-                      href={event.href!}
-                      className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm hover:border-orange-400"
-                    >
-                      <span>{event.title}</span>
-                      {badge}
-                    </Link>
-                  );
-                })}
-                {selectedEvents.length === 0 && (
-                  <p className="text-sm text-charcoal/50">이 날짜에 등록된 일정이 없습니다.</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4 xl:order-3">
           <div className="rounded-sm border border-nude/60 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-charcoal">전체 팀 할일</h3>
@@ -536,6 +480,164 @@ export default async function CalendarPage({
                 <p className="text-xs text-charcoal/40">내 할일이 없습니다.</p>
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="xl:order-2">
+          <div className="flex items-center justify-between">
+            <Link
+              href={calendarHref({ year: prevYear, month: prevMonth, date: null })}
+              className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
+            >
+              ← 이전
+            </Link>
+            <div className="flex items-center gap-3">
+              <h2 className="font-serif text-xl text-charcoal">
+                {year}년 {month}월
+              </h2>
+              <Link
+                href={calendarHref({ year: current.year, month: current.month, date: null })}
+                className="text-xs text-taupe hover:text-gold"
+              >
+                오늘
+              </Link>
+            </div>
+            <Link
+              href={calendarHref({ year: nextYear, month: nextMonth, date: null })}
+              className="rounded-full border border-nude px-4 py-1.5 text-sm text-charcoal hover:border-charcoal"
+            >
+              다음 →
+            </Link>
+          </div>
+
+          <div className="mt-6 overflow-hidden rounded-sm border border-nude/60 bg-white">
+            <div className="grid grid-cols-7 border-b border-nude/60 bg-beige/40 text-center text-xs tracking-wide text-charcoal/60">
+              {WEEKDAYS.map((day, i) => (
+                <div key={day} className={`py-2 ${i === 0 ? "text-red-600" : i === 6 ? "text-blue-600" : ""}`}>
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 border-b border-nude/30 last:border-0">
+                {week.map((cell, dayIndex) => {
+                  const events = eventsByDate.get(cell.dateString) ?? [];
+                  const isToday = cell.dateString === todayDateString;
+                  const isSelected = cell.dateString === selectedDate;
+                  const visibleEvents = events.slice(0, 4);
+                  const extraCount = events.length - visibleEvents.length;
+
+                  return (
+                    <Link
+                      key={cell.dateString}
+                      href={calendarHref({ date: cell.dateString })}
+                      className={`flex min-h-[120px] flex-col gap-1 border-r border-nude/20 p-1.5 text-left last:border-r-0 hover:bg-beige/30 ${
+                        !cell.isCurrentMonth ? "bg-cream/40" : ""
+                      } ${isSelected ? "ring-2 ring-inset ring-gold" : ""}`}
+                    >
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                          isToday
+                            ? "bg-charcoal text-cream"
+                            : !cell.isCurrentMonth
+                              ? "text-charcoal/30"
+                              : dayIndex === 0
+                                ? "text-red-600"
+                                : dayIndex === 6
+                                  ? "text-blue-600"
+                                  : "text-charcoal"
+                        }`}
+                      >
+                        {cell.day}
+                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        {visibleEvents.map((event) => (
+                          <span
+                            key={`${event.type}-${event.id}`}
+                            className={`truncate rounded-sm px-1.5 py-0.5 text-[10px] leading-tight ${
+                              event.colorClass ?? TYPE_STYLE[event.type]
+                            }`}
+                          >
+                            {event.title}
+                          </span>
+                        ))}
+                        {extraCount > 0 && (
+                          <span className="px-1.5 text-[10px] text-charcoal/50">+{extraCount}건 더</span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-sm border border-nude/60 bg-white p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg font-semibold text-charcoal">
+                  {effectiveDate === todayDateString && !selectedDate ? `오늘 (${effectiveDate})` : effectiveDate} 일정
+                </h2>
+                <AddEventModal
+                  defaultDate={effectiveDate}
+                  triggerLabel="+ 이 날짜에 추가"
+                  triggerClassName="rounded-full bg-orange-500 px-4 py-2 text-xs font-medium text-white hover:bg-orange-600"
+                />
+              </div>
+              <div className="mt-3 flex flex-col gap-2">
+                {selectedEvents.map((event) => {
+                  const badge = (
+                    <span
+                      className={`rounded-sm px-2 py-0.5 text-[10px] ${event.colorClass ?? TYPE_STYLE[event.type]}`}
+                    >
+                      {event.type === "site_task" ? "공정표" : TYPE_LEGEND.find((l) => l.type === event.type)?.label}
+                    </span>
+                  );
+                  const isCalendarEvent = (CALENDAR_EVENT_TYPES as readonly string[]).includes(event.type);
+                  const canDelete = isCalendarEvent && (canManageAnyEvent || event.createdBy === user!.id);
+                  const detail = [event.time, event.meetingType, event.siteName, event.team, formatWon(event.amount)]
+                    .filter(Boolean)
+                    .join(" · ");
+
+                  if (isCalendarEvent) {
+                    return (
+                      <div
+                        key={`${event.type}-${event.id}`}
+                        className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm"
+                      >
+                        <div>
+                          <span>{event.title}</span>
+                          {detail && <p className="mt-0.5 text-xs text-charcoal/50">{detail}</p>}
+                        </div>
+                        <span className="flex items-center gap-2">
+                          {badge}
+                          {canDelete && (
+                            <form action={deleteScheduleEvent.bind(null, event.id)}>
+                              <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
+                                삭제
+                              </button>
+                            </form>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={`${event.type}-${event.id}`}
+                      href={event.href!}
+                      className="flex items-center justify-between rounded-sm border border-nude/40 p-3 text-sm hover:border-orange-400"
+                    >
+                      <span>{event.title}</span>
+                      {badge}
+                    </Link>
+                  );
+                })}
+                {selectedEvents.length === 0 && (
+                  <p className="text-sm text-charcoal/50">이 날짜에 등록된 일정이 없습니다.</p>
+                )}
+              </div>
           </div>
         </div>
       </div>

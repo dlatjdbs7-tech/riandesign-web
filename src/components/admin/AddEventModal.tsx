@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createScheduleItem } from "@/app/admin/calendar/actions";
+import FormattedNumberInput from "./FormattedNumberInput";
 
 const CATEGORIES = ["미팅", "A/S", "수금", "행사", "촬영", "할일"] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -18,7 +19,15 @@ const CATEGORY_ACTIVE_CLASS: Record<Category, string> = {
 const MEETING_TYPES = ["레이아웃 미팅", "디자인 미팅", "마감재 미팅", "견적 미팅", "계약 미팅", "방문상담"];
 const TEAMS = ["전체", "총괄", "디자인팀", "시공팀", "영업팀"];
 
-export default function AddEventModal({ defaultDate }: { defaultDate: string }) {
+export default function AddEventModal({
+  defaultDate,
+  triggerLabel = "+ 일정 추가",
+  triggerClassName = "rounded-full bg-orange-300 px-4 py-2 text-xs font-medium text-orange-900 hover:bg-orange-400",
+}: {
+  defaultDate: string;
+  triggerLabel?: string;
+  triggerClassName?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<Category>("미팅");
   const [meetingType, setMeetingType] = useState(MEETING_TYPES[5]);
@@ -27,15 +36,12 @@ export default function AddEventModal({ defaultDate }: { defaultDate: string }) 
   const showTime = category === "미팅" || category === "수금" || category === "행사" || category === "촬영";
   const showSite = category !== "할일";
   const showTeam = category === "미팅" || category === "수금" || category === "행사" || category === "촬영";
+  const showAmount = category === "수금";
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="rounded-full bg-orange-300 px-4 py-2 text-xs font-medium text-orange-900 hover:bg-orange-400"
-      >
-        + 일정 추가
+      <button type="button" onClick={() => setOpen(true)} className={triggerClassName}>
+        {triggerLabel}
       </button>
 
       {open && (
@@ -141,6 +147,14 @@ export default function AddEventModal({ defaultDate }: { defaultDate: string }) 
                 <input
                   name="site_name"
                   placeholder="현장명 (선택)"
+                  className="rounded-sm border border-nude px-3 py-2 text-sm outline-none focus:border-orange-400"
+                />
+              )}
+
+              {showAmount && (
+                <FormattedNumberInput
+                  name="amount"
+                  placeholder="금액 (선택)"
                   className="rounded-sm border border-nude px-3 py-2 text-sm outline-none focus:border-orange-400"
                 />
               )}
