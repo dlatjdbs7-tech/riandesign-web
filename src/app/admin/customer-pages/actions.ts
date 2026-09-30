@@ -38,8 +38,6 @@ export async function addProjectPhoto(workOrderId: string, formData: FormData) {
     work_order_id: workOrderId,
     image_url: imageUrl,
     caption: String(formData.get("caption") ?? "").trim() || null,
-    period_start: String(formData.get("period_start") ?? "").trim() || null,
-    period_end: String(formData.get("period_end") ?? "").trim() || null,
   });
 
   revalidatePath("/admin/customer-pages");
@@ -85,8 +83,6 @@ export async function addManualProjectPhoto(customerProjectId: string, formData:
     customer_project_id: customerProjectId,
     image_url: imageUrl,
     caption: String(formData.get("caption") ?? "").trim() || null,
-    period_start: String(formData.get("period_start") ?? "").trim() || null,
-    period_end: String(formData.get("period_end") ?? "").trim() || null,
   });
 
   revalidatePath("/admin/customer-pages");

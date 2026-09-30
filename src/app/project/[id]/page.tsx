@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
-import type { PublicProject, WorkOrderPhoto } from "@/lib/types";
+import type { PhotoComment, PublicProject, WorkOrderPhoto } from "@/lib/types";
+import { submitPhotoComment } from "./actions";
 
 export const metadata: Metadata = {
   title: "고객페이지",
@@ -42,6 +43,17 @@ export default async function PublicProjectPage({
   );
   const photoList = (photos as WorkOrderPhoto[] | null) ?? [];
 
+  const commentsByPhoto = await Promise.all(
+    photoList.map(async (photo) => {
+      const { data } = await supabase.rpc("get_public_photo_comments", {
+        photo_id: photo.id,
+        is_manual: isManual,
+      });
+      return [photo.id, (data as PhotoComment[] | null) ?? []] as const;
+    })
+  );
+  const commentsMap = new Map(commentsByPhoto);
+
   return (
     <main className="min-h-screen bg-cream px-6 py-16">
       <div className="mx-auto max-w-3xl">
@@ -75,27 +87,66 @@ export default async function PublicProjectPage({
             </p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {photoList.map((photo) => (
-                <figure key={photo.id} className="overflow-hidden rounded-sm border border-nude/60 bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.image_url} alt={photo.caption ?? project.title} className="aspect-[4/3] w-full object-cover" />
-                  {(photo.period_start || photo.caption) && (
-                    <figcaption className="p-3">
-                      {photo.period_start && (
-                        <p className="text-[11px] font-medium tracking-wide text-gold">
-                          {photo.period_start}
-                          {photo.period_end && photo.period_end !== photo.period_start
-                            ? ` ~ ${photo.period_end}`
-                            : ""}
-                        </p>
+              {photoList.map((photo) => {
+                const comments = commentsMap.get(photo.id) ?? [];
+                return (
+                  <figure key={photo.id} className="overflow-hidden rounded-sm border border-nude/60 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.image_url}
+                      alt={photo.caption ?? project.title}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                    {photo.caption && (
+                      <figcaption className="p-3 pb-0">
+                        <p className="whitespace-pre-wrap text-xs text-charcoal/60">{photo.caption}</p>
+                      </figcaption>
+                    )}
+
+                    <div className="p-3">
+                      {comments.length > 0 && (
+                        <ul className="space-y-2">
+                          {comments.map((comment) => (
+                            <li key={comment.id} className="rounded-sm bg-beige/40 p-2">
+                              <p className="text-[11px] font-medium text-charcoal/70">
+                                {comment.author_name || "고객"}
+                              </p>
+                              <p className="mt-0.5 whitespace-pre-wrap text-xs text-charcoal/60">
+                                {comment.message}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
                       )}
-                      {photo.caption && (
-                        <p className="mt-1 whitespace-pre-wrap text-xs text-charcoal/60">{photo.caption}</p>
-                      )}
-                    </figcaption>
-                  )}
-                </figure>
-              ))}
+
+                      <form
+                        action={submitPhotoComment.bind(null, photo.id, isManual, id)}
+                        className="mt-2 flex flex-col gap-1.5"
+                      >
+                        <input
+                          type="text"
+                          name="author_name"
+                          placeholder="이름 (선택)"
+                          className="rounded-sm border border-nude bg-transparent px-2 py-1 text-xs outline-none focus:border-orange-400"
+                        />
+                        <textarea
+                          name="message"
+                          placeholder="이 사진에 대해 궁금한 점을 남겨주세요"
+                          rows={2}
+                          required
+                          className="resize-none rounded-sm border border-nude bg-transparent p-2 text-xs outline-none focus:border-orange-400"
+                        />
+                        <button
+                          type="submit"
+                          className="self-start rounded-full border border-charcoal/30 px-3 py-1 text-[11px] text-charcoal hover:border-charcoal"
+                        >
+                          문의 남기기
+                        </button>
+                      </form>
+                    </div>
+                  </figure>
+                );
+              })}
             </div>
           )}
         </div>
