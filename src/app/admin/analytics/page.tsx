@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Inquiry, PageView, PortfolioItem, Profile, Quote } from "@/lib/types";
 import TrendLineChart from "@/components/admin/TrendLineChart";
+import { classifyTrafficSource } from "@/lib/trafficSource";
 
 type Period = "1m" | "6m" | "1y";
 const PERIOD_LABEL: Record<Period, string> = { "1m": "1개월", "6m": "6개월", "1y": "1년" };
@@ -24,27 +25,6 @@ function shortDayLabel(key: string) {
 function shortMonthLabel(key: string) {
   const [, m] = key.split("-");
   return `${Number(m)}월`;
-}
-
-// 방문 시 자동으로 잡힌 referrer/UTM을 보기 좋은 이름으로 묶는다.
-function classifySource(pv: { referrer_host: string | null; utm_source: string | null }) {
-  const utm = pv.utm_source?.toLowerCase();
-  if (utm) {
-    if (utm.includes("naver")) return "네이버";
-    if (utm.includes("google")) return "구글";
-    if (utm.includes("meta") || utm.includes("facebook") || utm.includes("fb")) return "메타";
-    if (utm.includes("instagram")) return "인스타그램";
-    if (utm.includes("kakao")) return "카카오";
-    return pv.utm_source as string;
-  }
-  const host = pv.referrer_host?.toLowerCase();
-  if (!host) return "직접 방문";
-  if (host.includes("google")) return "구글";
-  if (host.includes("naver")) return "네이버";
-  if (host.includes("facebook")) return "페이스북";
-  if (host.includes("instagram")) return "인스타그램";
-  if (host.includes("daum") || host.includes("kakao")) return "카카오";
-  return host;
 }
 
 const PATH_LABEL: Record<string, string> = {
@@ -170,7 +150,7 @@ export default async function AnalyticsPage({
   // 유입 출처 — referrer/UTM 자동 감지 (고객이 직접 고르는 아래 "유입경로"와는 다른 데이터).
   const sourceCounts = new Map<string, number>();
   realPageViews.forEach((pv) => {
-    const key = classifySource(pv);
+    const key = classifyTrafficSource(pv);
     sourceCounts.set(key, (sourceCounts.get(key) ?? 0) + 1);
   });
   const sourceList = Array.from(sourceCounts.entries()).sort((a, b) => b[1] - a[1]);
@@ -238,6 +218,15 @@ export default async function AnalyticsPage({
   });
   const referralList = Array.from(referralCounts.entries()).sort((a, b) => b[1] - a[1]);
   const maxReferralCount = Math.max(1, ...referralList.map(([, c]) => c));
+
+  // 문의 유입 출처 (자동감지) — 고객이 직접 고른 값이 아니라, 방문 기록에서 역추적한 채널.
+  const autoSourceCounts = new Map<string, number>();
+  (inquiries ?? []).forEach((inquiry) => {
+    const key = inquiry.auto_source?.trim() || "미확인";
+    autoSourceCounts.set(key, (autoSourceCounts.get(key) ?? 0) + 1);
+  });
+  const autoSourceList = Array.from(autoSourceCounts.entries()).sort((a, b) => b[1] - a[1]);
+  const maxAutoSourceCount = Math.max(1, ...autoSourceList.map(([, c]) => c));
 
   return (
     <div>
@@ -403,7 +392,7 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-sm border border-nude/60 bg-white p-5">
           <h2 className="font-serif text-lg font-semibold text-charcoal">문의 상태별 분포</h2>
           <div className="mt-4 flex flex-col gap-2">
@@ -448,6 +437,28 @@ export default async function AnalyticsPage({
               );
             })}
             {referralList.length === 0 && (
+              <p className="text-sm text-charcoal/40">이 기간에 등록된 상담문의가 없습니다.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-nude/60 bg-white p-5">
+          <h2 className="font-serif text-lg font-semibold text-charcoal">문의 유입 출처 (자동감지)</h2>
+          <p className="mt-1 text-xs text-charcoal/40">문의를 남긴 방문자가 실제로 타고 들어온 채널</p>
+          <div className="mt-4 flex flex-col gap-2">
+            {autoSourceList.slice(0, 6).map(([source, count]) => {
+              const pct = Math.round((count / maxAutoSourceCount) * 100);
+              return (
+                <div key={source} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 truncate text-xs text-charcoal/60">{source}</span>
+                  <div className="h-3 flex-1 rounded-sm bg-stone-100">
+                    <div className="h-3 rounded-sm bg-teal-600" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-10 shrink-0 text-right text-xs text-charcoal/60">{count}건</span>
+                </div>
+              );
+            })}
+            {autoSourceList.length === 0 && (
               <p className="text-sm text-charcoal/40">이 기간에 등록된 상담문의가 없습니다.</p>
             )}
           </div>

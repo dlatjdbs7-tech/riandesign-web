@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
+import { classifyTrafficSource } from "@/lib/trafficSource";
 
 const VISITOR_COOKIE = "visitor_id";
 
@@ -37,6 +38,29 @@ export async function logPortfolioView(itemId: string) {
   const visitorId = await ensureVisitorId();
   const supabase = await createClient();
   await supabase.from("page_views").insert({ visitor_id: visitorId, path: `/project#${itemId}` });
+}
+
+// 상담문의를 넣은 이 방문자가 애초에 어느 채널(블로그·인스타·유튜브·홈페이지 등)로
+// 들어왔는지, 방문 기록(page_views) 중 가장 최근 실제 페이지 이동에서 역추적한다.
+// 고객이 상담폼에서 직접 고르는 referral_source와는 별개로, 자동 감지된 값을 보조로 남긴다.
+async function detectVisitorSource(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const cookieStore = await cookies();
+  const visitorId = cookieStore.get(VISITOR_COOKIE)?.value;
+  if (!visitorId) return null;
+
+  // 최근이 아니라 "가장 처음" 방문 기록을 쓴다 — 이후 새 탭/새로고침으로 referrer가
+  // 비어버려도 최초 유입 경로가 덮어써지지 않게 하기 위함.
+  const { data } = await supabase
+    .from("page_views")
+    .select("referrer_host, utm_source")
+    .eq("visitor_id", visitorId)
+    .not("path", "like", "%#%")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  return classifyTrafficSource(data);
 }
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
@@ -84,9 +108,10 @@ export async function submitInquiry(formData: FormData) {
 
   const supabase = await createClient();
 
-  const [floorPlanUrl, referenceUrl] = await Promise.all([
+  const [floorPlanUrl, referenceUrl, autoSource] = await Promise.all([
     uploadInquiryFile(supabase, formData, "floor_plan"),
     uploadInquiryFile(supabase, formData, "reference"),
+    detectVisitorSource(supabase),
   ]);
 
   const { error } = await supabase.from("inquiries").insert({
@@ -109,6 +134,7 @@ export async function submitInquiry(formData: FormData) {
     floor_plan_url: floorPlanUrl,
     reference_url: referenceUrl,
     portfolio_url: String(formData.get("portfolio_url") ?? "").trim() || null,
+    auto_source: autoSource,
   });
 
   if (error) {
