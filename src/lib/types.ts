@@ -305,6 +305,8 @@ export type WorkOrderPhoto = {
   work_order_id: string;
   image_url: string;
   caption: string | null;
+  period_start: string | null;
+  period_end: string | null;
   created_at: string;
 };
 
@@ -373,6 +375,8 @@ export type CustomerProjectPhoto = {
   customer_project_id: string;
   image_url: string;
   caption: string | null;
+  period_start: string | null;
+  period_end: string | null;
   created_at: string;
 };
 

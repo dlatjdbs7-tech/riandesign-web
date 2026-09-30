@@ -27,7 +27,13 @@ export type ProjectCard = {
   customerPhone: string | null;
   siteAddress: string | null;
   isManual: boolean;
-  photos: { id: string; image_url: string; caption: string | null }[];
+  photos: {
+    id: string;
+    image_url: string;
+    caption: string | null;
+    period_start: string | null;
+    period_end: string | null;
+  }[];
   createdAt: string;
 };
 
@@ -160,6 +166,15 @@ export default function CustomerPageGrid({ cards, origin }: { cards: ProjectCard
                         <img
                           src={photo.image_url}
                           alt={photo.caption ?? ""}
+                          title={
+                            [
+                              photo.period_start &&
+                                `${photo.period_start} ~ ${photo.period_end ?? photo.period_start}`,
+                              photo.caption,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || undefined
+                          }
                           className="h-16 w-16 rounded-sm border border-nude/60 object-cover"
                         />
                         <form
@@ -193,11 +208,30 @@ export default function CustomerPageGrid({ cards, origin }: { cards: ProjectCard
                     required
                     className="text-xs file:mr-2 file:rounded-full file:border file:border-charcoal/30 file:bg-white file:px-3 file:py-1 file:text-xs file:text-charcoal hover:file:border-charcoal"
                   />
-                  <input
+                  <textarea
                     name="caption"
-                    placeholder="설명 (선택)"
-                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
+                    placeholder="담당자 코멘트 (선택) — 오늘 진행한 작업을 남겨주세요"
+                    rows={2}
+                    className="resize-none rounded-sm border border-nude bg-transparent p-2 text-xs outline-none focus:border-orange-400"
                   />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-charcoal/50">진행 공정 시작일 (선택)</label>
+                      <input
+                        type="date"
+                        name="period_start"
+                        className="w-full border-b border-nude bg-transparent py-1 text-xs outline-none focus:border-orange-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-charcoal/50">종료일 (선택)</label>
+                      <input
+                        type="date"
+                        name="period_end"
+                        className="w-full border-b border-nude bg-transparent py-1 text-xs outline-none focus:border-orange-400"
+                      />
+                    </div>
+                  </div>
                   <button
                     type="submit"
                     className="self-start rounded-full border border-charcoal/30 px-4 py-1 text-xs text-charcoal hover:border-charcoal"

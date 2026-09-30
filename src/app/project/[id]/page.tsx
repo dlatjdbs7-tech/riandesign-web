@@ -79,8 +79,20 @@ export default async function PublicProjectPage({
                 <figure key={photo.id} className="overflow-hidden rounded-sm border border-nude/60 bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.image_url} alt={photo.caption ?? project.title} className="aspect-[4/3] w-full object-cover" />
-                  {photo.caption && (
-                    <figcaption className="p-3 text-xs text-charcoal/60">{photo.caption}</figcaption>
+                  {(photo.period_start || photo.caption) && (
+                    <figcaption className="p-3">
+                      {photo.period_start && (
+                        <p className="text-[11px] font-medium tracking-wide text-gold">
+                          {photo.period_start}
+                          {photo.period_end && photo.period_end !== photo.period_start
+                            ? ` ~ ${photo.period_end}`
+                            : ""}
+                        </p>
+                      )}
+                      {photo.caption && (
+                        <p className="mt-1 whitespace-pre-wrap text-xs text-charcoal/60">{photo.caption}</p>
+                      )}
+                    </figcaption>
                   )}
                 </figure>
               ))}
