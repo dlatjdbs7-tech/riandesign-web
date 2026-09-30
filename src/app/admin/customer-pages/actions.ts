@@ -3,11 +3,37 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
+function isUploadedFile(value: FormDataEntryValue | null): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    typeof (value as File).arrayBuffer === "function" &&
+    typeof (value as File).size === "number"
+  );
+}
+
+async function uploadProjectPhoto(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  formData: FormData
+): Promise<string | null> {
+  const file = formData.get("photo");
+  if (!isUploadedFile(file) || file.size === 0) return null;
+
+  // Supabase Storage 오브젝트 키는 비-ASCII 문자(한글 등)를 거부하므로 안전한 키로 치환한다.
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${Date.now()}-${safeName}`;
+  const { error } = await supabase.storage.from("project-photos").upload(path, file);
+  if (error) return null;
+
+  return supabase.storage.from("project-photos").getPublicUrl(path).data.publicUrl;
+}
+
 export async function addProjectPhoto(workOrderId: string, formData: FormData) {
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const supabase = await createClient();
+  const imageUrl = await uploadProjectPhoto(supabase, formData);
   if (!imageUrl) return;
 
-  const supabase = await createClient();
   await supabase.from("work_order_photos").insert({
     work_order_id: workOrderId,
     image_url: imageUrl,
@@ -49,10 +75,10 @@ export async function deleteManualProject(id: string) {
 }
 
 export async function addManualProjectPhoto(customerProjectId: string, formData: FormData) {
-  const imageUrl = String(formData.get("image_url") ?? "").trim();
+  const supabase = await createClient();
+  const imageUrl = await uploadProjectPhoto(supabase, formData);
   if (!imageUrl) return;
 
-  const supabase = await createClient();
   await supabase.from("customer_project_photos").insert({
     customer_project_id: customerProjectId,
     image_url: imageUrl,

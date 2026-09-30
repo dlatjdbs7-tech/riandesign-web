@@ -181,14 +181,17 @@ export default function CustomerPageGrid({ cards, origin }: { cards: ProjectCard
                 )}
 
                 <form
+                  key={card.photos.length}
                   action={(card.isManual ? addManualProjectPhoto : addProjectPhoto).bind(null, card.id)}
                   className="mt-3 flex flex-col gap-2"
                 >
                   <input
-                    name="image_url"
-                    placeholder="사진 이미지 URL"
+                    type="file"
+                    name="photo"
+                    accept="image/*"
+                    capture="environment"
                     required
-                    className="border-b border-nude bg-transparent py-1.5 text-xs outline-none focus:border-orange-400"
+                    className="text-xs file:mr-2 file:rounded-full file:border file:border-charcoal/30 file:bg-white file:px-3 file:py-1 file:text-xs file:text-charcoal hover:file:border-charcoal"
                   />
                   <input
                     name="caption"
