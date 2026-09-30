@@ -28,6 +28,7 @@ import AssigneeSelect from "@/components/admin/AssigneeSelect";
 import InlineFieldInput from "@/components/admin/InlineFieldInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
 import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
+import { STAFF_REFERRAL_SOURCES } from "@/lib/referralSources";
 
 type QuoteRow = Quote & {
   customers: Pick<Customer, "name" | "phone"> | null;
@@ -38,7 +39,7 @@ type SiteRow = WorkOrder & {
   profiles: Pick<Profile, "full_name"> | null;
 };
 
-const REFERRAL_SOURCES = ["블로그", "인스타그램", "유튜브", "인터넷 검색", "지인 소개", "기타"];
+const REFERRAL_SOURCES = STAFF_REFERRAL_SOURCES;
 
 const RISK_LABEL: Record<RiskLevel, string> = { danger: "위험", caution: "주의", normal: "정상" };
 const RISK_STYLE: Record<RiskLevel, string> = {
@@ -341,10 +342,22 @@ export default async function SitesPage({
             placeholder="예산 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
+          <select
+            name="referral_source"
+            defaultValue="전화"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          >
+            <option value="">유입경로 선택 안 함</option>
+            {REFERRAL_SOURCES.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
           <input
             name="message"
             placeholder="어떤 문의였는지 간단히 (선택)"
-            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400 lg:col-span-2"
           />
           <button
             type="submit"

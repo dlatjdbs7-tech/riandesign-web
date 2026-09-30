@@ -44,6 +44,7 @@ export async function createLeadInquiry(redirectTo: string, formData: FormData) 
     address: String(formData.get("address") ?? "").trim() || null,
     size_py: String(formData.get("size_py") ?? "").trim() || null,
     floor_plan_type: String(formData.get("floor_plan_type") ?? "").trim() || null,
+    referral_source: String(formData.get("referral_source") ?? "").trim() || null,
     status: "lead",
   });
 

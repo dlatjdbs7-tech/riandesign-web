@@ -9,6 +9,7 @@ import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
 import FormattedNumberInput from "@/components/admin/FormattedNumberInput";
 import InlineInquiryFieldInput from "@/components/admin/InlineInquiryFieldInput";
 import InlineActionInput from "@/components/admin/InlineActionInput";
+import { STAFF_REFERRAL_SOURCES } from "@/lib/referralSources";
 
 function hasExtraDetails(i: Inquiry) {
   return Boolean(
@@ -113,10 +114,22 @@ export default async function InquiriesPage({
             placeholder="예산 (선택)"
             className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
           />
+          <select
+            name="referral_source"
+            defaultValue="전화"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+          >
+            <option value="">유입경로 선택 안 함</option>
+            {STAFF_REFERRAL_SOURCES.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
           <input
             name="message"
             placeholder="어떤 문의였는지 간단히 (선택)"
-            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400"
+            className="border-b border-nude bg-transparent py-2 text-sm outline-none focus:border-rose-400 lg:col-span-2"
           />
           <button
             type="submit"

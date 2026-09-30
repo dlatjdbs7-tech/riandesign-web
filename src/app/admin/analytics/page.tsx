@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Inquiry, PageView, PortfolioItem, Profile, Quote } from "@/lib/types";
 import TrendLineChart from "@/components/admin/TrendLineChart";
 import { classifyTrafficSource } from "@/lib/trafficSource";
+import { DIRECT_INQUIRY_SOURCES } from "@/lib/referralSources";
 
 type Period = "1m" | "6m" | "1y";
 const PERIOD_LABEL: Record<Period, string> = { "1m": "1개월", "6m": "6개월", "1y": "1년" };
@@ -186,6 +187,11 @@ export default async function AnalyticsPage({
   ).length;
   const acceptedQuotes = (quotes ?? []).filter((q) => q.status === "accepted").length;
 
+  // 직접상담신청 — 홈페이지를 거치지 않고 전화·방문으로 바로 들어온 문의.
+  const directInquiryCount = (inquiries ?? []).filter((i) =>
+    (DIRECT_INQUIRY_SOURCES as readonly string[]).includes(i.referral_source ?? "")
+  ).length;
+
   const funnelBase = [
     { key: "visit", label: "홈페이지 방문", count: totalVisits },
     { key: "call", label: "상담접수", count: totalInquiries },
@@ -250,11 +256,16 @@ export default async function AnalyticsPage({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {[
           { label: "총 방문", value: `${totalVisits}건`, caption: "홈페이지 페이지뷰" },
           { label: "순방문", value: `${uniqueVisitors}명`, caption: "고유 방문자" },
           { label: "상담접수", value: `${totalInquiries}건`, caption: "문의 등록" },
+          {
+            label: "직접상담신청",
+            value: `${directInquiryCount}건`,
+            caption: "전화·방문 (홈페이지 경유 아님)",
+          },
           {
             label: "계약전환율",
             value: `${totalVisits > 0 ? Math.round((acceptedQuotes / totalVisits) * 100) : 0}%`,
