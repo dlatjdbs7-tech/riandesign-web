@@ -82,6 +82,27 @@ export const MENU_GROUPS: MenuGroup[] = [
   },
 ];
 
+// 사이드바 위쪽에 바로 보이는 메인 메뉴 (작게 시작해서 하나씩 늘린다).
+// 여기 없는 메뉴는 사이드바 아래 "보관 메뉴"에 접혀서 남아 있다.
+// 메뉴를 메인으로 올리려면 key를 원하는 섹션에 추가하기만 하면 된다. 권한은 MENU_GROUPS 기준 그대로.
+export const PRIMARY_SECTIONS: { label: string; keys: string[] }[] = [
+  { label: "영업", keys: ["/admin/inquiries", "/admin/customer-pages"] },
+  { label: "현장", keys: ["/admin/sites", "/admin/calendar"] },
+  { label: "업무", keys: ["/admin/todos", "/admin/attendance"] },
+];
+
+// 보관 메뉴 그룹의 한글 이름
+export const GROUP_LABELS_KO: Record<string, string> = {
+  PROJECTS: "프로젝트",
+  DAILY: "일상업무",
+  LIBRARY: "자료실",
+  PEOPLE: "사람",
+  MARKETING: "마케팅",
+  FINANCE: "재무",
+  OPERATIONS: "운영",
+  SETTINGS: "설정",
+};
+
 export const CONFIGURABLE_MENU_KEYS = MENU_GROUPS.flatMap((group) =>
   group.items.map((item) => item.key)
 );

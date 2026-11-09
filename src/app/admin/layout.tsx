@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
 import { MENU_GROUPS } from "@/lib/menu";
-import AdminNav from "@/components/admin/AdminNav";
-import LogoutButton from "@/components/admin/LogoutButton";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import ChatWidget from "@/components/admin/chat/ChatWidget";
 import { getNotificationCount } from "@/lib/notifications";
 
@@ -77,34 +76,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   };
 
   return (
-    <div className="flex min-h-screen bg-stone-100 font-admin">
-      <aside className="flex w-64 flex-col justify-between overflow-y-auto border-r border-nude/50 bg-white px-5 py-8">
-        <div>
-          <div className="text-center">
-            <p className="text-base font-semibold tracking-[0.25em] text-charcoal">REAN DESIGN</p>
-            <p className="mt-3 flex justify-center gap-3 text-[10px] tracking-wide text-taupe/70">
-              <span>
-                <span className="font-semibold">RE-</span>ANALYZE
-              </span>
-              <span>
-                <span className="font-semibold">RE-</span>DESIGN
-              </span>
-            </p>
-          </div>
+    <div className="min-h-screen bg-stone-100 font-admin lg:flex">
+      <AdminSidebar
+        groups={visibleGroups}
+        isOwner={isOwner}
+        badges={badges}
+        userName={profile.full_name ?? ""}
+        roleLabel={profile.role === "owner" ? "대표" : profile.role === "manager" ? "팀장" : "직원"}
+      />
 
-          <AdminNav groups={visibleGroups} isOwner={isOwner} badges={badges} />
-        </div>
-
-        <div className="flex flex-col gap-3 border-t border-nude/50 pt-4">
-          <div className="text-xs text-charcoal/50">
-            <p className="text-sm font-medium text-charcoal">{profile.full_name}</p>
-            <p>{profile.role === "owner" ? "대표" : profile.role === "manager" ? "팀장" : "직원"}</p>
-          </div>
-          <LogoutButton />
-        </div>
-      </aside>
-
-      <main className="flex-1 overflow-y-auto px-10 py-10">{children}</main>
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
 
       <ChatWidget currentUserId={user.id} isOwner={isOwner} />
     </div>
