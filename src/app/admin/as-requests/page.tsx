@@ -3,7 +3,8 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Customer, Profile } from "@/lib/types";
 import { createAsRequest, deleteAsRequest, updateAsRequest } from "./actions";
 import AsStatusSelect from "@/components/admin/AsStatusSelect";
-import FormattedPhoneInput from "@/components/admin/FormattedPhoneInput";
+import AsContactFields, { type AsContactOption } from "@/components/admin/AsContactFields";
+import { formatPhoneNumber } from "@/lib/format";
 
 type AsRequestRow = AsRequest & { customers: Pick<Customer, "name"> | null };
 
@@ -12,14 +13,24 @@ const FIELD_CLASS =
 
 // 등록 / 수정에 같이 쓰는 입력 칸. 수정일 때는 기존 값이 미리 채워진다.
 function AsRequestFields({
-  customers,
+  contactOptions,
   initial,
 }: {
-  customers: Pick<Customer, "id" | "name">[] | null;
+  contactOptions: AsContactOption[];
   initial?: AsRequestRow;
 }) {
   return (
     <>
+      <label className="flex w-fit cursor-pointer items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 has-[:checked]:border-red-500 has-[:checked]:bg-red-600 has-[:checked]:text-white lg:col-span-4">
+        <input
+          type="checkbox"
+          name="is_urgent"
+          defaultChecked={initial?.is_urgent ?? false}
+          className="h-4 w-4 accent-red-600"
+        />
+        긴급건
+        <span className="text-xs font-normal opacity-75">(체크하면 목록 맨 위에 빨간색으로 표시)</span>
+      </label>
       <input
         name="title"
         placeholder="제목 (예: 싱크대 누수)"
@@ -27,31 +38,17 @@ function AsRequestFields({
         defaultValue={initial?.title}
         className={FIELD_CLASS}
       />
-      <select name="customer_id" defaultValue={initial?.customer_id ?? ""} className={FIELD_CLASS}>
-        <option value="">등록된 고객 중 선택</option>
-        {customers?.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-      <input
-        name="caller_name"
-        placeholder="전화 건 분 이름 (등록 고객 아닐 때)"
-        defaultValue={initial?.caller_name ?? ""}
-        className={FIELD_CLASS}
-      />
-      <FormattedPhoneInput
-        name="phone"
-        placeholder="연락처"
-        defaultValue={initial?.phone ?? undefined}
-        className={FIELD_CLASS}
-      />
-      <input
-        name="address"
-        placeholder="현장 주소 (선택)"
-        defaultValue={initial?.address ?? ""}
-        className={FIELD_CLASS}
+      <AsContactFields
+        options={contactOptions}
+        fieldClass={FIELD_CLASS}
+        initial={
+          initial && {
+            customerId: initial.customer_id,
+            name: initial.caller_name ?? initial.customers?.name ?? "",
+            phone: initial.phone ?? "",
+            address: initial.address ?? "",
+          }
+        }
       />
       <div className="flex flex-col gap-1">
         <label className="text-[10px] text-charcoal/50">접수일</label>
@@ -92,15 +89,72 @@ export default async function AsRequestsPage({
     .single<Profile>();
   const canManage = me?.role === "owner" || me?.role === "manager";
 
-  const { data: requests } = await supabase
+  const { data: fetchedRequests } = await supabase
     .from("as_requests")
     .select("*, customers(name)")
     .order("request_date", { ascending: false })
     .returns<AsRequestRow[]>();
 
-  const { data: customers } = canManage
-    ? await supabase.from("customers").select("id, name").order("name").returns<Pick<Customer, "id" | "name">[]>()
-    : { data: null };
+  // 아직 끝나지 않은 긴급건을 맨 위로 (나머지는 접수일 최신순 그대로)
+  const isOpenUrgent = (r: AsRequestRow) => r.is_urgent && r.status !== "completed";
+  const requests = fetchedRequests
+    ? [...fetchedRequests].sort((a, b) => Number(isOpenUrgent(b)) - Number(isOpenUrgent(a)))
+    : null;
+
+  // 고객 불러오기 목록: 고객·우수회원 명단 + 현장관리 + 상담접수 (고객 정보가 실제로 들어 있는 곳)
+  const contactOptions: AsContactOption[] = [];
+  if (canManage) {
+    const [{ data: customers }, { data: sites }, { data: inquiries }] = await Promise.all([
+      supabase
+        .from("customers")
+        .select("id, name, phone, address")
+        .order("name")
+        .returns<Pick<Customer, "id" | "name" | "phone" | "address">[]>(),
+      supabase
+        .from("work_orders")
+        .select("id, title, client_name, site_address")
+        .order("created_at", { ascending: false })
+        .returns<{ id: string; title: string; client_name: string | null; site_address: string | null }[]>(),
+      supabase
+        .from("inquiries")
+        .select("id, name, phone, address")
+        .order("created_at", { ascending: false })
+        .returns<{ id: string; name: string | null; phone: string | null; address: string | null }[]>(),
+    ]);
+    for (const c of customers ?? []) {
+      contactOptions.push({
+        value: `c:${c.id}`,
+        group: "고객",
+        label: [c.name, c.phone && formatPhoneNumber(c.phone)].filter(Boolean).join(" · "),
+        name: c.name,
+        phone: c.phone ?? "",
+        address: c.address ?? "",
+      });
+    }
+    for (const w of sites ?? []) {
+      contactOptions.push({
+        value: `w:${w.id}`,
+        group: "현장",
+        label: [w.title, w.client_name].filter(Boolean).join(" · "),
+        name: w.client_name ?? w.title,
+        phone: "",
+        address: w.site_address ?? "",
+      });
+    }
+    for (const i of inquiries ?? []) {
+      // 이름도 연락처도 없는(이름 "미정"만 있는) 상담은 불러와도 쓸모가 없어 뺀다.
+      const hasName = !!i.name && i.name.trim() !== "미정";
+      if (!hasName && !i.phone) continue;
+      contactOptions.push({
+        value: `i:${i.id}`,
+        group: "상담접수",
+        label: [i.name, i.phone && formatPhoneNumber(i.phone), i.address].filter(Boolean).join(" · "),
+        name: i.name ?? "",
+        phone: i.phone ?? "",
+        address: i.address ?? "",
+      });
+    }
+  }
 
   const editing = canManage && params.edit ? requests?.find((r) => r.id === params.edit) : undefined;
 
@@ -126,7 +180,7 @@ export default async function AsRequestsPage({
           <p className="text-xs text-charcoal/50 lg:col-span-4">
             전화로 AS 접수가 오면 여기에 바로 적어두세요.
           </p>
-          <AsRequestFields customers={customers} />
+          <AsRequestFields contactOptions={contactOptions} />
           <button
             type="submit"
             className="self-start rounded-full bg-charcoal px-6 py-2 text-sm tracking-wide text-cream hover:bg-gold lg:col-span-4"
@@ -145,7 +199,7 @@ export default async function AsRequestsPage({
           <p className="text-sm font-semibold text-charcoal lg:col-span-4">
             AS 요청 수정 <span className="font-normal text-charcoal/50">— {editing.title}</span>
           </p>
-          <AsRequestFields customers={customers} initial={editing} />
+          <AsRequestFields contactOptions={contactOptions} initial={editing} />
           <div className="flex items-center gap-3 lg:col-span-4">
             <button
               type="submit"
@@ -180,11 +234,18 @@ export default async function AsRequestsPage({
               <tr
                 key={r.id}
                 className={`border-b border-nude/30 last:border-0 align-top ${
-                  editing?.id === r.id ? "bg-orange-50" : ""
+                  editing?.id === r.id ? "bg-orange-50" : isOpenUrgent(r) ? "bg-red-50" : ""
                 }`}
               >
-                <td className="px-4 py-3">
-                  <p>{r.title}</p>
+                <td className={`px-4 py-3 ${r.is_urgent ? "border-l-4 border-l-red-500" : ""}`}>
+                  <p className="flex flex-wrap items-center gap-2">
+                    {r.is_urgent && (
+                      <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
+                        긴급
+                      </span>
+                    )}
+                    <span className={r.is_urgent ? "font-semibold text-red-800" : ""}>{r.title}</span>
+                  </p>
                   {r.description && (
                     <p className="mt-1 max-w-xs whitespace-pre-wrap text-xs text-charcoal/50">
                       {r.description}

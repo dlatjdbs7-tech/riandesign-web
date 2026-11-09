@@ -148,6 +148,7 @@ export type AsRequest = {
   caller_name: string | null;
   phone: string | null;
   address: string | null;
+  is_urgent: boolean;
   created_at: string;
 };
 

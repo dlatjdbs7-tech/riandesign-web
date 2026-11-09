@@ -15,6 +15,7 @@ function readAsFields(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || null,
     request_date:
       String(formData.get("request_date") ?? "") || new Date().toISOString().slice(0, 10),
+    is_urgent: formData.get("is_urgent") === "on",
   };
 }
 
