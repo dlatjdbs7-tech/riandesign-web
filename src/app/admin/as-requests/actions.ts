@@ -15,7 +15,6 @@ function readAsFields(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || null,
     request_date:
       String(formData.get("request_date") ?? "") || new Date().toISOString().slice(0, 10),
-    is_urgent: formData.get("is_urgent") === "on",
   };
 }
 
@@ -48,6 +47,13 @@ export async function updateAsRequest(id: string, formData: FormData) {
 export async function updateAsStatus(id: string, status: AsStatus) {
   const supabase = await createClient();
   await supabase.from("as_requests").update({ status }).eq("id", id);
+  revalidatePath("/admin/as-requests");
+}
+
+// 목록의 "긴급" 칸에서 바로 켜고 끈다.
+export async function updateAsUrgent(id: string, isUrgent: boolean) {
+  const supabase = await createClient();
+  await supabase.from("as_requests").update({ is_urgent: isUrgent }).eq("id", id);
   revalidatePath("/admin/as-requests");
 }
 

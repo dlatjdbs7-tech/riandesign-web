@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { AsRequest, Customer, Profile } from "@/lib/types";
 import { createAsRequest, deleteAsRequest, updateAsRequest } from "./actions";
 import AsStatusSelect from "@/components/admin/AsStatusSelect";
+import AsUrgentCheckbox from "@/components/admin/AsUrgentCheckbox";
 import AsContactFields, { type AsContactOption } from "@/components/admin/AsContactFields";
 import { formatPhoneNumber } from "@/lib/format";
 
@@ -21,16 +22,6 @@ function AsRequestFields({
 }) {
   return (
     <>
-      <label className="flex w-fit cursor-pointer items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 has-[:checked]:border-red-500 has-[:checked]:bg-red-600 has-[:checked]:text-white lg:col-span-4">
-        <input
-          type="checkbox"
-          name="is_urgent"
-          defaultChecked={initial?.is_urgent ?? false}
-          className="h-4 w-4 accent-red-600"
-        />
-        긴급건
-        <span className="text-xs font-normal opacity-75">(체크하면 목록 맨 위에 빨간색으로 표시)</span>
-      </label>
       <input
         name="title"
         placeholder="제목 (예: 싱크대 누수)"
@@ -226,6 +217,7 @@ export default async function AsRequestsPage({
               <th className="px-4 py-3">연락처</th>
               <th className="px-4 py-3">날짜</th>
               <th className="px-4 py-3">상태</th>
+              <th className="px-4 py-3">긴급</th>
               {canManage && <th className="px-4 py-3" />}
             </tr>
           </thead>
@@ -238,14 +230,7 @@ export default async function AsRequestsPage({
                 }`}
               >
                 <td className={`px-4 py-3 ${r.is_urgent ? "border-l-4 border-l-red-500" : ""}`}>
-                  <p className="flex flex-wrap items-center gap-2">
-                    {r.is_urgent && (
-                      <span className="rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
-                        긴급
-                      </span>
-                    )}
-                    <span className={r.is_urgent ? "font-semibold text-red-800" : ""}>{r.title}</span>
-                  </p>
+                  <p className={r.is_urgent ? "font-semibold text-red-800" : ""}>{r.title}</p>
                   {r.description && (
                     <p className="mt-1 max-w-xs whitespace-pre-wrap text-xs text-charcoal/50">
                       {r.description}
@@ -260,6 +245,15 @@ export default async function AsRequestsPage({
                 <td className="px-4 py-3 text-charcoal/70">{r.request_date}</td>
                 <td className="px-4 py-3">
                   {canManage ? <AsStatusSelect id={r.id} status={r.status} /> : r.status}
+                </td>
+                <td className="px-4 py-3">
+                  {canManage ? (
+                    <AsUrgentCheckbox key={`${r.id}-${r.is_urgent}`} id={r.id} isUrgent={r.is_urgent} />
+                  ) : r.is_urgent ? (
+                    <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">긴급</span>
+                  ) : (
+                    <span className="text-charcoal/30">-</span>
+                  )}
                 </td>
                 {canManage && (
                   <td className="px-4 py-3">
@@ -282,7 +276,7 @@ export default async function AsRequestsPage({
             ))}
             {(!requests || requests.length === 0) && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-charcoal/50">
+                <td colSpan={7} className="px-4 py-6 text-center text-charcoal/50">
                   등록된 AS 요청이 없습니다.
                 </td>
               </tr>
