@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Customer, Profile, WorkOrder } from "@/lib/types";
 import { createWorkOrder, deleteWorkOrder } from "./actions";
 import WorkOrderTitleCell from "@/components/admin/WorkOrderTitleCell";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 const STATUS_LABEL: Record<WorkOrder["status"], string> = {
   pending: "대기",
@@ -118,14 +119,7 @@ export default async function WorkOrdersPage() {
                         <Link href={`/admin/work-orders/${order.id}`} className="text-taupe hover:text-gold">
                           상세
                         </Link>
-                        <form action={deleteWorkOrder.bind(null, order.id)}>
-                          <button
-                            type="submit"
-                            className="text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100"
-                          >
-                            삭제
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteWorkOrder.bind(null, order.id)} className="text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100" >삭제</DeleteButton>
                       </div>
                     </td>
                   )}

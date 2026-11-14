@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -26,6 +27,7 @@ export async function createPurchaseOrder(formData: FormData) {
 
 export async function deletePurchaseOrder(id: string) {
   const supabase = await createClient();
-  await supabase.from("purchase_orders").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "purchase_orders", id);
   revalidatePath("/admin/field-management/purchase-orders");
+  return trashed;
 }

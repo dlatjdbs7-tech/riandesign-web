@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Material, Profile } from "@/lib/types";
 import { createMaterial, deleteMaterial } from "./actions";
@@ -49,11 +50,7 @@ export default async function MaterialsPage() {
                   <td className="px-4 py-3 text-charcoal/70">{m.supplier ?? "-"}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deleteMaterial.bind(null, m.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteMaterial.bind(null, m.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, PurchaseOrder } from "@/lib/types";
 import { createPurchaseOrder, deletePurchaseOrder } from "./actions";
+import PurchasingTabs from "@/components/admin/PurchasingTabs";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 export default async function PurchaseOrdersPage() {
   const supabase = await createClient();
@@ -23,12 +24,7 @@ export default async function PurchaseOrdersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-semibold text-charcoal">발주서</h1>
-        <Link href="/admin/field-management" className="text-xs text-taupe hover:text-orange-600">
-          ← 시공관리
-        </Link>
-      </div>
+      <PurchasingTabs active="/admin/field-management/purchase-orders" />
       <p className="mt-2 text-sm text-charcoal/60">
         자재·시공 발주 내용을 간단히 메모로 남깁니다.
       </p>
@@ -48,11 +44,7 @@ export default async function PurchaseOrdersPage() {
                   )}
                 </div>
                 {canManage && (
-                  <form action={deletePurchaseOrder.bind(null, order.id)}>
-                    <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                      삭제
-                    </button>
-                  </form>
+                  <DeleteButton action={deletePurchaseOrder.bind(null, order.id)} className="text-xs text-charcoal/40 hover:text-red-600">삭제</DeleteButton>
                 )}
               </div>
               {order.notes && (

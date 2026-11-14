@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -25,6 +26,7 @@ export async function createCategory(formData: FormData) {
 
 export async function deleteCategory(id: string) {
   const supabase = await createClient();
-  await supabase.from("categories").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "categories", id);
   revalidateCategoryPages();
+  return trashed;
 }

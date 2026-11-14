@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { QuoteStatus } from "@/lib/types";
@@ -33,6 +34,7 @@ export async function updateQuoteStatus(id: string, status: QuoteStatus) {
 
 export async function deleteQuote(id: string) {
   const supabase = await createClient();
-  await supabase.from("quotes").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "quotes", id);
   revalidatePath("/admin/quotes");
+  return trashed;
 }

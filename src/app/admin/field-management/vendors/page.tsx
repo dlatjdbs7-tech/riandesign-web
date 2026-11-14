@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Profile, Vendor } from "@/lib/types";
 import { createVendor, deleteVendor } from "../../vendors/actions";
 import VendorTierCell from "@/components/admin/VendorTierCell";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 const TRADE_ORDER = [
   "철거",
@@ -77,14 +78,7 @@ export default async function FieldManagementVendorsPage() {
                 {v.contact && <p className="truncate text-xs text-charcoal/50">{v.contact}</p>}
               </div>
               {canManage && (
-                <form action={deleteVendor.bind(null, v.id)}>
-                  <button
-                    type="submit"
-                    className="shrink-0 text-xs text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100"
-                  >
-                    삭제
-                  </button>
-                </form>
+                <DeleteButton action={deleteVendor.bind(null, v.id)} className="shrink-0 text-xs text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100" >삭제</DeleteButton>
               )}
             </div>
           ))}

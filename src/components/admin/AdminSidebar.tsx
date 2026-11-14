@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import type { MenuGroup } from "@/lib/menu";
 import AdminNav from "./AdminNav";
@@ -8,10 +9,10 @@ import LogoutButton from "./LogoutButton";
 
 function Brand() {
   return (
-    <div className="text-center">
-      <p className="text-base font-semibold tracking-[0.25em] text-charcoal">REAN DESIGN</p>
-      <p className="mt-2 text-[11px] text-charcoal/40">관리자</p>
-    </div>
+    <Link href="/admin" className="block px-1 text-center">
+      <p className="text-[15px] font-bold tracking-[0.22em] text-charcoal">REAN NETWORKS</p>
+      <p className="mt-1 text-xs font-medium text-orange-600">리안네트웍스</p>
+    </Link>
   );
 }
 
@@ -57,7 +58,7 @@ export default function AdminSidebar({
 
       {/* 모바일 상단 바 */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-nude/50 bg-white px-4 py-3 lg:hidden">
-        <p className="text-sm font-semibold tracking-[0.2em] text-charcoal">REAN DESIGN</p>
+        <p className="text-sm font-bold text-charcoal">리안네트웍스</p>
         <button
           type="button"
           onClick={() => setMobileOpen(true)}

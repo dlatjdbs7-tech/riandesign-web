@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { TodoStatus } from "@/lib/types";
@@ -59,6 +60,7 @@ export async function createQuickTodo(formData: FormData) {
 
 export async function deleteTodo(id: string) {
   const supabase = await createClient();
-  await supabase.from("todos").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "todos", id);
   revalidatePath("/admin/todos");
+  return trashed;
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createScheduleItem } from "@/app/admin/calendar/actions";
 import FormattedNumberInput from "./FormattedNumberInput";
+import { TEAMS } from "@/lib/teams";
 
 const CATEGORIES = ["미팅", "A/S", "수금", "행사", "촬영", "할일"] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -17,16 +18,18 @@ const CATEGORY_ACTIVE_CLASS: Record<Category, string> = {
 };
 
 const MEETING_TYPES = ["레이아웃 미팅", "디자인 미팅", "마감재 미팅", "견적 미팅", "계약 미팅", "방문상담"];
-const TEAMS = ["전체", "총괄", "디자인팀", "시공팀", "영업팀"];
+const TEAM_OPTIONS = ["공통", ...TEAMS];
 
 export default function AddEventModal({
   defaultDate,
   triggerLabel = "+ 일정 추가",
   triggerClassName = "rounded-full bg-orange-300 px-4 py-2 text-xs font-medium text-orange-900 hover:bg-orange-400",
+  defaultTeam = "공통",
 }: {
   defaultDate: string;
   triggerLabel?: string;
   triggerClassName?: string;
+  defaultTeam?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<Category>("미팅");
@@ -162,10 +165,11 @@ export default function AddEventModal({
               {showTeam && (
                 <select
                   name="team"
-                  defaultValue="전체"
+                  aria-label="팀"
+                  defaultValue={defaultTeam}
                   className="rounded-sm border border-nude px-3 py-2 text-sm outline-none focus:border-orange-400"
                 >
-                  {TEAMS.map((t) => (
+                  {TEAM_OPTIONS.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>

@@ -10,6 +10,7 @@ import {
   updateWorkOrderTaskDetails,
 } from "@/app/admin/field-management/schedule/actions";
 import type { WorkOrderStatus } from "@/lib/types";
+import { announceTrashed } from "./DeleteButton";
 
 const STATUS_LABEL: Record<WorkOrderStatus, string> = {
   pending: "대기",
@@ -166,7 +167,7 @@ export default function WorkOrderTaskRow({
         <button
           type="button"
           onClick={async () => {
-            await deleteWorkOrderTask(id);
+            announceTrashed(await deleteWorkOrderTask(id));
             router.refresh();
           }}
           className="text-xs text-charcoal/40 hover:text-red-600"

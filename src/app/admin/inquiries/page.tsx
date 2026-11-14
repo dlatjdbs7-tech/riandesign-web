@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Inquiry, Profile } from "@/lib/types";
@@ -345,11 +346,7 @@ export default async function InquiriesPage({
             )}
 
             <div className="mt-2">
-              <form action={deleteInquiry.bind(null, i.id)}>
-                <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                  삭제
-                </button>
-              </form>
+              <DeleteButton action={deleteInquiry.bind(null, i.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
             </div>
           </div>
         ))}

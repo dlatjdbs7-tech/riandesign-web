@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, WorkLog, WorkOrder } from "@/lib/types";
@@ -87,11 +88,7 @@ export default async function WorkOrderDetailPage({
           </div>
         </div>
         {canManage && (
-          <form action={deleteWorkOrder.bind(null, order.id)}>
-            <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-              삭제
-            </button>
-          </form>
+          <DeleteButton action={deleteWorkOrder.bind(null, order.id)} redirectTo="/admin/work-orders" className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
         )}
       </div>
 

@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server";
 import type { Profile, Vendor } from "@/lib/types";
 import { createVendor, deleteVendor } from "./actions";
 import CategorySection from "@/components/admin/CategorySection";
+import PurchasingTabs from "@/components/admin/PurchasingTabs";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 export default async function VendorsPage() {
   const supabase = await createClient();
@@ -23,7 +25,7 @@ export default async function VendorsPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">업체정보</h1>
+      <PurchasingTabs active="/admin/vendors" />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="overflow-x-auto rounded-sm border border-nude/60 bg-white">
@@ -44,11 +46,7 @@ export default async function VendorsPage() {
                   <td className="px-4 py-3 text-charcoal/70">{v.category ?? "-"}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deleteVendor.bind(null, v.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteVendor.bind(null, v.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { PurchaseOrderStatus } from "@/lib/types";
@@ -33,6 +34,7 @@ export async function updateQuickLinkStatus(id: string, status: PurchaseOrderSta
 
 export async function deleteQuickLink(id: string) {
   const supabase = await createClient();
-  await supabase.from("quick_links").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "quick_links", id);
   revalidatePath("/admin/field-management/quick-links");
+  return trashed;
 }

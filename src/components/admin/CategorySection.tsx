@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Category } from "@/lib/types";
 import { createCategory, deleteCategory } from "@/app/admin/categories/actions";
@@ -22,11 +23,7 @@ export default async function CategorySection({ type, canManage }: { type: strin
           >
             {c.name}
             {canManage && (
-              <form action={deleteCategory.bind(null, c.id)}>
-                <button type="submit" className="text-charcoal/40 hover:text-red-600">
-                  ×
-                </button>
-              </form>
+              <DeleteButton action={deleteCategory.bind(null, c.id)} className="text-charcoal/40 hover:text-red-600">×</DeleteButton>
             )}
           </div>
         ))}

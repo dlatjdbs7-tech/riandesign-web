@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { WorkDirectiveStatus } from "@/lib/types";
@@ -33,6 +34,7 @@ export async function updateDirectiveStatus(id: string, status: WorkDirectiveSta
 
 export async function deleteDirective(id: string) {
   const supabase = await createClient();
-  await supabase.from("work_directives").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "work_directives", id);
   revalidatePath("/admin/work-directives");
+  return trashed;
 }

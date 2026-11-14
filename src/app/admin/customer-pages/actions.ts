@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -45,8 +46,9 @@ export async function addProjectPhoto(workOrderId: string, formData: FormData) {
 
 export async function deleteProjectPhoto(id: string) {
   const supabase = await createClient();
-  await supabase.from("work_order_photos").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "work_order_photos", id);
   revalidatePath("/admin/customer-pages");
+  return trashed;
 }
 
 export async function createManualProject(formData: FormData) {
@@ -70,8 +72,9 @@ export async function createManualProject(formData: FormData) {
 
 export async function deleteManualProject(id: string) {
   const supabase = await createClient();
-  await supabase.from("customer_projects").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "customer_projects", id);
   revalidatePath("/admin/customer-pages");
+  return trashed;
 }
 
 export async function addManualProjectPhoto(customerProjectId: string, formData: FormData) {
@@ -90,6 +93,7 @@ export async function addManualProjectPhoto(customerProjectId: string, formData:
 
 export async function deleteManualProjectPhoto(id: string) {
   const supabase = await createClient();
-  await supabase.from("customer_project_photos").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "customer_project_photos", id);
   revalidatePath("/admin/customer-pages");
+  return trashed;
 }

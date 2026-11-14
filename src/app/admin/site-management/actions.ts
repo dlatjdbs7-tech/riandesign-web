@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -51,7 +52,8 @@ export async function createService(formData: FormData) {
 
 export async function deleteService(id: string) {
   const supabase = await createClient();
-  await supabase.from("services").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "services", id);
   revalidatePath("/admin/site-management");
   revalidatePath("/");
+  return trashed;
 }

@@ -1,7 +1,7 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { SiteStatus } from "@/lib/types";
 
@@ -222,9 +222,9 @@ export async function updateWorkOrderProgress(id: string, formData: FormData) {
 
 export async function deleteWorkOrder(id: string) {
   const supabase = await createClient();
-  await supabase.from("work_orders").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "work_orders", id);
   revalidatePath("/admin/work-orders");
-  redirect("/admin/work-orders");
+  return trashed;
 }
 
 export async function addWorkLog(workOrderId: string | null, formData: FormData) {

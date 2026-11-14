@@ -1,4 +1,5 @@
 "use client";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 import { useMemo, useState } from "react";
 import type { WorkOrder } from "@/lib/types";
@@ -134,11 +135,7 @@ export default function CustomerPageGrid({ cards, origin }: { cards: ProjectCard
                   {card.siteAddress && <p className="text-xs text-charcoal/40">{card.siteAddress}</p>}
                 </div>
                 {card.isManual && (
-                  <form action={deleteManualProject.bind(null, card.id)}>
-                    <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                      삭제
-                    </button>
-                  </form>
+                  <DeleteButton action={deleteManualProject.bind(null, card.id)} className="text-xs text-charcoal/40 hover:text-red-600">삭제</DeleteButton>
                 )}
               </div>
 
@@ -167,19 +164,12 @@ export default function CustomerPageGrid({ cards, origin }: { cards: ProjectCard
                           title={photo.caption ?? undefined}
                           className="h-16 w-16 rounded-sm border border-nude/60 object-cover"
                         />
-                        <form
-                          action={(card.isManual ? deleteManualProjectPhoto : deleteProjectPhoto).bind(
-                            null,
-                            photo.id
-                          )}
+                        <DeleteButton
+                          action={(card.isManual ? deleteManualProjectPhoto : deleteProjectPhoto).bind(null, photo.id)}
+                          className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-charcoal text-[10px] text-cream"
                         >
-                          <button
-                            type="submit"
-                            className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-charcoal text-[10px] text-cream"
-                          >
-                            ×
-                          </button>
-                        </form>
+                          ×
+                        </DeleteButton>
                       </div>
                     ))}
                   </div>

@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, WorkDirective } from "@/lib/types";
@@ -77,11 +78,7 @@ export default async function WorkDirectivesPage() {
                     )}
                   </div>
                   {canManageRow && (
-                    <form action={deleteDirective.bind(null, directive.id)} className="shrink-0">
-                      <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                        삭제
-                      </button>
-                    </form>
+                    <span className="shrink-0"><DeleteButton action={deleteDirective.bind(null, directive.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton></span>
                   )}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-charcoal/60">

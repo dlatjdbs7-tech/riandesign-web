@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { WorkSite } from "@/lib/types";
 import WorkSiteForm from "@/components/admin/WorkSiteForm";
 import { deleteWorkSite } from "./actions";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 export default async function WorkSitesPage() {
   const supabase = await createClient();
@@ -37,14 +38,7 @@ export default async function WorkSitesPage() {
                   <td className="px-4 py-3 text-charcoal/70">{site.address ?? "-"}</td>
                   <td className="px-4 py-3 text-charcoal/70">{site.radius_meters}</td>
                   <td className="px-4 py-3">
-                    <form action={deleteWorkSite.bind(null, site.id)}>
-                      <button
-                        type="submit"
-                        className="text-xs text-red-700 underline hover:no-underline"
-                      >
-                        삭제
-                      </button>
-                    </form>
+                    <DeleteButton action={deleteWorkSite.bind(null, site.id)} className="text-xs text-red-700 underline hover:no-underline" >삭제</DeleteButton>
                   </td>
                 </tr>
               ))}

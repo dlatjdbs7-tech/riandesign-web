@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Category, Profile } from "@/lib/types";
 import { createCategory, deleteCategory } from "./actions";
@@ -41,11 +42,7 @@ export default async function CategoriesPage() {
                   <td className="px-4 py-3 text-charcoal/70">{c.type ?? "-"}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deleteCategory.bind(null, c.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteCategory.bind(null, c.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, PurchaseOrderStatus, QuickLink } from "@/lib/types";
@@ -65,11 +66,7 @@ export default async function QuickLinksPage() {
                     <div className="mt-2 flex items-center justify-between">
                       <QuickLinkStatusSelect id={link.id} status={link.status} />
                       {canManage && (
-                        <form action={deleteQuickLink.bind(null, link.id)}>
-                          <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                            삭제
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteQuickLink.bind(null, link.id)} className="text-xs text-charcoal/40 hover:text-red-600">삭제</DeleteButton>
                       )}
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { TransactionStatus } from "@/lib/types";
@@ -49,6 +50,7 @@ export async function updateTransactionStatus(id: string, status: TransactionSta
 
 export async function deleteTransaction(id: string) {
   const supabase = await createClient();
-  await supabase.from("transactions").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "transactions", id);
   revalidatePath("/admin/transactions");
+  return trashed;
 }

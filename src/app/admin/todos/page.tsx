@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, Todo } from "@/lib/types";
 import { createTodo, deleteTodo } from "./actions";
@@ -56,11 +57,7 @@ export default async function TodosPage() {
                     </td>
                     <td className="px-4 py-3">
                       {canManageRow && (
-                        <form action={deleteTodo.bind(null, todo.id)}>
-                          <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                            삭제
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteTodo.bind(null, todo.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                       )}
                     </td>
                   </tr>

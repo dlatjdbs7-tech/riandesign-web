@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, Service, SiteContent } from "@/lib/types";
 import { createService, deleteService, updateSiteContent } from "./actions";
@@ -217,11 +218,7 @@ export default async function SiteManagementPage() {
                     <td className="px-4 py-3 text-charcoal/70">{service.display_order}</td>
                     {canManage && (
                       <td className="px-4 py-3">
-                        <form action={deleteService.bind(null, service.id)}>
-                          <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                            삭제
-                          </button>
-                        </form>
+                        <DeleteButton action={deleteService.bind(null, service.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                       </td>
                     )}
                   </tr>

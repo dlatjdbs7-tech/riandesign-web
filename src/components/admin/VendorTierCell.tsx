@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createVendor, deleteVendor, updateVendor } from "@/app/admin/vendors/actions";
 import type { Vendor } from "@/lib/types";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 export default function VendorTierCell({
   vendor,
@@ -62,14 +63,7 @@ export default function VendorTierCell({
           }}
           className="w-full truncate border-b border-transparent bg-transparent text-[11px] text-charcoal/50 outline-none hover:border-nude focus:border-orange-400"
         />
-        <form action={deleteVendor.bind(null, vendor.id)}>
-          <button
-            type="submit"
-            className="text-[10px] text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100"
-          >
-            삭제
-          </button>
-        </form>
+        <DeleteButton action={deleteVendor.bind(null, vendor.id)} className="text-[10px] text-charcoal/30 opacity-0 hover:text-red-600 group-hover:opacity-100" >삭제</DeleteButton>
       </div>
     );
   }

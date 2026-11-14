@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import type { Customer, Profile } from "@/lib/types";
@@ -66,11 +67,7 @@ export default async function CustomersPage() {
                   <td className="px-4 py-3 text-charcoal/70">{c.address ?? "-"}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deleteCustomer.bind(null, c.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteCustomer.bind(null, c.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

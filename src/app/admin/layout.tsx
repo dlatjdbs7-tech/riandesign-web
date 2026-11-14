@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Profile } from "@/lib/types";
 import { MENU_GROUPS } from "@/lib/menu";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import UndoToaster from "@/components/admin/UndoToaster";
 import ChatWidget from "@/components/admin/chat/ChatWidget";
 import { getNotificationCount } from "@/lib/notifications";
 
@@ -87,6 +88,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
 
+      <UndoToaster />
       <ChatWidget currentUserId={user.id} isOwner={isOwner} />
     </div>
   );

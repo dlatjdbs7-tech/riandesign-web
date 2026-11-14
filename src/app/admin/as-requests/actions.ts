@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
@@ -59,6 +60,7 @@ export async function updateAsUrgent(id: string, isUrgent: boolean) {
 
 export async function deleteAsRequest(id: string) {
   const supabase = await createClient();
-  await supabase.from("as_requests").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "as_requests", id);
   revalidatePath("/admin/as-requests");
+  return trashed;
 }

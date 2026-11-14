@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
@@ -109,11 +110,7 @@ export default async function ManualPage({
             <div className="flex items-start justify-between">
               <h2 className="font-serif text-xl font-semibold tracking-tight text-charcoal">{manual.title}</h2>
               {canManage && (
-                <form action={deleteManual.bind(null, manual.id)}>
-                  <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                    삭제
-                  </button>
-                </form>
+                <DeleteButton action={deleteManual.bind(null, manual.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
               )}
             </div>
             <p className="mt-1 text-xs text-charcoal/40">최종 수정 {formatKST(manual.updated_at)}</p>

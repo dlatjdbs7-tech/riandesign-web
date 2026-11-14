@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -22,8 +23,9 @@ export async function createProcessStep(formData: FormData) {
 
 export async function deleteProcessStep(id: string) {
   const supabase = await createClient();
-  await supabase.from("process_steps").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "process_steps", id);
   revalidatePath("/admin/process");
   revalidatePath("/");
   revalidatePath("/process");
+  return trashed;
 }

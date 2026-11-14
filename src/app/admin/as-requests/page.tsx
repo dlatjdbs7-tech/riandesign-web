@@ -6,6 +6,7 @@ import AsStatusSelect from "@/components/admin/AsStatusSelect";
 import AsUrgentCheckbox from "@/components/admin/AsUrgentCheckbox";
 import AsContactFields, { type AsContactOption } from "@/components/admin/AsContactFields";
 import { formatPhoneNumber } from "@/lib/format";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 type AsRequestRow = AsRequest & { customers: Pick<Customer, "name"> | null };
 
@@ -264,11 +265,7 @@ export default async function AsRequestsPage({
                       >
                         수정
                       </Link>
-                      <form action={deleteAsRequest.bind(null, r.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteAsRequest.bind(null, r.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </div>
                   </td>
                 )}

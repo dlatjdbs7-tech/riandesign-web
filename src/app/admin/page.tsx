@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
-import type { AsRequest, Profile, Todo, WorkOrder } from "@/lib/types";
-import { daysBetweenDateStrings, getKSTCurrentYearMonth, getKSTDateBounds, getKSTWeekBounds, getMonthDateRange } from "@/lib/date";
+import type { AsRequest, Inquiry, Profile, Todo, WorkOrder } from "@/lib/types";
+import { daysBetweenDateStrings, getKSTDateBounds, getKSTWeekBounds } from "@/lib/date";
 import { getWorkOrderRisk, type RiskLevel } from "@/lib/risk";
 import { getFinishTaskInfo, getTaskCompletionProgress } from "@/lib/schedulePeriod";
-import { getNotificationCount } from "@/lib/notifications";
+import { INFLOW_START_ISO, inquirySourceLabel, isOnlineInquiry } from "@/lib/trafficSource";
+import ClockInCard from "@/components/admin/ClockInCard";
+
+// 지각 기준: 9시 10분 이후 출근 (근태 페이지와 같은 기준)
+const LATE_CHECK_IN_MINUTES = 9 * 60 + 10;
 
 const RISK_LABEL: Record<RiskLevel, string> = { danger: "위험", caution: "주의", normal: "정상" };
 const RISK_STYLE: Record<RiskLevel, string> = {
@@ -13,84 +17,60 @@ const RISK_STYLE: Record<RiskLevel, string> = {
   normal: "bg-emerald-100 text-emerald-700",
 };
 
-// 신규→상담→견적→계약 순서를 명도로 표현하는 ordinal 팔레트 (유입분석과 동일).
-const CLOSED_STAGE_RAMP = ["#fb923c", "#f97316", "#ea580c", "#c2410c"];
+const INQUIRY_STATUS_LABEL: Record<Inquiry["status"], string> = {
+  lead: "문의",
+  new: "신규",
+  contacted: "상담",
+  quoted: "견적",
+  closed: "마감",
+  simple_inquiry: "단순문의",
+};
+const INQUIRY_STATUS_STYLE: Record<Inquiry["status"], string> = {
+  lead: "bg-sky-50 text-sky-700",
+  new: "bg-sky-50 text-sky-700",
+  contacted: "bg-violet-50 text-violet-700",
+  quoted: "bg-orange-50 text-orange-700",
+  closed: "bg-stone-100 text-charcoal/50",
+  simple_inquiry: "bg-stone-100 text-charcoal/60",
+};
 
-function FunnelBar({
-  label,
-  count,
-  percentOfPrevious,
-}: {
-  label: string;
-  count: number;
-  percentOfPrevious: number | null;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-12 shrink-0 text-xs text-charcoal/60">{label}</span>
-      <div className="h-6 flex-1 rounded-sm bg-stone-100">
-        <div
-          className="flex h-6 items-center rounded-sm bg-orange-300 px-2 text-xs font-medium text-orange-900"
-          style={{ width: `${Math.max(count > 0 ? 8 : 0, Math.min(100, percentOfPrevious ?? 100))}%` }}
-        >
-          {count}
-        </div>
-      </div>
-      {percentOfPrevious !== null && (
-        <span className="w-12 shrink-0 text-right text-xs text-charcoal/60">
-          {Math.round(percentOfPrevious)}%
-        </span>
-      )}
-    </div>
-  );
+function shortDate(iso: string) {
+  return new Date(iso).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" });
 }
 
 async function ManagerDashboard({
   supabase,
-  profile,
 }: {
   supabase: Awaited<ReturnType<typeof createClient>>;
-  profile: { id: string; role: string };
 }) {
   const { todayDateString } = getKSTDateBounds();
   const { weekStartDate, weekEndDate } = getKSTWeekBounds();
 
   const [
-    { count: newInquiryCount },
-    { count: activeWorkOrderCount },
+    { data: inquiries },
+    { count: contractCount },
     { count: openAsCount },
-    { count: totalInquiryCount },
-    { count: contactedInquiryCount },
-    { count: sentQuoteCount },
-    { count: totalQuoteCount },
-    { count: acceptedQuoteCount },
     { data: inProgressOrders },
     { data: weekOrders },
     { data: weekAsRequests },
     { data: weekTodos },
-    { data: recentCompletedOrders },
-    pendingAlertCount,
-    { count: closedAtNewCount },
-    { count: closedAtContactedCount },
-    { count: closedAtQuoteCount },
-    { count: closedAtContractCount },
   ] = await Promise.all([
-    supabase.from("inquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
-    supabase.from("work_orders").select("*", { count: "exact", head: true }).eq("status", "in_progress"),
+    // 2026-11-01 이후 문의만 (리셋 기준일)
     supabase
-      .from("as_requests")
-      .select("*", { count: "exact", head: true })
-      .neq("status", "completed"),
-    supabase.from("inquiries").select("*", { count: "exact", head: true }),
-    supabase.from("inquiries").select("*", { count: "exact", head: true }).neq("status", "new"),
-    supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "sent"),
-    supabase.from("quotes").select("*", { count: "exact", head: true }),
-    supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "accepted"),
+      .from("inquiries")
+      .select("id, name, size_py, address, status, auto_source, referral_source, created_at")
+      .gte("created_at", INFLOW_START_ISO)
+      .order("created_at", { ascending: false })
+      .returns<
+        Pick<Inquiry, "id" | "name" | "size_py" | "address" | "status" | "auto_source" | "referral_source" | "created_at">[]
+      >(),
     supabase
       .from("work_orders")
-      .select("*")
-      .eq("status", "in_progress")
-      .returns<WorkOrder[]>(),
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", INFLOW_START_ISO)
+      .neq("status", "cancelled"),
+    supabase.from("as_requests").select("*", { count: "exact", head: true }).neq("status", "completed"),
+    supabase.from("work_orders").select("*").eq("status", "in_progress").returns<WorkOrder[]>(),
     supabase
       .from("work_orders")
       .select("*")
@@ -112,125 +92,27 @@ async function ManagerDashboard({
       .lte("due_date", weekEndDate)
       .order("due_date", { ascending: true })
       .returns<Todo[]>(),
-    supabase
-      .from("work_orders")
-      .select("*")
-      .eq("status", "completed")
-      .order("work_end_date", { ascending: false, nullsFirst: false })
-      .limit(5)
-      .returns<WorkOrder[]>(),
-    getNotificationCount(supabase, profile),
-    supabase
-      .from("inquiries")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "closed")
-      .eq("closed_stage", "new"),
-    supabase
-      .from("inquiries")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "closed")
-      .eq("closed_stage", "contacted"),
-    supabase.from("quotes").select("*", { count: "exact", head: true }).eq("status", "rejected"),
-    supabase
-      .from("work_orders")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "cancelled")
-      .eq("cancelled_at_stage", "contract"),
   ]);
 
-  const closedByStage = [
-    { label: "신규", count: closedAtNewCount ?? 0 },
-    { label: "상담", count: closedAtContactedCount ?? 0 },
-    { label: "견적", count: closedAtQuoteCount ?? 0 },
-    { label: "계약", count: closedAtContractCount ?? 0 },
-  ];
-  const totalClosedCount = closedByStage.reduce((sum, s) => sum + s.count, 0);
+  const allInquiries = inquiries ?? [];
+  const onlineCount = allInquiries.filter(isOnlineInquiry).length;
+  const inConsultCount = allInquiries.filter((i) => i.status === "new" || i.status === "lead" || i.status === "contacted").length;
+  const quotedCount = allInquiries.filter((i) => i.status === "quoted").length;
 
-  const { year: curYear, month: curMonth } = getKSTCurrentYearMonth();
-  const { start: curStart, end: curEnd, prevYear, prevMonth } = getMonthDateRange(curYear, curMonth);
-  const { start: prevStart, end: prevEnd } = getMonthDateRange(prevYear, prevMonth);
-  const prevEndExclusive = `${prevEnd}T23:59:59.999Z`;
-  const curEndExclusive = `${curEnd}T23:59:59.999Z`;
-  const prevStartInclusive = `${prevStart}T00:00:00.000Z`;
-  const curStartInclusive = `${curStart}T00:00:00.000Z`;
-
-  const [
-    { count: curInquiryCount },
-    { count: prevInquiryCount },
-    { count: curContractCount },
-    { count: prevContractCount },
-    { count: curAsCount },
-    { count: prevAsCount },
-    { count: curCompletedCount },
-    { count: prevCompletedCount },
-  ] = await Promise.all([
-    supabase
-      .from("inquiries")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", curStartInclusive)
-      .lte("created_at", curEndExclusive),
-    supabase
-      .from("inquiries")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", prevStartInclusive)
-      .lte("created_at", prevEndExclusive),
-    supabase
-      .from("work_orders")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", curStartInclusive)
-      .lte("created_at", curEndExclusive),
-    supabase
-      .from("work_orders")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", prevStartInclusive)
-      .lte("created_at", prevEndExclusive),
-    supabase
-      .from("as_requests")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", curStartInclusive)
-      .lte("created_at", curEndExclusive),
-    supabase
-      .from("as_requests")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", prevStartInclusive)
-      .lte("created_at", prevEndExclusive),
-    supabase
-      .from("work_orders")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "completed")
-      .gte("work_end_date", curStart)
-      .lte("work_end_date", curEnd),
-    supabase
-      .from("work_orders")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "completed")
-      .gte("work_end_date", prevStart)
-      .lte("work_end_date", prevEnd),
-  ]);
-
-  const monthComparisonSteps = [
-    { label: "신규문의", count: curInquiryCount ?? 0, prevCount: prevInquiryCount ?? 0 },
-    { label: "신규계약", count: curContractCount ?? 0, prevCount: prevContractCount ?? 0 },
-    { label: "AS접수", count: curAsCount ?? 0, prevCount: prevAsCount ?? 0 },
-    { label: "현장완료", count: curCompletedCount ?? 0, prevCount: prevCompletedCount ?? 0 },
-  ];
+  // 문의가 들어온 곳별 건수
+  const sourceCounts = new Map<string, number>();
+  for (const inquiry of allInquiries) {
+    const label = inquirySourceLabel(inquiry);
+    sourceCounts.set(label, (sourceCounts.get(label) ?? 0) + 1);
+  }
+  const sourceRows = [...sourceCounts.entries()].sort((a, b) => b[1] - a[1]);
+  const maxSource = Math.max(1, ...sourceRows.map(([, n]) => n));
 
   const cards = [
-    {
-      label: "신규 상담문의",
-      value: `${newInquiryCount ?? 0}건`,
-      caption: `견적 진행 ${sentQuoteCount ?? 0} · 전체 ${totalInquiryCount ?? 0}건`,
-    },
-    { label: "진행중 현장", value: `${activeWorkOrderCount ?? 0}건`, caption: "계약·시공중" },
-    { label: "AS 현황", value: `${openAsCount ?? 0}건`, caption: "미완료" },
-    { label: "발송 대기 알림", value: `${pendingAlertCount}건`, caption: "알림센터" },
-  ];
-
-  const funnelSteps = [
-    { label: "문의", count: totalInquiryCount ?? 0, base: totalInquiryCount ?? 0 },
-    { label: "상담", count: contactedInquiryCount ?? 0, base: totalInquiryCount ?? 0 },
-    { label: "견적", count: totalQuoteCount ?? 0, base: totalInquiryCount ?? 0 },
-    { label: "계약", count: acceptedQuoteCount ?? 0, base: totalInquiryCount ?? 0 },
+    { label: "11월부터 문의", value: allInquiries.length, caption: `홈페이지 ${onlineCount} · 직접 접수 ${allInquiries.length - onlineCount}`, href: "/admin/inquiries" },
+    { label: "상담 중", value: inConsultCount, caption: "신규·상담 단계", href: "/admin/inquiries" },
+    { label: "견적 단계", value: quotedCount, caption: "견적 보낸 문의", href: "/admin/inquiries" },
+    { label: "계약", value: contractCount ?? 0, caption: "11월부터 등록된 현장", href: "/admin/sites" },
   ];
 
   const inProgressIds = (inProgressOrders ?? []).map((o) => o.id);
@@ -248,159 +130,90 @@ async function ManagerDashboard({
   siteItems.sort((a, b) => riskOrder[a.risk] - riskOrder[b.risk]);
 
   const scheduleItems = [
-    ...(weekAsRequests ?? []).map((a) => ({
-      id: a.id,
-      title: a.title,
-      date: a.request_date,
-      type: "AS" as const,
-      href: "/admin/as-requests",
-    })),
-    ...(weekTodos ?? []).map((t) => ({
-      id: t.id,
-      title: t.title,
-      date: t.due_date ?? "",
-      type: "할일" as const,
-      href: "/admin/todos",
-    })),
+    ...(weekAsRequests ?? []).map((a) => ({ id: a.id, title: a.title, date: a.request_date, type: "AS" as const, href: "/admin/as-requests" })),
+    ...(weekTodos ?? []).map((t) => ({ id: t.id, title: t.title, date: t.due_date ?? "", type: "할일" as const, href: "/admin/todos" })),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-sm border border-nude/60 bg-white p-5">
-            <p className="text-xs tracking-wide text-charcoal/60">{card.label}</p>
-            <p className="mt-2 font-serif text-2xl text-charcoal">{card.value}</p>
+          <Link key={card.label} href={card.href} className="rounded-xl border border-nude/60 bg-white p-5 hover:border-orange-300">
+            <p className="text-xs font-medium text-charcoal/55">{card.label}</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-charcoal">
+              {card.value}
+              <span className="ml-0.5 text-base font-normal text-charcoal/50">건</span>
+            </p>
             <p className="mt-1 text-xs text-charcoal/40">{card.caption}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
-      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-semibold text-charcoal">전환 퍼널</h2>
-          <span className="text-xs text-charcoal/60">
-            계약 전환율{" "}
-            <span className="font-semibold text-orange-600">
-              {funnelSteps[0].base > 0
-                ? Math.round((funnelSteps[3].count / funnelSteps[0].base) * 100)
-                : 0}
-              %
-            </span>
-          </span>
-        </div>
-        <div className="mt-4 flex flex-col gap-2">
-          {funnelSteps.map((step, index) => (
-            <FunnelBar
-              key={step.label}
-              label={step.label}
-              count={step.count}
-              percentOfPrevious={
-                index === 0
-                  ? funnelSteps[0].base > 0
-                    ? 100
-                    : 0
-                  : funnelSteps[0].base > 0
-                    ? (step.count / funnelSteps[0].base) * 100
-                    : 0
-              }
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
-        <h2 className="font-serif text-lg font-semibold text-charcoal">
-          전월 대비 · {curMonth}월
-        </h2>
-        <div className="mt-4 flex flex-col gap-2">
-          {monthComparisonSteps.map((step) => {
-            const percent =
-              step.prevCount > 0 ? (step.count / step.prevCount) * 100 : step.count > 0 ? 100 : 0;
-            return (
-              <div key={step.label} className="flex items-center gap-3">
-                <span className="w-16 shrink-0 text-xs text-charcoal/60">{step.label}</span>
-                <div className="h-6 flex-1 rounded-sm bg-stone-100">
-                  <div
-                    className="flex h-6 items-center rounded-sm bg-orange-300 px-2 text-xs font-medium text-orange-900"
-                    style={{ width: `${Math.max(step.count > 0 ? 8 : 0, Math.min(100, percent))}%` }}
-                  >
-                    {step.count}
-                  </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <section className="rounded-xl border border-nude/60 bg-white p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-charcoal">문의는 어디서 왔나</h2>
+            <Link href="/admin/analytics" className="text-xs text-taupe hover:text-orange-600">
+              유입분석 →
+            </Link>
+          </div>
+          <p className="mt-1 text-xs text-charcoal/40">11월 1일부터 · 홈페이지 문의는 자동 감지, 직접 접수는 고른 경로</p>
+          <div className="mt-4 flex flex-col gap-2.5">
+            {sourceRows.map(([label, count]) => (
+              <div key={label} className="flex items-center gap-3 text-sm">
+                <span className="w-32 shrink-0 truncate text-charcoal/70">{label}</span>
+                <div className="h-5 flex-1 rounded bg-stone-100">
+                  <div className="h-5 rounded bg-orange-400" style={{ width: `${(count / maxSource) * 100}%` }} />
                 </div>
-                <span className="w-16 shrink-0 text-right text-xs text-charcoal/60">
-                  {step.prevCount > 0 ? `${Math.round(percent)}%` : "-"}
-                </span>
+                <span className="w-8 shrink-0 text-right font-medium tabular-nums text-charcoal">{count}</span>
               </div>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-[11px] text-charcoal/40">
-          지난달({prevMonth}월) 대비 이번달 건수 비율. 문의·계약·AS는 접수일 기준, 완료는 준공일 기준.
-        </p>
+            ))}
+            {sourceRows.length === 0 && <p className="text-sm text-charcoal/45">11월 들어 아직 문의가 없습니다.</p>}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-nude/60 bg-white p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-charcoal">최근 문의</h2>
+            <Link href="/admin/inquiries" className="text-xs text-taupe hover:text-orange-600">
+              상담접수 →
+            </Link>
+          </div>
+          <ul className="mt-3 flex flex-col">
+            {allInquiries.slice(0, 7).map((inquiry) => (
+              <li key={inquiry.id} className="flex items-center gap-3 border-b border-nude/30 py-2.5 text-sm last:border-0">
+                <span className="w-10 shrink-0 text-xs tabular-nums text-charcoal/45">{shortDate(inquiry.created_at)}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium text-charcoal">{inquiry.name}</span>
+                  {(inquiry.size_py || inquiry.address) && (
+                    <span className="ml-2 text-xs text-charcoal/45">
+                      {[inquiry.size_py && `${inquiry.size_py}평`, inquiry.address].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                </span>
+                <span className="hidden shrink-0 text-xs text-charcoal/50 sm:inline">{inquirySourceLabel(inquiry)}</span>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${INQUIRY_STATUS_STYLE[inquiry.status]}`}>
+                  {INQUIRY_STATUS_LABEL[inquiry.status]}
+                </span>
+              </li>
+            ))}
+            {allInquiries.length === 0 && <li className="py-2 text-sm text-charcoal/45">11월 들어 아직 문의가 없습니다.</li>}
+          </ul>
+        </section>
       </div>
 
-      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
+      <div className="mt-6 rounded-xl border border-nude/60 bg-white p-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-semibold text-charcoal">마감 현황</h2>
-          <span className="text-xs text-charcoal/60">
-            누적 마감 <span className="font-semibold text-red-600">{totalClosedCount}건</span>
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-charcoal/40">
-          신규·상담·견적·계약 단계에서 &ldquo;마감&rdquo; 처리된 누적 건수 · 자세히 보기는{" "}
-          <Link href="/admin/analytics" className="text-orange-600 hover:underline">
-            유입분석
-          </Link>
-        </p>
-        <div className="mt-4 flex gap-3">
-          {closedByStage.map((stage) => (
-            <div key={stage.label} className="flex-1 rounded-sm bg-stone-50 px-3 py-2 text-center">
-              <p className="text-xs text-charcoal/50">{stage.label}</p>
-              <p className="mt-1 font-serif text-lg text-charcoal">{stage.count}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
-          {totalClosedCount > 0 && (
-            <div className="flex h-full">
-              {closedByStage.map((stage, index) =>
-                stage.count > 0 ? (
-                  <div
-                    key={stage.label}
-                    style={{
-                      width: `${(stage.count / totalClosedCount) * 100}%`,
-                      backgroundColor: CLOSED_STAGE_RAMP[index],
-                    }}
-                  />
-                ) : null
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg font-semibold text-charcoal">
-            진행 현장 · 신호등 · {siteItems.length}
-          </h2>
+          <h2 className="text-lg font-semibold text-charcoal">진행 현장 · {siteItems.length}</h2>
           <Link href="/admin/sites" className="text-xs text-taupe hover:text-orange-600">
             현장관리 →
           </Link>
         </div>
         <div className="mt-4 flex gap-3">
-          <span className="flex-1 rounded-full bg-red-50 py-2 text-center text-xs text-red-700">
-            위험 {riskCounts.danger}
-          </span>
-          <span className="flex-1 rounded-full bg-amber-50 py-2 text-center text-xs text-amber-700">
-            주의 {riskCounts.caution}
-          </span>
-          <span className="flex-1 rounded-full bg-emerald-50 py-2 text-center text-xs text-emerald-700">
-            정상 {riskCounts.normal}
-          </span>
+          <span className="flex-1 rounded-full bg-red-50 py-2 text-center text-xs text-red-700">위험 {riskCounts.danger}</span>
+          <span className="flex-1 rounded-full bg-amber-50 py-2 text-center text-xs text-amber-700">주의 {riskCounts.caution}</span>
+          <span className="flex-1 rounded-full bg-emerald-50 py-2 text-center text-xs text-emerald-700">정상 {riskCounts.normal}</span>
         </div>
-
         <div className="mt-4 flex flex-col gap-3">
           {siteItems.map(({ order, risk, progress }) => {
             const materialDday = order.material_order_date
@@ -412,11 +225,7 @@ async function ManagerDashboard({
                   <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
                     {order.title}
                   </Link>
-                  <span
-                    className={`rounded-sm px-1.5 py-0.5 text-xs ${RISK_STYLE[risk]}`}
-                  >
-                    {RISK_LABEL[risk]}
-                  </span>
+                  <span className={`rounded-sm px-1.5 py-0.5 text-xs ${RISK_STYLE[risk]}`}>{RISK_LABEL[risk]}</span>
                 </div>
                 {materialDday !== null && (
                   <p className={`mt-0.5 text-xs ${materialDday < 0 ? "text-red-600" : "text-charcoal/40"}`}>
@@ -432,21 +241,16 @@ async function ManagerDashboard({
               </div>
             );
           })}
-          {siteItems.length === 0 && (
-            <p className="text-sm text-charcoal/50">진행중인 현장이 없습니다.</p>
-          )}
+          {siteItems.length === 0 && <p className="text-sm text-charcoal/50">진행중인 현장이 없습니다.</p>}
         </div>
-        <p className="mt-3 text-[11px] text-charcoal/40">공정률 = 완료 공정 ÷ 전체 공정.</p>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-sm border border-nude/60 bg-white p-5">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-nude/60 bg-white p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-lg font-semibold text-charcoal">
-              이번 주 시공 · {(weekOrders ?? []).length}
-            </h2>
-            <Link href="/admin/work-orders" className="text-xs text-taupe hover:text-orange-600">
-              전체 보기
+            <h2 className="text-lg font-semibold text-charcoal">이번 주 시공 · {(weekOrders ?? []).length}</h2>
+            <Link href="/admin/calendar?team=시공팀" className="text-xs text-taupe hover:text-orange-600">
+              시공팀 캘린더
             </Link>
           </div>
           <ul className="mt-3 flex flex-col gap-2 text-sm">
@@ -458,27 +262,23 @@ async function ManagerDashboard({
                 <span className="text-charcoal/60">{order.work_date}</span>
               </li>
             ))}
-            {(!weekOrders || weekOrders.length === 0) && (
-              <li className="text-charcoal/50">이번 주로 예정된 시공이 없습니다.</li>
-            )}
+            {(!weekOrders || weekOrders.length === 0) && <li className="text-charcoal/50">이번 주로 예정된 시공이 없습니다.</li>}
           </ul>
         </div>
 
-        <div className="rounded-sm border border-nude/60 bg-white p-5">
+        <div className="rounded-xl border border-nude/60 bg-white p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-lg font-semibold text-charcoal">
+            <h2 className="text-lg font-semibold text-charcoal">
               이번 주 일정 · {scheduleItems.length}
+              {!!openAsCount && <span className="ml-2 text-xs font-normal text-red-600">미완료 AS {openAsCount}</span>}
             </h2>
             <Link href="/admin/calendar" className="text-xs text-taupe hover:text-orange-600">
-              캘린더 보기
+              통합 캘린더
             </Link>
           </div>
           <ul className="mt-3 flex flex-col gap-2 text-sm">
             {scheduleItems.map((item) => (
-              <li
-                key={`${item.type}-${item.id}`}
-                className="flex items-center justify-between border-b border-nude/30 pb-2 last:border-0"
-              >
+              <li key={`${item.type}-${item.id}`} className="flex items-center justify-between border-b border-nude/30 pb-2 last:border-0">
                 <Link href={item.href} className="flex items-center gap-2 hover:text-orange-600">
                   <span
                     className={`rounded-sm px-1.5 py-0.5 text-[10px] ${
@@ -492,36 +292,9 @@ async function ManagerDashboard({
                 <span className="text-charcoal/60">{item.date}</span>
               </li>
             ))}
-            {scheduleItems.length === 0 && (
-              <li className="text-charcoal/50">이번 주로 예정된 일정이 없습니다.</li>
-            )}
+            {scheduleItems.length === 0 && <li className="text-charcoal/50">이번 주로 예정된 일정이 없습니다.</li>}
           </ul>
         </div>
-      </div>
-
-      <div className="mt-8 rounded-sm border border-nude/60 bg-white p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-1.5 font-serif text-lg font-semibold text-charcoal">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-            완료된 현장 · {(recentCompletedOrders ?? []).length}
-          </h2>
-          <Link href="/admin/sites" className="text-xs text-taupe hover:text-orange-600">
-            현장관리 →
-          </Link>
-        </div>
-        <ul className="mt-3 flex flex-col gap-2 text-sm">
-          {recentCompletedOrders?.map((order) => (
-            <li key={order.id} className="flex justify-between border-b border-nude/30 pb-2 last:border-0">
-              <Link href={`/admin/work-orders/${order.id}`} className="hover:text-orange-600">
-                {order.title}
-              </Link>
-              <span className="text-charcoal/60">{order.work_end_date ?? "-"}</span>
-            </li>
-          ))}
-          {(!recentCompletedOrders || recentCompletedOrders.length === 0) && (
-            <li className="text-charcoal/50">마감된 현장이 없습니다.</li>
-          )}
-        </ul>
       </div>
     </>
   );
@@ -605,11 +378,46 @@ export default async function AdminDashboardPage() {
 
   const canManage = me?.role === "owner" || me?.role === "manager";
 
+  // 출근도장 카드: 오늘 출근 기록(퇴근 전 기록 우선)
+  const { startOfDay, endOfDay } = getKSTDateBounds();
+  const { data: todayRecords } = await supabase
+    .from("attendance_records")
+    .select("check_in_at, check_out_at, work_sites(name)")
+    .eq("user_id", user!.id)
+    .gte("check_in_at", startOfDay)
+    .lt("check_in_at", endOfDay)
+    .order("check_in_at", { ascending: false })
+    .returns<{ check_in_at: string; check_out_at: string | null; work_sites: { name: string } | null }[]>();
+  const todayRecord = todayRecords?.find((r) => !r.check_out_at) ?? todayRecords?.[0] ?? null;
+  const checkInMinutes = todayRecord
+    ? (() => {
+        const [h, m] = new Date(todayRecord.check_in_at)
+          .toLocaleTimeString("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" })
+          .split(":")
+          .map(Number);
+        return h * 60 + m;
+      })()
+    : 0;
+  const todayLabel = new Date().toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">대시보드</h1>
+      <ClockInCard
+        userName={me?.full_name ?? ""}
+        todayLabel={todayLabel}
+        checkInAt={todayRecord?.check_in_at ?? null}
+        checkOutAt={todayRecord?.check_out_at ?? null}
+        siteName={todayRecord?.work_sites?.name ?? null}
+        isLate={!!todayRecord && checkInMinutes > LATE_CHECK_IN_MINUTES}
+      />
+      <h1 className="mt-8 font-serif text-2xl font-semibold text-charcoal">대시보드</h1>
       {canManage ? (
-        <ManagerDashboard supabase={supabase} profile={{ id: user!.id, role: me!.role }} />
+        <ManagerDashboard supabase={supabase} />
       ) : (
         <EmployeeDashboard supabase={supabase} userId={user!.id} />
       )}

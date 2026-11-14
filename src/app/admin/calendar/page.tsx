@@ -7,6 +7,8 @@ import { createQuickTodo } from "../todos/actions";
 import AddEventModal from "@/components/admin/AddEventModal";
 import ClaimTodoCheckbox from "@/components/admin/ClaimTodoCheckbox";
 import CompleteTodoCheckbox from "@/components/admin/CompleteTodoCheckbox";
+import { TEAMS, TEAM_STYLE, normalizeTeam, type Team } from "@/lib/teams";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -22,6 +24,7 @@ type CalendarEvent = {
   meetingType?: string | null;
   amount?: number | null;
   colorClass?: string;
+  teamKey: Team | null; // null = 공통 (모든 팀 캘린더에 보임)
 };
 
 function formatWon(amount: number | null | undefined) {
@@ -72,7 +75,9 @@ function lastDayOfMonth(year: number, month: number) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
-const TEAMS = ["전체", "디자인팀", "시공팀"] as const;
+// 통합 캘린더 + 팀별 캘린더 (운영팀·설계팀·시공팀)
+// 현장 공정·작업지시·AS는 시공팀, 할일은 담당자 부서, 직접 넣은 일정은 고른 팀. 팀이 없으면 공통.
+const VIEWS = ["통합", ...TEAMS] as const;
 
 // start~end를 [lo, hi] 범위로 잘라 그 사이의 날짜 문자열 배열을 반환한다 (UTC 고정으로 시간대 밀림 방지).
 function eachDateClamped(start: string, end: string, lo: string, hi: string) {
@@ -100,7 +105,9 @@ export default async function CalendarPage({
   const year = Number(params.year) || current.year;
   const month = Number(params.month) || current.month;
   const selectedDate = params.date ?? null;
-  const selectedTeam = (TEAMS as readonly string[]).includes(params.team ?? "") ? (params.team as string) : "전체";
+  const selectedTeam = (VIEWS as readonly string[]).includes(params.team ?? "")
+    ? (params.team as (typeof VIEWS)[number])
+    : "통합";
 
   const monthStart = `${year}-${pad(month)}-01`;
   const monthEnd = `${year}-${pad(month)}-${pad(lastDayOfMonth(year, month))}`;
@@ -125,7 +132,7 @@ export default async function CalendarPage({
     const d = overrides.date !== undefined ? overrides.date : selectedDate;
     if (d) qs.set("date", d);
     const t = overrides.team ?? selectedTeam;
-    if (t !== "전체") qs.set("team", t);
+    if (t !== "통합") qs.set("team", t);
     return `/admin/calendar?${qs.toString()}`;
   }
 
@@ -207,14 +214,15 @@ export default async function CalendarPage({
       .order("due_date", { ascending: true, nullsFirst: false })
       .limit(10)
       .returns<Pick<Todo, "id" | "title" | "status" | "due_date">[]>(),
-    // 담당자의 부서(팀) 조회용 — 전체/디자인팀/시공팀 필터에 쓴다.
+    // 담당자의 부서(팀) 조회용 — 할일을 팀 캘린더에 나눌 때 쓴다.
     supabase.from("profiles").select("id, department").returns<Pick<Profile, "id" | "department">[]>(),
   ]);
 
   const siteColorMap = new Map((activeOrders ?? []).map((o, i) => [o.id, SITE_PALETTE[i % SITE_PALETTE.length]]));
   const departmentById = new Map((allProfiles ?? []).map((p) => [p.id, p.department]));
-  const matchesTeam = (department: string | null | undefined) =>
-    selectedTeam === "전체" || department === selectedTeam;
+  // 팀 캘린더에서는 그 팀 일정 + 공통 일정만, 통합에서는 전부
+  const matchesTeam = (team: Team | null) => selectedTeam === "통합" || team === null || team === selectedTeam;
+  const teamOfPerson = (personId: string | null | undefined) => normalizeTeam(departmentById.get(personId ?? ""));
 
   const eventsByDate = new Map<string, CalendarEvent[]>();
   const addEvent = (date: string | null, event: CalendarEvent) => {
@@ -224,26 +232,37 @@ export default async function CalendarPage({
     eventsByDate.set(date, list);
   };
 
+  const showSiteWork = matchesTeam("시공팀");
   workOrders?.forEach((o) => {
-    if (!matchesTeam(departmentById.get(o.assignee_id ?? ""))) return;
+    if (!showSiteWork) return;
     addEvent(o.work_date, {
       id: o.id,
       title: o.title,
       type: "work_order",
       href: `/admin/work-orders/${o.id}`,
+      teamKey: "시공팀",
     });
   });
-  // AS는 담당자 개념이 없어 팀 필터와 무관하게 항상 표시한다.
-  asRequests?.forEach((a) =>
-    addEvent(a.request_date, { id: a.id, title: a.title, type: "as_request", href: "/admin/as-requests" })
-  );
+  asRequests?.forEach((a) => {
+    if (!showSiteWork) return;
+    addEvent(a.request_date, {
+      id: a.id,
+      title: a.title,
+      type: "as_request",
+      href: "/admin/as-requests",
+      teamKey: "시공팀",
+    });
+  });
   todos?.forEach((t) => {
-    if (!matchesTeam(departmentById.get(t.assignee_id ?? ""))) return;
-    addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos" });
+    const team = teamOfPerson(t.assignee_id);
+    if (!matchesTeam(team)) return;
+    addEvent(t.due_date, { id: t.id, title: t.title, type: "todo", href: "/admin/todos", teamKey: team });
   });
   events?.forEach((e) => {
-    if (selectedTeam !== "전체" && e.team !== selectedTeam) return;
+    const team = normalizeTeam(e.team);
+    if (!matchesTeam(team)) return;
     addEvent(e.event_date, {
+      teamKey: team,
       id: e.id,
       title: e.title,
       type: e.category,
@@ -258,7 +277,7 @@ export default async function CalendarPage({
   });
   tasks?.forEach((t) => {
     if (!t.start_date || !t.end_date || !t.work_orders) return;
-    if (!matchesTeam(departmentById.get(t.work_orders.assignee_id ?? ""))) return;
+    if (!showSiteWork) return;
     const color = siteColorMap.get(t.work_order_id);
     eachDateClamped(t.start_date, t.end_date, monthStart, monthEnd).forEach((d) =>
       addEvent(d, {
@@ -267,6 +286,7 @@ export default async function CalendarPage({
         type: "site_task",
         href: `/admin/work-orders/${t.work_order_id}`,
         colorClass: color ? `${color.bg} ${color.text}` : undefined,
+        teamKey: "시공팀",
       })
     );
   });
@@ -284,7 +304,7 @@ export default async function CalendarPage({
   };
   const importantSchedule: ImportantItem[] = [];
   events?.forEach((e) => {
-    if (selectedTeam !== "전체" && e.team !== selectedTeam) return;
+    if (!matchesTeam(normalizeTeam(e.team))) return;
     importantSchedule.push({
       id: e.id,
       type: e.category,
@@ -297,6 +317,7 @@ export default async function CalendarPage({
     });
   });
   asRequests?.forEach((a) => {
+    if (!showSiteWork) return;
     importantSchedule.push({
       id: a.id,
       type: "as_request",
@@ -323,35 +344,60 @@ export default async function CalendarPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-semibold text-charcoal">캘린더</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-4">
-            {TYPE_LEGEND.map((legend) => (
-              <span key={legend.type} className="flex items-center gap-1.5 text-xs text-charcoal/60">
-                <span className={`h-2.5 w-2.5 rounded-full ${TYPE_STYLE[legend.type].split(" ")[0]}`} />
-                {legend.label}
-              </span>
-            ))}
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-serif text-2xl font-semibold text-charcoal">
+          {selectedTeam === "통합" ? "통합 캘린더" : `${selectedTeam} 캘린더`}
+        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* 통합 / 팀별 캘린더 전환 */}
           <div className="flex items-center gap-1 rounded-full border border-nude/60 bg-white p-1">
-            {TEAMS.map((t) => (
-              <Link
-                key={t}
-                href={calendarHref({ team: t })}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedTeam === t ? "bg-charcoal text-cream" : "text-charcoal/60 hover:bg-beige/60"
-                }`}
-              >
-                {t}
-              </Link>
-            ))}
+            {VIEWS.map((v) => {
+              const style = TEAM_STYLE[v === "통합" ? "공통" : v];
+              const active = selectedTeam === v;
+              return (
+                <Link
+                  key={v}
+                  href={calendarHref({ team: v })}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                    active ? style.active : "text-charcoal/60 hover:bg-beige/60"
+                  }`}
+                >
+                  {v !== "통합" && <span className={`h-2 w-2 rounded-full ${active ? "bg-white" : style.dot}`} />}
+                  {v}
+                </Link>
+              );
+            })}
           </div>
-          <AddEventModal defaultDate={selectedDate ?? todayDateString} />
+          <AddEventModal
+            defaultDate={selectedDate ?? todayDateString}
+            defaultTeam={selectedTeam === "통합" ? "공통" : selectedTeam}
+            triggerClassName="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+          />
         </div>
       </div>
-      <p className="mt-1.5 text-xs text-charcoal/40">
-        현장 공정은 현장별 색상(왼쪽 진행 현장 참고) · 날짜를 클릭해 추가 · 진행 현장·중요 일정·할일은 왼쪽에서
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-charcoal/50">
+        {selectedTeam === "통합" && (
+          <>
+            {TEAMS.map((t) => (
+              <span key={t} className="flex items-center gap-1.5">
+                <span className={`h-3 w-1 rounded-sm ${TEAM_STYLE[t].dot}`} />
+                {t}
+              </span>
+            ))}
+            <span className="text-charcoal/25">|</span>
+          </>
+        )}
+        {TYPE_LEGEND.map((legend) => (
+          <span key={legend.type} className="flex items-center gap-1.5">
+            <span className={`h-2.5 w-2.5 rounded-full ${TYPE_STYLE[legend.type].split(" ")[0]}`} />
+            {legend.label}
+          </span>
+        ))}
+      </div>
+      <p className="mt-1 text-xs text-charcoal/40">
+        {selectedTeam === "통합"
+          ? "세 팀 일정을 한 화면에 · 일정 왼쪽 색 줄이 팀 표시 · 현장 공정은 시공팀"
+          : `${selectedTeam} 일정과 공통 일정만 보여요 · 날짜를 클릭해 추가`}
       </p>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[320px_1fr]">
@@ -557,7 +603,7 @@ export default async function CalendarPage({
                             key={`${event.type}-${event.id}`}
                             className={`truncate rounded-sm px-1.5 py-0.5 text-[10px] leading-tight ${
                               event.colorClass ?? TYPE_STYLE[event.type]
-                            }`}
+                            } ${selectedTeam === "통합" ? `border-l-[3px] ${TEAM_STYLE[event.teamKey ?? "공통"].border}` : ""}`}
                           >
                             {event.title}
                           </span>
@@ -580,6 +626,7 @@ export default async function CalendarPage({
                 </h2>
                 <AddEventModal
                   defaultDate={effectiveDate}
+                  defaultTeam={selectedTeam === "통합" ? "공통" : selectedTeam}
                   triggerLabel="+ 이 날짜에 추가"
                   triggerClassName="rounded-full bg-orange-500 px-4 py-2 text-xs font-medium text-white hover:bg-orange-600"
                 />
@@ -595,7 +642,7 @@ export default async function CalendarPage({
                   );
                   const isCalendarEvent = (CALENDAR_EVENT_TYPES as readonly string[]).includes(event.type);
                   const canDelete = isCalendarEvent && (canManageAnyEvent || event.createdBy === user!.id);
-                  const detail = [event.time, event.meetingType, event.siteName, event.team, formatWon(event.amount)]
+                  const detail = [event.time, event.meetingType, event.siteName, event.teamKey ?? "공통", formatWon(event.amount)]
                     .filter(Boolean)
                     .join(" · ");
 
@@ -612,11 +659,7 @@ export default async function CalendarPage({
                         <span className="flex items-center gap-2">
                           {badge}
                           {canDelete && (
-                            <form action={deleteScheduleEvent.bind(null, event.id)}>
-                              <button type="submit" className="text-xs text-charcoal/40 hover:text-red-600">
-                                삭제
-                              </button>
-                            </form>
+                            <DeleteButton action={deleteScheduleEvent.bind(null, event.id)} className="text-xs text-charcoal/40 hover:text-red-600">삭제</DeleteButton>
                           )}
                         </span>
                       </div>

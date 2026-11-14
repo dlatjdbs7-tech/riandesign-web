@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { updateEmployeeDepartment } from "@/app/admin/employees/actions";
 import { DEPARTMENTS } from "@/lib/departments";
+import { normalizeTeam } from "@/lib/teams";
 
 export default function DepartmentSelect({
   employeeId,
@@ -12,11 +13,13 @@ export default function DepartmentSelect({
   department: string | null;
 }) {
   const router = useRouter();
+  // 예전 부서명(디자인팀·영업팀)은 새 팀 이름으로 보여준다.
+  const current = department ? (normalizeTeam(department) ?? department) : "";
 
   return (
     <select
-      key={department}
-      defaultValue={department ?? ""}
+      key={current}
+      defaultValue={current}
       onChange={async (event) => {
         await updateEmployeeDepartment(employeeId, event.target.value);
         router.refresh();

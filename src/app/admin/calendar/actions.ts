@@ -1,9 +1,11 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { createAsRequest } from "../as-requests/actions";
 import { createTodo } from "../todos/actions";
+import { normalizeTeam } from "@/lib/teams";
 
 const CALENDAR_CATEGORIES = ["미팅", "수금", "행사", "촬영"] as const;
 
@@ -52,7 +54,7 @@ export async function createScheduleItem(formData: FormData) {
     meeting_type: category === "미팅" ? String(formData.get("meeting_type") ?? "").trim() || null : null,
     event_time: String(formData.get("event_time") ?? "").trim() || null,
     site_name: String(formData.get("site_name") ?? "").trim() || null,
-    team: String(formData.get("team") ?? "").trim() || null,
+    team: normalizeTeam(String(formData.get("team") ?? "")),
     amount: category === "수금" && amountRaw ? Number(amountRaw) : null,
     memo: String(formData.get("memo") ?? "").trim() || null,
     created_by: user.id,
@@ -63,6 +65,7 @@ export async function createScheduleItem(formData: FormData) {
 
 export async function deleteScheduleEvent(id: string) {
   const supabase = await createClient();
-  await supabase.from("calendar_events").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "calendar_events", id);
   revalidatePath("/admin/calendar");
+  return trashed;
 }

@@ -82,13 +82,56 @@ export const MENU_GROUPS: MenuGroup[] = [
   },
 ];
 
-// 사이드바 위쪽에 바로 보이는 메인 메뉴 (작게 시작해서 하나씩 늘린다).
+// 리안네트웍스 사이드바 메인 메뉴. 묶음(섹션) 사이에는 구분선이 들어간다.
 // 여기 없는 메뉴는 사이드바 아래 "보관 메뉴"에 접혀서 남아 있다.
-// 메뉴를 메인으로 올리려면 key를 원하는 섹션에 추가하기만 하면 된다. 권한은 MENU_GROUPS 기준 그대로.
-export const PRIMARY_SECTIONS: { label: string; keys: string[] }[] = [
-  { label: "영업", keys: ["/admin/inquiries", "/admin/customer-pages"] },
-  { label: "현장", keys: ["/admin/sites", "/admin/calendar"] },
-  { label: "업무", keys: ["/admin/todos", "/admin/attendance"] },
+// - href: 이동할 주소
+// - permKey: 권한 판단에 쓰는 MENU_GROUPS key (생략하면 href와 같음, "always"는 누구나)
+// - label: 사이드바에 보일 이름 (생략하면 MENU_GROUPS의 이름)
+// - alsoActive: 이 메뉴에 포함된 다른 화면 (그 화면에 있어도 이 메뉴가 선택되고, 보관 메뉴에서는 빠짐)
+export type PrimaryItem = { href: string; permKey?: string; label?: string; alsoActive?: string[] };
+export const PRIMARY_SECTIONS: { label: string | null; items: PrimaryItem[] }[] = [
+  {
+    label: null,
+    items: [
+      { href: "/admin", permKey: "always", label: "대시보드" },
+      { href: "/admin/analytics" },
+      { href: "/admin/inquiries" },
+    ],
+  },
+  {
+    label: "현장",
+    items: [
+      { href: "/admin/calendar" },
+      { href: "/admin/sites" },
+      { href: "/admin/customer-pages" },
+      { href: "/admin/as-requests" },
+    ],
+  },
+  {
+    label: "오늘 업무",
+    items: [
+      { href: "/admin/todos", label: "오늘의 할일" },
+      { href: "/admin/attendance", label: "근태·출근도장" },
+      { href: "/admin/work-logs" },
+    ],
+  },
+  {
+    label: "견적·발주·결재",
+    items: [
+      { href: "/admin/quotes" },
+      {
+        href: "/admin/field-management/purchase-orders",
+        permKey: "/admin/field-management",
+        label: "발주·업체",
+        alsoActive: ["/admin/vendors"],
+      },
+      { href: "/admin/approvals" },
+    ],
+  },
+  {
+    label: "사람",
+    items: [{ href: "/admin/employees" }],
+  },
 ];
 
 // 보관 메뉴 그룹의 한글 이름
@@ -108,7 +151,7 @@ export const CONFIGURABLE_MENU_KEYS = MENU_GROUPS.flatMap((group) =>
 );
 
 // 항상 접근 가능 (권한 설정 대상 아님, 대표 외에도 팀장/직원 전부 고정 허용)
-export const ALWAYS_ALLOWED_KEYS = ["/admin", "/admin/settings"];
+export const ALWAYS_ALLOWED_KEYS = ["/admin", "/admin/settings", "/admin/trash"];
 
 // 대표만 접근 가능한 고정 메뉴 (설정 화면 자체를 다른 역할이 못 만지게)
 export const OWNER_ONLY_KEYS = ["/admin/team-permissions"];

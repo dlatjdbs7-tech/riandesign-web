@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, Review } from "@/lib/types";
 import { createReview, deleteReview } from "./actions";
@@ -48,11 +49,7 @@ export default async function ReviewsPage() {
                   <td className="px-4 py-3 max-w-xs truncate text-charcoal/70">{review.content}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deleteReview.bind(null, review.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deleteReview.bind(null, review.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

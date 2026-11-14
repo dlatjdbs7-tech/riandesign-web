@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
@@ -18,6 +19,7 @@ export async function createQuickPhrase(formData: FormData) {
 
 export async function deleteQuickPhrase(id: string) {
   const supabase = await createClient();
-  await supabase.from("quick_phrases").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "quick_phrases", id);
   revalidatePath("/admin/quick-phrases");
+  return trashed;
 }

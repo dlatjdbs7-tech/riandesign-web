@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { PortfolioItem, Profile } from "@/lib/types";
 import { createPortfolioItem, deletePortfolioItem } from "./actions";
@@ -48,11 +49,7 @@ export default async function PortfolioPage() {
                   <td className="px-4 py-3 text-charcoal/70">{item.display_order}</td>
                   {canManage && (
                     <td className="px-4 py-3">
-                      <form action={deletePortfolioItem.bind(null, item.id)}>
-                        <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                          삭제
-                        </button>
-                      </form>
+                      <DeleteButton action={deletePortfolioItem.bind(null, item.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
                     </td>
                   )}
                 </tr>

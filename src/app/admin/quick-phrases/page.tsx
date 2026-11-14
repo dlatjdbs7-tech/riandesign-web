@@ -1,3 +1,4 @@
+import DeleteButton from "@/components/admin/DeleteButton";
 import { createClient } from "@/utils/supabase/server";
 import type { Profile, QuickPhrase } from "@/lib/types";
 import { createQuickPhrase, deleteQuickPhrase } from "./actions";
@@ -33,11 +34,7 @@ export default async function QuickPhrasesPage() {
                 <p className="mt-1 whitespace-pre-line text-charcoal/80">{p.content}</p>
               </div>
               {canManage && (
-                <form action={deleteQuickPhrase.bind(null, p.id)}>
-                  <button type="submit" className="text-xs text-red-700 underline hover:no-underline">
-                    삭제
-                  </button>
-                </form>
+                <DeleteButton action={deleteQuickPhrase.bind(null, p.id)} className="text-xs text-red-700 underline hover:no-underline">삭제</DeleteButton>
               )}
             </div>
           ))}

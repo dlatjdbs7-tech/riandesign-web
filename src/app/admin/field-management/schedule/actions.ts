@@ -1,5 +1,6 @@
 "use server";
 
+import { moveToTrash } from "@/lib/trash";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { WorkOrderStatus } from "@/lib/types";
@@ -67,8 +68,9 @@ export async function setWorkOrderTaskAutoStatus(id: string) {
 
 export async function deleteWorkOrderTask(id: string) {
   const supabase = await createClient();
-  await supabase.from("work_order_tasks").delete().eq("id", id);
+  const trashed = await moveToTrash(supabase, "work_order_tasks", id);
   revalidatePath("/admin/field-management/schedule");
+  return trashed;
 }
 
 export async function moveWorkOrderTask(id: string, workOrderId: string, direction: "up" | "down") {
