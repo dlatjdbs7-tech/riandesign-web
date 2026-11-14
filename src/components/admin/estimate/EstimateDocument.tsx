@@ -985,7 +985,7 @@ function SubBlock({ sub, list }: { sub: string; list: DocLine[] }) {
   );
 }
 
-// 간단 견적 내역: 엑셀 표 대신 공종별 체크리스트 (수량이 있는 품목만 ☑, 공종 합계 → 공사금액)
+// 간단 견적 내역서: 체크(☑)한 품목만, 공종별 파스텔 머리 + 재료비·노무비 단가/금액 (휴대폰은 옆으로 밀어서 보기)
 function ChecklistSheet({
   estimate,
   byCategory,
@@ -997,86 +997,172 @@ function ChecklistSheet({
 }) {
   const groups = [...byCategory.entries()]
     .map(([cat, subs]) => {
-      // 세부공종 순서대로 (예: 4-1 타일공사 → 4-2 거실욕실 → 4-3 안방화장실)
       const list = [...subs.entries()]
         .sort(([a], [b]) => a.localeCompare(b, "ko", { numeric: true }))
         .flatMap(([sub, ls]) =>
           ls.filter((l) => Number(l.qty) > 0).map((l) => ({ ...l, sub })),
         );
-      const total = list.reduce((a, l) => a + lineAmounts(l).total, 0);
-      return { cat, list, total };
+      const m = list.reduce((a, l) => a + lineAmounts(l).material, 0);
+      const lb = list.reduce((a, l) => a + lineAmounts(l).labor, 0);
+      return { cat, list, m, lb };
     })
     .filter((g) => g.list.length > 0);
+  const td = "border-b border-charcoal/10 px-2 py-1.5 align-middle";
+  const num = `${td} text-right tabular-nums whitespace-nowrap`;
   return (
     <section className={`${LAND_FLOW} px-4 py-8 sm:px-[4%]`}>
-      <DocHeader title="견 적 내 역" estimate={estimate} />
-      <div className="mt-4 gap-5 sm:columns-2 [column-fill:_balance]">
-        {groups.map((g) => (
-          <div
-            key={g.cat}
-            className="mb-5 break-inside-avoid rounded-lg border border-charcoal/15"
-          >
-            <div
-              className="flex items-baseline justify-between gap-2 border-b border-charcoal/10 px-3 py-2"
-              style={{
-                background: PASTEL[(categoryNo(g.cat) - 1) % PASTEL.length],
-              }}
-            >
-              <p className="text-[12.5px] font-bold">
-                {categoryNo(g.cat)}. {categoryLabel(g.cat)}
-              </p>
-              <p className="text-[12.5px] font-bold tabular-nums">
-                {won(g.total)}원
-              </p>
-            </div>
-            <ul className="divide-y divide-charcoal/10 text-[11.5px]">
-              {g.list.map((l, i) => {
-                const a = lineAmounts(l);
-                const newSub =
-                  l.sub && (i === 0 || g.list[i - 1].sub !== l.sub);
-                const subName = l.sub.replace(/^\d+-\d+\s*/, "");
-                return (
-                  <Fragment key={`${l.name}-${i}`}>
-                    {newSub && (
-                      <li className="bg-stone-50/70 px-3 py-1 text-[10.5px] font-semibold tracking-[0.1em] text-charcoal/55">
-                        {subName}
-                      </li>
-                    )}
-                    <li className="grid grid-cols-[18px_1fr_auto_auto] items-baseline gap-x-2 px-3 py-1.5">
-                      <span className="text-orange-600">☑</span>
-                      <span className="min-w-0">
-                        <span className="font-medium">{l.name}</span>
-                        {l.spec && (
-                          <span className="ml-1.5 text-charcoal/55">
-                            {l.spec}
-                          </span>
-                        )}
-                      </span>
-                      <span className="whitespace-nowrap text-right tabular-nums text-charcoal/55">
-                        {Number(l.qty).toLocaleString("ko-KR", {
-                          maximumFractionDigits: 2,
-                        })}
-                        {l.unit ?? ""}
-                      </span>
-                      <span className="w-[86px] whitespace-nowrap text-right tabular-nums">
-                        {won(a.total)}
-                      </span>
-                    </li>
-                  </Fragment>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+      <DocHeader title="내 역 서" estimate={estimate} />
+      <p className="mt-2 text-[11px] text-charcoal/50 sm:hidden">
+        ← 표를 옆으로 밀어서 재료비·노무비를 볼 수 있어요
+      </p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[980px] table-fixed border-collapse text-[11.5px]">
+          <colgroup>
+            <col style={{ width: "3.6%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "4.6%" }} />
+            <col style={{ width: "5.4%" }} />
+            <col style={{ width: "8.4%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "8.4%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "10%" }} />
+            <col />
+          </colgroup>
+          <thead>
+            <tr className="bg-[#F5F1EB] text-[10.5px]">
+              <th rowSpan={2} className={XTH} />
+              <th rowSpan={2} className={XTH}>
+                품&emsp;&emsp;명
+              </th>
+              <th rowSpan={2} className={XTH}>
+                규&emsp;&emsp;격
+              </th>
+              <th rowSpan={2} className={XTH}>
+                단위
+              </th>
+              <th rowSpan={2} className={XTH}>
+                수량
+              </th>
+              <th colSpan={2} className={XTH}>
+                재 료 비
+              </th>
+              <th colSpan={2} className={XTH}>
+                노 무 비
+              </th>
+              <th rowSpan={2} className={XTH}>
+                합 계
+              </th>
+              <th rowSpan={2} className={XTH}>
+                비고
+              </th>
+            </tr>
+            <tr className="bg-[#F5F1EB] text-[10.5px]">
+              {["단가", "금액", "단가", "금액"].map((t, i) => (
+                <th key={i} className={XTH}>
+                  {t}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((g) => (
+              <Fragment key={g.cat}>
+                {/* 공종 머리: 파스텔 그라데이션 */}
+                <tr
+                  className="font-bold"
+                  style={{
+                    background: PASTEL[(categoryNo(g.cat) - 1) % PASTEL.length],
+                  }}
+                >
+                  <td
+                    className="border-y border-charcoal/15 px-2 py-1.5"
+                    colSpan={5}
+                  >
+                    {categoryNo(g.cat)}. {categoryLabel(g.cat)}
+                  </td>
+                  <td className="border-y border-charcoal/15" />
+                  <td className="border-y border-charcoal/15 px-2 py-1.5 text-right tabular-nums">
+                    {dash(g.m)}
+                  </td>
+                  <td className="border-y border-charcoal/15" />
+                  <td className="border-y border-charcoal/15 px-2 py-1.5 text-right tabular-nums">
+                    {dash(g.lb)}
+                  </td>
+                  <td className="border-y border-charcoal/15 px-2 py-1.5 text-right tabular-nums">
+                    {won(g.m + g.lb)}
+                  </td>
+                  <td className="border-y border-charcoal/15" />
+                </tr>
+                {g.list.map((l, i) => {
+                  const a = lineAmounts(l);
+                  const newSub =
+                    l.sub && (i === 0 || g.list[i - 1].sub !== l.sub);
+                  return (
+                    <Fragment key={`${l.name}-${i}`}>
+                      {newSub && (
+                        <tr className="bg-stone-50/80">
+                          <td className={td} />
+                          <td
+                            className={`${td} text-[10.5px] font-semibold tracking-[0.1em]`}
+                            colSpan={10}
+                          >
+                            {l.sub.replace(/^\d+-\d+\s*/, "")}
+                          </td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td className={`${td} text-center text-orange-600`}>
+                          ☑
+                        </td>
+                        <td className={`${td} font-medium`}>{l.name}</td>
+                        <td className={td}>{l.spec}</td>
+                        <td className={`${td} text-center`}>{l.unit}</td>
+                        <td className={num}>
+                          {Number(l.qty).toLocaleString("ko-KR", {
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td className={num}>
+                          {Number(l.material_price)
+                            ? won(Number(l.material_price))
+                            : ""}
+                        </td>
+                        <td className={num}>{dash(a.material)}</td>
+                        <td className={num}>
+                          {Number(l.labor_price)
+                            ? won(Number(l.labor_price))
+                            : ""}
+                        </td>
+                        <td className={num}>{dash(a.labor)}</td>
+                        <td className={`${num} font-semibold`}>
+                          {won(a.total)}
+                        </td>
+                        <td className={`${td} text-[10.5px]`}>{l.note}</td>
+                      </tr>
+                    </Fragment>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <div className="mt-2 break-inside-avoid overflow-hidden rounded-lg border border-charcoal/20 text-[12.5px]">
+      <div className="mt-4 break-inside-avoid overflow-hidden rounded-lg border border-charcoal/20 text-[12.5px]">
         <div className="flex justify-between px-4 py-2">
           <span>
             직접공사비 합계 (재료비 {won(s.material)} · 노무비 {won(s.labor)})
           </span>
           <span className="font-semibold tabular-nums">{won(s.direct)}원</span>
         </div>
-        <div className="flex justify-between border-t border-charcoal/10 px-4 py-2 text-charcoal/70">
+        {s.indirect > 0 && (
+          <div className="flex justify-between border-t border-charcoal/10 px-4 py-2">
+            <span>간접공사비</span>
+            <span className="tabular-nums">{won(s.indirect)}원</span>
+          </div>
+        )}
+        <div className="flex justify-between border-t border-charcoal/10 px-4 py-2">
           <span>부가가치세</span>
           <span className="tabular-nums">
             {estimate.vat_included
@@ -1085,7 +1171,7 @@ function ChecklistSheet({
           </span>
         </div>
         {s.cut > 0 && (
-          <div className="flex justify-between border-t border-charcoal/10 px-4 py-2 text-charcoal/55">
+          <div className="flex justify-between border-t border-charcoal/10 px-4 py-2">
             <span>단위 절사 ({won(estimate.round_unit)}원 미만)</span>
             <span className="tabular-nums">-{won(s.cut)}원</span>
           </div>
@@ -1094,7 +1180,7 @@ function ChecklistSheet({
           <span className="tracking-[0.3em]">공 사 금 액</span>
           <span className="text-[15px] tabular-nums">
             {won(s.final)}원{" "}
-            <span className="text-[11px] font-normal text-white/70">
+            <span className="text-[11px] font-normal">
               일금 {toKoreanAmount(s.final)}원정
             </span>
           </span>
