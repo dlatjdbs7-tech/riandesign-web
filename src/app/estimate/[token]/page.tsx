@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { calcEstimate, toKoreanAmount, won } from "@/lib/estimate";
 import EstimateDocument, { type DocCompany, type DocEstimate, type DocLine } from "@/components/admin/estimate/EstimateDocument";
 import ApproveEstimate from "./ApproveEstimate";
 import PinGate from "./PinGate";
@@ -12,7 +11,25 @@ import { readPin } from "./actions";
 //  - 보낸 날부터 3일만 열람 (DB share_expires_at)
 //  - 전화번호 뒤 4자리를 입력해야 열람
 //  - 인쇄·저장·복사 막기, 검색 노출 안 함
-export const metadata: Metadata = { title: "견적서", robots: { index: false, follow: false } };
+// 카카오톡 등 링크 미리보기: "○○동 ○○호 · 홍길동 고객님 견적서" + REAN 이미지 (내용은 번호 확인 후에만)
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  let title = "리안디자인 견적서";
+  if (/^[0-9a-f-]{36}$/i.test(token)) {
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("shared_estimate_preview", { p_token: token });
+    const pv = data as { title: string | null; customer_name: string | null } | null;
+    if (pv?.title) title = `${pv.title}${pv.customer_name ? ` · ${pv.customer_name} 고객님` : ""} 견적서`;
+  }
+  const description = "리안디자인 견적서입니다. 눌러서 휴대폰 번호 뒤 4자리를 입력하면 열람할 수 있어요. (받은 날부터 3일)";
+  return {
+    title: { absolute: title },
+    description,
+    robots: { index: false, follow: false },
+    openGraph: { title, description, siteName: "REAN DESIGN · 리안디자인", type: "website", images: [{ url: "/estimate-assets/og-estimate.png", width: 1200, height: 630, alt: "REAN 견적서" }] },
+    twitter: { card: "summary_large_image", title, description, images: ["/estimate-assets/og-estimate.png"] },
+  };
+}
 
 type Shared = {
   estimate: DocEstimate & { status: string; approved_name: string | null; approved_at: string | null; share_expires_at: string | null };
@@ -63,17 +80,6 @@ export default async function SharedEstimatePage({ params }: { params: Promise<{
   if (!user) await supabase.rpc("mark_estimate_viewed", { p_token: token, p_phone: pin });
 
   const e = shared.estimate;
-  const s = calcEstimate(
-    shared.lines.map((l) => ({ ...l, qty: Number(l.qty), material_price: Number(l.material_price), labor_price: Number(l.labor_price) })),
-    {
-      expense: Number(e.expense_rate),
-      misc: Number(e.misc_rate),
-      profit: Number(e.profit_rate),
-      vat: Number(e.vat_rate),
-      vatIncluded: e.vat_included,
-      roundUnit: e.round_unit,
-    }
-  );
   const companyName = shared.company?.company_name ?? "리안디자인";
   const customer = e.customer_name ? `${e.customer_name} 고객님` : "고객님";
   const expires = e.share_expires_at
@@ -93,29 +99,12 @@ export default async function SharedEstimatePage({ params }: { params: Promise<{
           </div>
         </header>
 
-        <div className="mx-auto max-w-[860px] px-5 pt-6">
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-charcoal/50">{customer} 견적서</p>
-            <h1 className="mt-1 text-xl font-bold">{e.title}</h1>
-            <div className="mt-5 rounded-xl bg-orange-50 px-5 py-4">
-              <p className="text-xs text-orange-800/70">공사 금액 {e.vat_included ? `(부가세 ${e.vat_rate}% 포함)` : "(부가세 별도)"}</p>
-              <p className="mt-1 text-3xl font-bold tabular-nums text-orange-700">{won(s.final)}원</p>
-              <p className="mt-1 text-sm text-orange-900/70">일금 {toKoreanAmount(s.final)}원정</p>
-            </div>
-            <ul className="mt-4 grid gap-1.5 text-sm sm:grid-cols-2">
-              {s.categories.map((c) => (
-                <li key={c.key} className="flex justify-between gap-3 border-b border-nude/40 py-1.5">
-                  <span className="text-charcoal/70">{c.label}</span>
-                  <span className="tabular-nums">{won(c.total)}원</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-xs text-charcoal/45">아래에서 갑지·집계표·상세 내역서를 확인하실 수 있습니다. 견적서는 이 화면에서만 열람할 수 있습니다.</p>
-          </div>
-        </div>
+        <p className="mx-auto max-w-[1140px] px-5 pt-5 text-xs text-charcoal/50">
+          {customer} 견적서 · 표지 → 갑지 → 집계표 → 내역 순서입니다. 견적서는 이 화면에서만 열람할 수 있습니다.
+        </p>
 
-        <div className="mx-auto mt-6 max-w-[900px] px-2">
-          <EstimateDocument estimate={e} lines={shared.lines} company={shared.company} showCover={false} />
+        <div className="mx-auto mt-6 max-w-[1140px] px-2">
+          <EstimateDocument estimate={e} lines={shared.lines} company={shared.company} showCover />
         </div>
 
         <div className="mx-auto mt-6 max-w-[860px] px-5">

@@ -6,7 +6,7 @@ import EstimateDocument, { type DocCompany } from "@/components/admin/estimate/E
 import PrintButton from "@/components/admin/estimate/PrintButton";
 import { PRINT_CSS } from "@/components/admin/estimate/printCss";
 
-// 인쇄·PDF: 브라우저 인쇄에서 "PDF로 저장"을 고르면 PDF가 된다.
+// 견적서 보기 (목록에서 누르면 열림): 표지~내역서 전체. 인쇄에서 "PDF로 저장"을 고르면 PDF가 된다.
 export default async function EstimatePrintPage({
   params,
   searchParams,
@@ -39,8 +39,11 @@ export default async function EstimatePrintPage({
     <div>
       <style>{PRINT_CSS}</style>
       <div className="no-print mb-4 flex flex-wrap items-center gap-2">
-        <Link href={`/admin/estimates/${id}`} className="text-sm text-charcoal/50 hover:text-orange-600">
-          ← 견적서 편집
+        <Link href="/admin/estimates" className="text-sm text-charcoal/50 hover:text-orange-600">
+          ← 견적서 목록
+        </Link>
+        <Link href={`/admin/estimates/${id}`} className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+          편집하기
         </Link>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href={toggle("cover", !showCover)} className="rounded-full border border-nude bg-white px-4 py-2 text-sm text-charcoal/70 hover:bg-stone-100">
@@ -49,6 +52,13 @@ export default async function EstimatePrintPage({
           <Link href={toggle("detail", !showDetail)} className="rounded-full border border-nude bg-white px-4 py-2 text-sm text-charcoal/70 hover:bg-stone-100">
             내역서 {showDetail ? "빼기" : "넣기"}
           </Link>
+          <a
+            href={`/admin/estimates/${id}/excel`}
+            download
+            className="rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-50"
+          >
+            엑셀 내려받기
+          </a>
           <PrintButton />
         </div>
       </div>

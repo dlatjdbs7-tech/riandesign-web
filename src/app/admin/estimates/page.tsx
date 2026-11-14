@@ -51,8 +51,8 @@ export default async function EstimatesPage({ searchParams }: { searchParams: Pr
           <p className="text-sm font-semibold text-charcoal">{KIND_LABEL[newKind]} 만들기</p>
           <p className="mt-1 text-xs text-charcoal/50">
             {newKind === "simple"
-              ? "평수를 넣으면 기본 품목이 평수에 맞춰 미리 체크됩니다. 간접비 없이 부가세 별도로 계산합니다."
-              : "나릿재 견적서와 같은 상세 양식입니다. 경비 2% · 공과잡비 3% · 기업이윤 5% · 부가세 10% 포함."}
+              ? "평수를 넣으면 기준 견적(33평) 구성의 기본 품목이 평수에 맞춰 미리 체크됩니다. 간접비 없이 부가세 별도로 계산합니다."
+              : "공사원가계산서(조달청 2026 건축 요율)로 계산하는 상세 양식입니다. 부가세 10% 포함."}
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-[2fr_1fr_120px_auto]">
             <input
@@ -101,7 +101,7 @@ export default async function EstimatesPage({ searchParams }: { searchParams: Pr
             {estimates?.map((e) => (
               <tr key={e.id} className="border-b border-nude/30 last:border-0 hover:bg-stone-50">
                 <td className="px-4 py-3">
-                  <Link href={`/admin/estimates/${e.id}`} className="font-medium text-charcoal hover:text-orange-600">
+                  <Link href={`/admin/estimates/${e.id}/print`} className="font-medium text-charcoal hover:text-orange-600" title="견적서 전체 보기">
                     {e.title}
                   </Link>
                   {e.area_py && <span className="ml-2 text-xs text-charcoal/45">{e.area_py}평</span>}
@@ -124,8 +124,8 @@ export default async function EstimatesPage({ searchParams }: { searchParams: Pr
                 <td className="px-4 py-3 text-charcoal/70">{STATUS_LABEL[e.status] ?? e.status}</td>
                 <td className="px-4 py-3 text-right">
                   <span className="inline-flex items-center gap-3">
-                    <Link href={`/admin/estimates/${e.id}/print`} className="text-xs text-charcoal/50 hover:text-orange-600">
-                      인쇄
+                    <Link href={`/admin/estimates/${e.id}`} className="text-xs font-medium text-orange-600 hover:underline">
+                      편집
                     </Link>
                     <DeleteButton action={deleteEstimate.bind(null, e.id)} className="text-xs text-charcoal/40 hover:text-red-600" />
                   </span>

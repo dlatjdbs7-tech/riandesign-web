@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { moveToTrash } from "@/lib/trash";
-import { DEFAULT_RATES, calcEstimate, type EstimateKind } from "@/lib/estimate";
+import { DEFAULT_RATES, calcEstimate, methodOf, type EstimateKind } from "@/lib/estimate";
 
 // 한국 날짜(YYYY-MM-DD): DB 기본값(current_date)은 UTC라 새벽에는 하루 전 날짜가 들어간다
 function todayKst() {
@@ -42,8 +42,8 @@ export type EstimateHeaderInput = {
   notes: string | null;
 };
 
-const SIMPLE_BASE_PY = 34; // 간단 양식 기본 수량의 기준 평수
-const MIN_ROWS = 4; // 간단 양식에서 세부공종마다 최소로 보여줄 줄 수
+const SIMPLE_BASE_PY = 33; // 간단 양식 기본 수량의 기준 평수 (기준 견적 33평)
+const MIN_ROWS = 0; // 간단 양식은 기준 견적 구성 + 선택지가 이미 있으므로 채우지 않음
 
 // 새 견적서: 간단 양식이면 기본 품목을 평수에 맞춰 미리 체크해 둔다.
 export async function createEstimate(formData: FormData) {
@@ -86,7 +86,8 @@ export async function createEstimate(formData: FormData) {
       .eq("is_active", true)
       .order("sort_order");
     const scale = areaPy ? areaPy / SIMPLE_BASE_PY : 1;
-    const lines = (items ?? []).map((item, index) => {
+    // 기본 수량 0인 품목은 "선택지"라 줄로 넣지 않는다 (편집 화면 '간단 품목만'에서 체크해서 추가)
+    const lines = (items ?? []).filter((item) => Number(item.simple_qty) > 0).map((item, index) => {
       const basis = String(item.qty_basis ?? "");
       const scaled = basis.includes("평") || basis.includes("m2") || basis.includes("면적");
       const qty = scaled ? Math.round(Number(item.simple_qty) * scale * 10) / 10 : Number(item.simple_qty);
@@ -160,6 +161,7 @@ async function updateTotal(supabase: Awaited<ReturnType<typeof createClient>>, i
       vat: Number(est.vat_rate),
       vatIncluded: est.vat_included,
       roundUnit: est.round_unit,
+      method: methodOf(est.kind),
     }
   );
   await supabase.from("estimates").update({ total_amount: result.final }).eq("id", id);
@@ -337,4 +339,41 @@ export async function closeShareLink(id: string) {
   const supabase = await createClient();
   await supabase.from("estimates").update({ share_expires_at: new Date().toISOString() }).eq("id", id);
   revalidatePath(`/admin/estimates/${id}`);
+}
+
+// 단가표에서 고른 품목을 작성 중인 견적서에 줄로 넣는다 (이미 들어 있는 품목은 건너뜀, 수량 1)
+export async function addItemsToEstimate(estimateId: string, itemIds: string[]) {
+  if (itemIds.length === 0) return { error: "품목을 골라 주세요." };
+  const supabase = await createClient();
+  const [{ data: est }, { data: existing }, { data: items }] = await Promise.all([
+    supabase.from("estimates").select("id, title").eq("id", estimateId).maybeSingle<{ id: string; title: string }>(),
+    supabase.from("estimate_lines").select("item_id, sort_order").eq("estimate_id", estimateId),
+    supabase.from("estimate_items").select("*").in("id", itemIds),
+  ]);
+  if (!est) return { error: "견적서를 찾을 수 없습니다." };
+  const have = new Set((existing ?? []).map((l) => l.item_id).filter(Boolean));
+  let order = Math.max(0, ...(existing ?? []).map((l) => Number(l.sort_order) || 0)) + 1;
+  const rows = (items ?? [])
+    .filter((i) => !have.has(i.id))
+    .map((i) => ({
+      estimate_id: estimateId,
+      item_id: i.id,
+      category: i.category,
+      subcategory: i.subcategory,
+      name: i.name,
+      spec: i.spec,
+      unit: i.unit,
+      qty: 1,
+      material_price: i.material_price,
+      labor_price: i.labor_price,
+      note: null,
+      sort_order: order++,
+    }));
+  if (rows.length > 0) {
+    const { error } = await supabase.from("estimate_lines").insert(rows);
+    if (error) return { error: "견적서에 넣지 못했습니다." };
+    await updateTotal(supabase, estimateId);
+  }
+  revalidatePath(`/admin/estimates/${estimateId}`);
+  return { ok: true as const, added: rows.length, skipped: itemIds.length - rows.length, title: est.title };
 }
