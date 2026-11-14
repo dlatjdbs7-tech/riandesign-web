@@ -476,7 +476,10 @@ export default function EstimateEditor({
 
           <div className="mt-2 flex flex-col gap-3">
             {ESTIMATE_CATEGORIES.map((cat) => {
-              const catItems = items.filter((i) => i.category === cat.key && matches(i) && (!onlyPicked || picks[i.id]));
+              // 같은 세부공종끼리 모아서 보여준다 (세부공종 안에서는 원래 순서)
+              const catItems = items
+                .filter((i) => i.category === cat.key && matches(i) && (!onlyPicked || picks[i.id]))
+                .sort((a, b) => (a.subcategory ?? "").localeCompare(b.subcategory ?? "", "ko", { numeric: true }));
               const catCustoms = customs.filter((c) => c.category === cat.key);
               const pickedCount = items.filter((i) => i.category === cat.key && picks[i.id]).length + catCustoms.length;
               const catTotal = summary.categories.find((c) => c.key === cat.key)?.total ?? 0;
