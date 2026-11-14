@@ -187,10 +187,10 @@ export default function EstimateEditor({
     setCustoms((c) => c.map((x) => (x.key === key ? { ...x, ...patch } : x)));
     touch();
   }
-  function addCustom(category: string) {
+  function addCustom(category: string, subcategory: string | null = null) {
     setCustoms((c) => [
       ...c,
-      { key: `new-${Date.now()}`, category, subcategory: null, name: "", spec: null, unit: "식", qty: 1, material_price: 0, labor_price: 0, note: null },
+      { key: `new-${Date.now()}`, category, subcategory, name: "", spec: null, unit: "식", qty: 1, material_price: 0, labor_price: 0, note: null },
     ]);
     touch();
   }
@@ -248,6 +248,77 @@ export default function EstimateEditor({
       }
     });
   }
+
+  // 직접 추가한 줄 (세부공종 묶음 안에 그린다)
+  const renderCustom = (c: Custom) => (
+                            <tr key={c.key} className="border-t border-nude/30 bg-orange-50/60">
+                              <td className="py-1.5 text-center">
+                                <button
+                                  type="button"
+                                  aria-label="직접 입력 줄 빼기"
+                                  onClick={() => {
+                                    setCustoms((list) => list.filter((x) => x.key !== c.key));
+                                    touch();
+                                  }}
+                                  className="text-charcoal/35 hover:text-red-600"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                              <td className="py-1.5 pl-1">
+                                <div className="flex gap-1">
+                                  <input
+                                    value={c.name}
+                                    onChange={(e) => editCustom(c.key, { name: e.target.value })}
+                                    placeholder="품명 (직접 입력)"
+                                    className="w-1/2 rounded border border-nude px-1.5 py-1 text-sm outline-none focus:border-orange-400"
+                                  />
+                                  <input
+                                    value={c.spec ?? ""}
+                                    onChange={(e) => editCustom(c.key, { spec: e.target.value || null })}
+                                    placeholder="규격"
+                                    className="w-1/2 rounded border border-nude px-1.5 py-1 text-xs outline-none focus:border-orange-400"
+                                  />
+                                  <button
+                                    type="button"
+                                    title="다음 견적부터 체크로 고를 수 있게 품목 목록에 저장"
+                                    onClick={async () => {
+                                      const result = await saveCustomToLibrary({
+                                        category: c.category,
+                                        subcategory: c.subcategory,
+                                        name: c.name,
+                                        spec: c.spec,
+                                        unit: c.unit,
+                                        material_price: c.material_price,
+                                        labor_price: c.labor_price,
+                                      });
+                                      setMessage("error" in result ? (result.error ?? "저장하지 못했습니다.") : `"${c.name}" 품목 목록에 저장했어요`);
+                                    }}
+                                    className="shrink-0 whitespace-nowrap rounded border border-nude bg-white px-2 py-1 text-[11px] text-charcoal/60 hover:border-orange-400 hover:text-orange-700"
+                                  >
+                                    목록에 저장
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="py-1.5">
+                                <input
+                                  value={c.unit ?? ""}
+                                  onChange={(e) => editCustom(c.key, { unit: e.target.value || null })}
+                                  className="w-full rounded border border-nude px-1 py-1 text-center text-xs outline-none focus:border-orange-400"
+                                />
+                              </td>
+                              <td className="py-1.5">
+                                <NumInput decimals ariaLabel="수량" value={c.qty} onChange={(n) => editCustom(c.key, { qty: n })} />
+                              </td>
+                              <td className="py-1.5">
+                                <NumInput ariaLabel="재료 단가" value={c.material_price} onChange={(n) => editCustom(c.key, { material_price: n })} />
+                              </td>
+                              <td className="py-1.5">
+                                <NumInput ariaLabel="노무 단가" value={c.labor_price} onChange={(n) => editCustom(c.key, { labor_price: n })} />
+                              </td>
+                              <td className="py-1.5 pr-4 text-right font-medium tabular-nums">{won(lineAmounts(c).total)}</td>
+                            </tr>
+  );
 
   const headerInput = "w-full rounded-lg border border-nude px-3 py-2 text-sm outline-none focus:border-orange-400";
 
@@ -536,87 +607,36 @@ export default function EstimateEditor({
                                   </tr>
                                 );
                               })}
+                              {catCustoms.filter((c) => (c.subcategory ?? "") === g.sub).map(renderCustom)}
+                              <AddLineRow label={g.sub || "이 공종"} onAdd={() => addCustom(cat.key, g.sub || null)} />
                             </GroupRows>
                           ))}
 
-                          {catCustoms.map((c) => (
-                            <tr key={c.key} className="border-t border-nude/30 bg-orange-50/60">
-                              <td className="py-1.5 text-center">
-                                <button
-                                  type="button"
-                                  aria-label="직접 입력 줄 빼기"
-                                  onClick={() => {
-                                    setCustoms((list) => list.filter((x) => x.key !== c.key));
-                                    touch();
-                                  }}
-                                  className="text-charcoal/35 hover:text-red-600"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </td>
-                              <td className="py-1.5 pl-1">
-                                <div className="flex gap-1">
-                                  <input
-                                    value={c.name}
-                                    onChange={(e) => editCustom(c.key, { name: e.target.value })}
-                                    placeholder="품명 (직접 입력)"
-                                    className="w-1/2 rounded border border-nude px-1.5 py-1 text-sm outline-none focus:border-orange-400"
-                                  />
-                                  <input
-                                    value={c.spec ?? ""}
-                                    onChange={(e) => editCustom(c.key, { spec: e.target.value || null })}
-                                    placeholder="규격"
-                                    className="w-1/2 rounded border border-nude px-1.5 py-1 text-xs outline-none focus:border-orange-400"
-                                  />
-                                  <button
-                                    type="button"
-                                    title="다음 견적부터 체크로 고를 수 있게 품목 목록에 저장"
-                                    onClick={async () => {
-                                      const result = await saveCustomToLibrary({
-                                        category: c.category,
-                                        subcategory: c.subcategory,
-                                        name: c.name,
-                                        spec: c.spec,
-                                        unit: c.unit,
-                                        material_price: c.material_price,
-                                        labor_price: c.labor_price,
-                                      });
-                                      setMessage("error" in result ? (result.error ?? "저장하지 못했습니다.") : `"${c.name}" 품목 목록에 저장했어요`);
-                                    }}
-                                    className="shrink-0 whitespace-nowrap rounded border border-nude bg-white px-2 py-1 text-[11px] text-charcoal/60 hover:border-orange-400 hover:text-orange-700"
-                                  >
-                                    목록에 저장
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="py-1.5">
-                                <input
-                                  value={c.unit ?? ""}
-                                  onChange={(e) => editCustom(c.key, { unit: e.target.value || null })}
-                                  className="w-full rounded border border-nude px-1 py-1 text-center text-xs outline-none focus:border-orange-400"
-                                />
-                              </td>
-                              <td className="py-1.5">
-                                <NumInput decimals ariaLabel="수량" value={c.qty} onChange={(n) => editCustom(c.key, { qty: n })} />
-                              </td>
-                              <td className="py-1.5">
-                                <NumInput ariaLabel="재료 단가" value={c.material_price} onChange={(n) => editCustom(c.key, { material_price: n })} />
-                              </td>
-                              <td className="py-1.5">
-                                <NumInput ariaLabel="노무 단가" value={c.labor_price} onChange={(n) => editCustom(c.key, { labor_price: n })} />
-                              </td>
-                              <td className="py-1.5 pr-4 text-right font-medium tabular-nums">{won(lineAmounts(c).total)}</td>
-                            </tr>
-                          ))}
+                          {catCustoms.filter((c) => !groups.some((g) => g.sub === (c.subcategory ?? ""))).map(renderCustom)}
                         </tbody>
                       </table>
-                      <button
-                        type="button"
-                        onClick={() => addCustom(cat.key)}
-                        className="flex w-full items-center gap-1.5 border-t border-nude/40 px-4 py-2.5 text-sm text-charcoal/50 hover:bg-stone-50 hover:text-orange-600"
-                      >
-                        <Plus size={15} /> 목록에 없는 품목 직접 추가
-                      </button>
+                      <div className="flex flex-wrap items-center gap-1.5 border-t border-nude/40 px-4 py-2.5 text-sm text-charcoal/50">
+                        <Plus size={15} /> 다른 세부공종에 줄 추가:
+                        {[...new Set(items.filter((i) => i.category === cat.key).map((i) => i.subcategory ?? ""))]
+                          .filter((sub) => sub && !groups.some((g) => g.sub === sub))
+                          .map((sub) => (
+                            <button
+                              key={sub}
+                              type="button"
+                              onClick={() => addCustom(cat.key, sub)}
+                              className="rounded-md border border-dashed border-orange-200 bg-white px-2 py-0.5 text-xs text-orange-800 hover:border-orange-400 hover:bg-orange-50"
+                            >
+                              {sub}
+                            </button>
+                          ))}
+                        <button
+                          type="button"
+                          onClick={() => addCustom(cat.key)}
+                          className="rounded-md border border-dashed border-nude bg-white px-2 py-0.5 text-xs text-charcoal/60 hover:border-orange-400"
+                        >
+                          세부공종 없이
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -706,6 +726,23 @@ export default function EstimateEditor({
         </button>
       </div>
     </div>
+  );
+}
+
+function AddLineRow({ label, onAdd }: { label: string; onAdd: () => void }) {
+  return (
+    <tr>
+      <td />
+      <td colSpan={6} className="pb-2 pt-1 pl-1">
+        <button
+          type="button"
+          onClick={onAdd}
+          className="rounded-md border border-dashed border-orange-200 bg-white px-2.5 py-1 text-xs text-orange-800 hover:border-orange-400 hover:bg-orange-50"
+        >
+          + {label}에 줄 추가
+        </button>
+      </td>
+    </tr>
   );
 }
 
