@@ -21,7 +21,22 @@ async function ensureVisitorId() {
   return visitorId;
 }
 
+// 대표님·팀원 기기: 관리자페이지에 로그인한 적이 있으면 이 기기 방문은 유입분석에서 뺀다.
+// 로그아웃해도 계속 빠지도록 1년짜리 표시 쿠키를 남긴다. (2026-11-15)
+const STAFF_COOKIE = "rean_staff";
+async function isStaffDevice() {
+  const cookieStore = await cookies();
+  if (cookieStore.get(STAFF_COOKIE)?.value === "1") return true;
+  const loggedIn = cookieStore.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
+  if (loggedIn) {
+    cookieStore.set(STAFF_COOKIE, "1", { maxAge: 60 * 60 * 24 * 365, path: "/", sameSite: "lax" });
+    return true;
+  }
+  return false;
+}
+
 export async function logPageView(path: string, referrerHost: string | null, utmSource: string | null) {
+  if (await isStaffDevice()) return;
   const visitorId = await ensureVisitorId();
   const supabase = await createClient();
   await supabase.from("page_views").insert({
@@ -35,6 +50,7 @@ export async function logPageView(path: string, referrerHost: string | null, utm
 // 포트폴리오 카드를 열어본 것도 페이지 이동은 아니지만 조회로 기록한다.
 // path에 "#"을 넣어 실제 페이지 이동(인기 페이지 집계)과 구분한다.
 export async function logPortfolioView(itemId: string) {
+  if (await isStaffDevice()) return;
   const visitorId = await ensureVisitorId();
   const supabase = await createClient();
   await supabase.from("page_views").insert({ visitor_id: visitorId, path: `/project#${itemId}` });

@@ -12,18 +12,25 @@ export type Channel = {
   label: string;
   group: "블로그" | "인스타" | "쓰레드" | "유튜브";
   account?: string; // 화면에 보여줄 계정 이름
+  profileUrl?: string; // 채널 주소 (관리자 화면에서 눌러 바로 가기)
+  where?: string; // 추적 링크를 어디에 넣는지
   blogId?: string;
 };
 
-// 리안디자인이 운영하는 채널. 각 채널 소개란·게시물에 아래 추적 링크를 넣는다.
+// 리안디자인이 운영하는 채널 (2026-11-15 대표가 준 주소로 정리).
+// 각 채널 소개란·게시물에 아래 추적 링크를 넣는다.
+// label은 문의(inquiries.auto_source)에 글자 그대로 저장되므로 바꾸지 않는다.
 export const CHANNELS: Channel[] = [
-  { key: "blog_main", label: "블로그(메인)", group: "블로그", account: "reandesign_", blogId: "reandesign_" },
-  { key: "blog_personal", label: "블로그(개인)", group: "블로그", account: "redvgt", blogId: "redvgt" },
-  { key: "insta_main", label: "인스타(메인)", group: "인스타", account: "@rean.interior" },
-  { key: "insta_personal", label: "인스타(개인)", group: "인스타", account: "@reandesign.hyuk" },
-  { key: "threads", label: "쓰레드", group: "쓰레드" },
-  { key: "youtube", label: "유튜브", group: "유튜브", account: "@rean.interior" },
+  { key: "blog_main", label: "블로그(메인)", group: "블로그", account: "reandesign_", profileUrl: "https://blog.naver.com/reandesign_", where: "글 본문·프로필 소개 링크", blogId: "reandesign_" },
+  { key: "blog_personal", label: "블로그(개인)", group: "블로그", account: "redvgt", profileUrl: "https://blog.naver.com/redvgt", where: "글 본문·프로필 소개 링크", blogId: "redvgt" },
+  { key: "insta_main", label: "인스타(메인)", group: "인스타", account: "@rean.interior", profileUrl: "https://www.instagram.com/rean.interior/", where: "프로필 웹사이트 칸" },
+  { key: "insta_personal", label: "인스타(개인)", group: "인스타", account: "@reandesign.hyuk", profileUrl: "https://www.instagram.com/reandesign.hyuk/", where: "프로필 웹사이트 칸" },
+  { key: "threads", label: "쓰레드", group: "쓰레드", account: "@reandesign.hyuk (개인)", profileUrl: "https://www.threads.com/@reandesign.hyuk", where: "프로필 링크·게시물" },
+  { key: "youtube", label: "유튜브", group: "유튜브", account: "@rean.interior", profileUrl: "https://youtube.com/@rean.interior", where: "채널 링크·영상 설명란" },
 ];
+
+// 지금 운영 중인 홈페이지(카페24). 유입분석은 이 사이트 방문을 세지 못한다 (새 홈페이지 reandesign.co.kr만 셈)
+export const MAIN_HOMEPAGE = "https://reandesign.kr/";
 
 // 유입분석 표에 나오는 순서 (채널 → 검색 → 직접 → 기타)
 export const SOURCE_ORDER = [
@@ -33,6 +40,7 @@ export const SOURCE_ORDER = [
   "네이버 검색",
   "구글 검색",
   "카카오·다음",
+  "기존 홈페이지",
   "직접 방문",
   "기타",
 ];
@@ -41,7 +49,16 @@ export function channelLink(key: string) {
   return `${SITE_URL}/?utm_source=${key}`;
 }
 
-const OWN_HOSTS = ["reandesign.co.kr", "www.reandesign.co.kr", "reandesign.kr", "www.reandesign.kr"];
+// 기존 홈페이지(카페24)에서 보낸 방문 기록은 path 앞에 이 표시를 붙여 새 홈페이지 기록과 나눈다.
+// (public/rean-track.js → /api/track) — 표를 새로 만들지 않으려고 path에 표시한다.
+export const OLD_SITE_PREFIX = "kr:";
+export function isOldSitePath(path: string) {
+  return path.startsWith(OLD_SITE_PREFIX);
+}
+
+const OWN_HOSTS = ["reandesign.co.kr", "www.reandesign.co.kr"];
+// 카페24 홈페이지(reandesign.kr)에서 새 홈페이지로 넘어온 방문 (예전엔 "직접 방문"에 섞여 있었음)
+const OLD_SITE_HOSTS = ["reandesign.kr", "www.reandesign.kr"];
 
 export function classifyTrafficSource(pv: { referrer_host: string | null; utm_source: string | null }) {
   const utm = pv.utm_source?.trim().toLowerCase() ?? "";
@@ -67,6 +84,7 @@ export function classifyTrafficSource(pv: { referrer_host: string | null; utm_so
 
   const host = pv.referrer_host?.toLowerCase() ?? "";
   if (!host || OWN_HOSTS.includes(host)) return "직접 방문";
+  if (OLD_SITE_HOSTS.includes(host)) return "기존 홈페이지";
   if (host.includes("blog.naver") || host.includes("naverblogwidget")) return "블로그(계정 모름)";
   if (host.includes("naver")) return "네이버 검색";
   if (host.includes("instagram")) return "인스타(계정 모름)";
