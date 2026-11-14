@@ -531,6 +531,18 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <code>reandesign.kr/?rean_staff=1</code> 한 번 열기).
         </p>
         <div className="mt-4 flex flex-col gap-2">
+          {/* 맨 위: 홈페이지 기본 주소 (채널이 아니라 추적 표시 없음) */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-orange-200 bg-white px-4 py-3">
+            <span className="w-28 shrink-0 font-medium text-charcoal">홈페이지</span>
+            <span className="w-44 shrink-0 text-xs">
+              <a href={MAIN_HOMEPAGE} target="_blank" rel="noreferrer" className="text-charcoal/60 underline-offset-2 hover:text-orange-600 hover:underline">
+                reandesign.kr ↗
+              </a>
+              <span className="block text-[11px] text-charcoal/40">기본 주소: 명함·카톡·문자 안내용</span>
+            </span>
+            <code className="min-w-0 flex-1 truncate text-xs text-charcoal/70">{MAIN_HOMEPAGE}</code>
+            <CopyLinkButton url={MAIN_HOMEPAGE} />
+          </div>
           {CHANNELS.map((c) => (
             <div key={c.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-white px-4 py-3">
               <span className="w-28 shrink-0 font-medium text-charcoal">{c.label}</span>
