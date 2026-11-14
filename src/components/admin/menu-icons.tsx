@@ -76,4 +76,5 @@ export const MENU_ICONS: Record<string, LucideIcon> = {
   "/admin/settings": UserCircle,
   "/admin/field-management/purchase-orders": ShoppingCart,
   "/admin/trash": Trash2,
+  "/admin/estimates": FileText,
 };

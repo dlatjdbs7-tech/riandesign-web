@@ -16,6 +16,7 @@ const CHILD_TABLES: Record<string, [table: string, column: string][]> = {
     ["work_logs", "work_order_id"],
   ],
   customer_projects: [["customer_project_photos", "customer_project_id"]],
+  estimates: [["estimate_lines", "estimate_id"]],
 };
 
 // 부모를 지우면 연결만 끊기는 행 (on delete set null) — 되돌릴 때 다시 연결한다
@@ -38,6 +39,8 @@ export const TABLE_LABEL: Record<string, string> = {
   customer_project_photos: "고객페이지 사진",
   customer_projects: "고객페이지",
   customers: "고객",
+  estimates: "견적서",
+  estimate_items: "견적 품목",
   inquiries: "상담접수",
   manuals: "리안메뉴얼",
   materials: "자재",

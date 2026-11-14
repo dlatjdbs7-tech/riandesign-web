@@ -30,27 +30,73 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-// 2026-11부터 이번 달까지의 월 목록
-function monthOptions() {
-  const { year, month } = getKSTCurrentYearMonth();
-  const list: { key: string; label: string }[] = [];
-  let y = 2026;
-  let m = 11;
-  while (y < year || (y === year && m <= month)) {
-    list.push({ key: `${y}-${pad(m)}`, label: `${y === 2026 ? "" : `${y}년 `}${m}월` });
-    m += 1;
-    if (m === 13) {
-      m = 1;
-      y += 1;
+type View = "month" | "quarter" | "year" | "all";
+type PeriodOption = { key: string; label: string; from: string; to: string };
+
+const VIEW_LABEL: Record<View, string> = { month: "월별", quarter: "분기별", year: "연간", all: "전체" };
+const START = { year: 2026, month: 11 }; // 집계 시작 (2026-11-01 리셋)
+
+// m은 1~13 허용 (13 = 다음 해 1월)
+function kst(y: number, m: number) {
+  const yy = m > 12 ? y + 1 : y;
+  const mm = m > 12 ? m - 12 : m;
+  return `${yy}-${pad(mm)}-01T00:00:00+09:00`;
+}
+
+// 보기 방식별 고를 수 있는 기간 (최근 것이 먼저)
+function periodOptions(view: View): PeriodOption[] {
+  const now = getKSTCurrentYearMonth();
+  const list: PeriodOption[] = [];
+  if (view === "month") {
+    let y = START.year;
+    let m = START.month;
+    while (y < now.year || (y === now.year && m <= now.month)) {
+      list.push({ key: `${y}-${pad(m)}`, label: `${y}년 ${m}월`, from: kst(y, m), to: kst(y, m + 1) });
+      if (m === 12) {
+        m = 1;
+        y += 1;
+      } else m += 1;
     }
+  } else if (view === "quarter") {
+    for (let y = START.year; y <= now.year; y++) {
+      for (let q = 1; q <= 4; q++) {
+        const firstMonth = (q - 1) * 3 + 1;
+        if (y === START.year && firstMonth + 2 < START.month) continue;
+        if (y === now.year && firstMonth > now.month) continue;
+        const fromMonth = y === START.year && firstMonth < START.month ? START.month : firstMonth;
+        list.push({ key: `${y}-Q${q}`, label: `${y}년 ${q}분기`, from: kst(y, fromMonth), to: kst(y, firstMonth + 3) });
+      }
+    }
+  } else if (view === "year") {
+    for (let y = START.year; y <= now.year; y++) {
+      list.push({ key: String(y), label: `${y}년`, from: y === START.year ? kst(y, START.month) : kst(y, 1), to: kst(y, 13) });
+    }
+  } else {
+    list.push({ key: "all", label: "11월 1일부터 지금까지", from: `${INFLOW_START_DATE}T00:00:00+09:00`, to: kst(now.year, now.month + 1) });
   }
   return list.reverse();
 }
 
-export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+// 분기·연간·전체를 볼 때 아래에 붙는 월별 표용
+function monthsBetween(from: string, to: string) {
+  const out: PeriodOption[] = [];
+  let y = Number(from.slice(0, 4));
+  let m = Number(from.slice(5, 7));
+  while (kst(y, m) < to) {
+    out.push({ key: `${y}-${pad(m)}`, label: `${y}년 ${m}월`, from: kst(y, m), to: kst(y, m + 1) });
+    if (m === 12) {
+      m = 1;
+      y += 1;
+    } else m += 1;
+  }
+  return out;
+}
+
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ view?: string; period?: string }> }) {
   const params = await searchParams;
-  const months = monthOptions();
-  const selected = params.month === "all" ? "all" : (months.find((m) => m.key === params.month)?.key ?? months[0].key);
+  const view: View = params.view === "quarter" || params.view === "year" || params.view === "all" ? params.view : "month";
+  const options = periodOptions(view);
+  const current = options.find((o) => o.key === params.period) ?? options[0];
 
   const supabase = await createClient();
   const {
@@ -59,15 +105,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const { data: me } = await supabase.from("profiles").select("*").eq("id", user!.id).single<Profile>();
   if (me?.role !== "owner" && me?.role !== "manager") redirect("/admin");
 
-  // 기간: 선택한 달 또는 11월 1일부터 지금까지 (한국 시간)
-  let fromIso = `${INFLOW_START_DATE}T00:00:00+09:00`;
-  let toIso: string | null = null;
-  if (selected !== "all") {
-    const [y, m] = selected.split("-").map(Number);
-    fromIso = `${y}-${pad(m)}-01T00:00:00+09:00`;
-    toIso = m === 12 ? `${y + 1}-01-01T00:00:00+09:00` : `${y}-${pad(m + 1)}-01T00:00:00+09:00`;
-  }
-  const periodLabel = selected === "all" ? "11월 1일부터 지금까지" : months.find((m) => m.key === selected)!.label;
+  const fromIso = current.from;
+  const toIso: string | null = current.to;
+  const periodLabel = current.label;
+  const monthRows = view === "month" ? [] : monthsBetween(current.from, current.to);
 
   let viewsQuery = supabase
     .from("page_views")
@@ -81,7 +122,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     .order("created_at", { ascending: false });
   let contractsQuery = supabase
     .from("work_orders")
-    .select("*", { count: "exact", head: true })
+    .select("created_at")
     .gte("created_at", fromIso)
     .neq("status", "cancelled");
   if (toIso) {
@@ -90,14 +131,29 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     contractsQuery = contractsQuery.lt("created_at", toIso);
   }
 
-  const [{ data: views }, { data: inquiries }, { count: contractCount }] = await Promise.all([
+  const [{ data: views }, { data: inquiries }, { data: contracts }] = await Promise.all([
     viewsQuery.returns<Pick<PageView, "visitor_id" | "path" | "referrer_host" | "utm_source" | "created_at">[]>(),
     inquiriesQuery.returns<Pick<Inquiry, "id" | "name" | "status" | "auto_source" | "referral_source" | "created_at">[]>(),
-    contractsQuery,
+    contractsQuery.returns<{ created_at: string }[]>(),
   ]);
+  const contractCount = contracts?.length ?? 0;
 
   // 포트폴리오 카드 열람(path에 #)은 페이지 이동이 아니라 제외
   const pageViews = (views ?? []).filter((v) => !v.path.includes("#"));
+
+  // 분기·연간·전체: 달마다 방문자·문의·계약 (시각은 한국 시간 기준 달로 나눈다)
+  const inMonth = (iso: string, m: PeriodOption) => new Date(iso) >= new Date(m.from) && new Date(iso) < new Date(m.to);
+  const monthStats = monthRows.map((m) => {
+    const monthViews = pageViews.filter((v) => inMonth(v.created_at, m));
+    const monthInquiries = (inquiries ?? []).filter((i) => inMonth(i.created_at, m));
+    return {
+      ...m,
+      visitors: new Set(monthViews.map((v) => v.visitor_id)).size,
+      online: monthInquiries.filter(isOnlineInquiry).length,
+      offline: monthInquiries.filter((i) => !isOnlineInquiry(i)).length,
+      contracts: (contracts ?? []).filter((c) => inMonth(c.created_at, m)).length,
+    };
+  });
 
   // 방문자마다 기간 안 "첫 방문"의 출처로 센다
   const visitorSource = new Map<string, string>();
@@ -147,7 +203,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     { label: "홈페이지 방문자", value: totalVisitors, unit: "명" },
     { label: "홈페이지 문의", value: online.length, unit: "건", caption: `방문자 대비 ${inquiryRate.toFixed(1)}%` },
     { label: "직접 접수 문의", value: offline.length, unit: "건", caption: "전화·방문 등 직원이 등록" },
-    { label: "계약", value: contractCount ?? 0, unit: "건", caption: "등록된 현장 기준" },
+    { label: "계약", value: contractCount, unit: "건", caption: "등록된 현장 기준" },
   ];
 
   return (
@@ -157,24 +213,38 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <h1 className="font-serif text-2xl font-semibold text-charcoal">유입분석</h1>
           <p className="mt-1 text-sm text-charcoal/50">어디서 들어와서 얼마나 문의했는지 · {periodLabel}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-1 rounded-full border border-nude/60 bg-white p-1">
-          {months.map((m) => (
+        {/* 보기 방식: 월별 / 분기별 / 연간 / 전체 */}
+        <div className="flex items-center gap-1 rounded-full border border-nude/60 bg-white p-1">
+          {(Object.keys(VIEW_LABEL) as View[]).map((v) => (
             <Link
-              key={m.key}
-              href={`/admin/analytics?month=${m.key}`}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${selected === m.key ? "bg-charcoal text-cream" : "text-charcoal/60 hover:bg-beige/60"}`}
+              key={v}
+              href={`/admin/analytics?view=${v}`}
+              className={`rounded-full px-4 py-1.5 text-sm font-semibold ${view === v ? "bg-charcoal text-cream" : "text-charcoal/60 hover:bg-beige/60"}`}
             >
-              {m.label}
+              {VIEW_LABEL[v]}
             </Link>
           ))}
-          <Link
-            href="/admin/analytics?month=all"
-            className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${selected === "all" ? "bg-charcoal text-cream" : "text-charcoal/60 hover:bg-beige/60"}`}
-          >
-            11월부터 전체
-          </Link>
         </div>
       </div>
+
+      {/* 기간 고르기 */}
+      {view !== "all" && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {options.map((o) => (
+            <Link
+              key={o.key}
+              href={`/admin/analytics?view=${view}&period=${o.key}`}
+              className={`rounded-lg border px-3.5 py-1.5 text-sm ${
+                current.key === o.key
+                  ? "border-orange-400 bg-orange-50 font-semibold text-orange-700"
+                  : "border-nude/70 bg-white text-charcoal/60 hover:border-orange-300"
+              }`}
+            >
+              {o.label}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summary.map((s) => (
@@ -188,6 +258,41 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           </div>
         ))}
       </div>
+
+      {monthStats.length > 0 && (
+        <section className="mt-6 rounded-xl border border-nude/60 bg-white p-5">
+          <h2 className="text-lg font-semibold text-charcoal">월별 정리</h2>
+          <p className="mt-1 text-xs text-charcoal/45">달 이름을 누르면 그 달 자세히 보기</p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead>
+                <tr className="border-b border-nude/60 text-left text-xs text-charcoal/50">
+                  <th className="py-2 pr-3 font-medium">달</th>
+                  <th className="py-2 pr-3 text-right font-medium">방문자</th>
+                  <th className="py-2 pr-3 text-right font-medium">홈페이지 문의</th>
+                  <th className="py-2 pr-3 text-right font-medium">직접 접수</th>
+                  <th className="py-2 text-right font-medium">계약</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthStats.map((m) => (
+                  <tr key={m.key} className="border-b border-nude/30 last:border-0">
+                    <td className="py-2.5 pr-3">
+                      <Link href={`/admin/analytics?view=month&period=${m.key}`} className="font-medium text-charcoal hover:text-orange-600">
+                        {m.label}
+                      </Link>
+                    </td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums">{m.visitors}</td>
+                    <td className="py-2.5 pr-3 text-right font-semibold tabular-nums">{m.online}</td>
+                    <td className="py-2.5 pr-3 text-right tabular-nums">{m.offline}</td>
+                    <td className="py-2.5 text-right tabular-nums">{m.contracts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="mt-6 rounded-xl border border-nude/60 bg-white p-5">
         <h2 className="text-lg font-semibold text-charcoal">어디서 들어왔나</h2>
