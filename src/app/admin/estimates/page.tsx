@@ -51,7 +51,7 @@ export default async function EstimatesPage({ searchParams }: { searchParams: Pr
           <p className="text-sm font-semibold text-charcoal">{KIND_LABEL[newKind]} 만들기</p>
           <p className="mt-1 text-xs text-charcoal/50">
             {newKind === "simple"
-              ? "평수를 넣으면 기본 품목 69개가 평수에 맞춰 미리 체크됩니다. 간접비 없이 부가세 별도로 계산합니다."
+              ? "평수를 넣으면 기본 품목이 평수에 맞춰 미리 체크됩니다. 간접비 없이 부가세 별도로 계산합니다."
               : "나릿재 견적서와 같은 상세 양식입니다. 경비 2% · 공과잡비 3% · 기업이윤 5% · 부가세 10% 포함."}
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-[2fr_1fr_120px_auto]">

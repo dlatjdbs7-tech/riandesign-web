@@ -12,7 +12,7 @@ import { readPin } from "./actions";
 //  - 보낸 날부터 3일만 열람 (DB share_expires_at)
 //  - 전화번호 뒤 4자리를 입력해야 열람
 //  - 인쇄·저장·복사 막기, 검색 노출 안 함
-export const metadata: Metadata = { title: "견적서 | 리안디자인", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "견적서", robots: { index: false, follow: false } };
 
 type Shared = {
   estimate: DocEstimate & { status: string; approved_name: string | null; approved_at: string | null; share_expires_at: string | null };

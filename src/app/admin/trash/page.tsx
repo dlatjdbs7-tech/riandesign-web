@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { TABLE_LABEL } from "@/lib/trash";
 import RestoreButton from "@/components/admin/RestoreButton";
+import { EmptyTrashButton, PurgeButton } from "@/components/admin/TrashPurgeButtons";
 
 type TrashRow = {
   id: string;
@@ -22,9 +23,12 @@ export default async function TrashPage() {
 
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-charcoal">휴지통</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-serif text-2xl font-semibold text-charcoal">휴지통</h1>
+        <EmptyTrashButton count={items?.length ?? 0} />
+      </div>
       <p className="mt-1 text-sm text-charcoal/50">
-        지운 항목이 여기 보관됩니다. 되돌리기를 누르면 원래 메뉴에 다시 나타납니다.
+        지운 항목이 여기 보관됩니다. 되돌리기를 누르면 원래 메뉴에 다시 나타나고, 완전 삭제·휴지통 비우기를 하면 영영 지워집니다.
       </p>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-nude/60 bg-white">
@@ -58,7 +62,10 @@ export default async function TrashPage() {
                   })}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <RestoreButton trashId={item.id} />
+                  <span className="inline-flex items-center gap-3">
+                    <PurgeButton trashId={item.id} label={item.label || "이 항목"} />
+                    <RestoreButton trashId={item.id} />
+                  </span>
                 </td>
               </tr>
             ))}

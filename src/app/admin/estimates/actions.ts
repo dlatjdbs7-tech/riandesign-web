@@ -6,6 +6,11 @@ import { createClient } from "@/utils/supabase/server";
 import { moveToTrash } from "@/lib/trash";
 import { DEFAULT_RATES, calcEstimate, type EstimateKind } from "@/lib/estimate";
 
+// 한국 날짜(YYYY-MM-DD): DB 기본값(current_date)은 UTC라 새벽에는 하루 전 날짜가 들어간다
+function todayKst() {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 export type EstimateLineInput = {
   item_id: string | null;
   category: string;
@@ -60,6 +65,7 @@ export async function createEstimate(formData: FormData) {
       customer_name: String(formData.get("customer_name") ?? "").trim() || null,
       area_py: areaPy,
       area_m2: areaPy ? Math.round(areaPy * 3.3058 * 100) / 100 : null,
+      quote_date: todayKst(),
       expense_rate: rates.expense,
       misc_rate: rates.misc,
       profit_rate: rates.profit,
@@ -196,7 +202,7 @@ export async function copyEstimate(id: string) {
   const { id: _id, share_token: _t, created_at: _c, updated_at: _u, ...rest } = est;
   const { data: copy } = await supabase
     .from("estimates")
-    .insert({ ...rest, title: `${est.title} (수정)`, status: "draft", quote_date: new Date().toISOString().slice(0, 10), created_by: user?.id })
+    .insert({ ...rest, title: `${est.title} (수정)`, status: "draft", quote_date: todayKst(), created_by: user?.id })
     .select("id")
     .single<{ id: string }>();
   if (!copy) return;
