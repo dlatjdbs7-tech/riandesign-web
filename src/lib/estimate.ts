@@ -158,6 +158,7 @@ export type Estimate = {
   view_count: number;
   approved_name: string | null;
   approved_at: string | null;
+  share_expires_at: string | null;
   created_at: string;
   updated_at: string;
 };

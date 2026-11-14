@@ -38,6 +38,7 @@ export type EstimateHeaderInput = {
 };
 
 const SIMPLE_BASE_PY = 34; // 간단 양식 기본 수량의 기준 평수
+const MIN_ROWS = 4; // 간단 양식에서 세부공종마다 최소로 보여줄 줄 수
 
 // 새 견적서: 간단 양식이면 기본 품목을 평수에 맞춰 미리 체크해 둔다.
 export async function createEstimate(formData: FormData) {
@@ -98,6 +99,38 @@ export async function createEstimate(formData: FormData) {
         sort_order: index,
       };
     });
+    // 줄이 적은 세부공종은 같은 종류 품목을 수량 0으로 채워 최소 MIN_ROWS줄 (비어 보이지 않게, 고르기 쉽게)
+    const { data: allItems } = await supabase
+      .from("estimate_items")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order");
+    const usedIds = new Set(lines.map((l) => l.item_id));
+    const groupKeys = [...new Set(lines.map((l) => `${l.category}|${l.subcategory ?? ""}`))];
+    for (const key of groupKeys) {
+      const [category, sub] = key.split("|");
+      const count = lines.filter((l) => l.category === category && (l.subcategory ?? "") === sub).length;
+      const fillers = (allItems ?? [])
+        .filter((i) => i.category === category && (i.subcategory ?? "") === sub && !usedIds.has(i.id))
+        .slice(0, Math.max(0, MIN_ROWS - count));
+      for (const item of fillers) {
+        usedIds.add(item.id);
+        lines.push({
+          estimate_id: estimate.id,
+          item_id: item.id,
+          category: item.category,
+          subcategory: item.subcategory,
+          name: item.name,
+          spec: item.spec,
+          unit: item.unit,
+          qty: 0,
+          material_price: item.material_price,
+          labor_price: item.labor_price,
+          note: null,
+          sort_order: lines.length,
+        });
+      }
+    }
     if (lines.length > 0) await supabase.from("estimate_lines").insert(lines);
     await updateTotal(supabase, estimate.id);
   }
@@ -270,4 +303,32 @@ export async function deleteItem(id: string) {
   const trashed = await moveToTrash(supabase, "estimate_items", id);
   revalidatePath("/admin/estimates/items");
   return trashed;
+}
+
+// ── 고객 링크 ───────────────────────────────────────────────
+const SHARE_DAYS = 3; // 고객 링크 열람 기간(일)
+
+// 고객에게 보내기: 지금부터 3일 동안 열람 가능. 고객 전화번호가 있어야 한다(열람할 때 확인).
+export async function openShareLink(id: string) {
+  const supabase = await createClient();
+  const { data: est } = await supabase.from("estimates").select("customer_phone, status, share_token").eq("id", id).single();
+  if (!est) return { error: "견적서를 찾을 수 없습니다." };
+  if (!String(est.customer_phone ?? "").replace(/\D/g, "")) {
+    return { error: "고객 연락처를 먼저 넣어 주세요. 고객은 전화번호 뒤 4자리를 입력해야 견적서를 볼 수 있어요." };
+  }
+  const expiresAt = new Date(Date.now() + SHARE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  await supabase
+    .from("estimates")
+    .update({ share_expires_at: expiresAt, ...(est.status === "draft" ? { status: "sent" } : {}) })
+    .eq("id", id);
+  revalidatePath(`/admin/estimates/${id}`);
+  revalidatePath("/admin/estimates");
+  return { ok: true as const, token: est.share_token as string, expiresAt };
+}
+
+// 링크 바로 닫기
+export async function closeShareLink(id: string) {
+  const supabase = await createClient();
+  await supabase.from("estimates").update({ share_expires_at: new Date().toISOString() }).eq("id", id);
+  revalidatePath(`/admin/estimates/${id}`);
 }

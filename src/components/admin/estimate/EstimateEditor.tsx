@@ -336,17 +336,18 @@ export default function EstimateEditor({
           {message && <span className="text-sm text-emerald-700">{message}</span>}
           {dirty && !message && <span className="text-sm text-orange-600">저장 안 된 변경이 있어요</span>}
           <ShareLinkButton
-            token={estimate.share_token}
-            beforeCopy={async () => {
-              // 링크를 보내기 전에 지금 내용을 저장하고, 작성 중이면 "발송"으로 바꾼다
-              const nextHeader = header.status === "draft" ? { ...header, status: "sent" } : header;
-              if (dirty || nextHeader !== header) {
-                const result = await saveEstimate(estimate.id, nextHeader, allLines);
-                if (!("error" in result)) {
-                  setHeader(nextHeader);
-                  setDirty(false);
-                }
+            estimateId={estimate.id}
+            expiresAt={estimate.share_expires_at}
+            beforeOpen={async () => {
+              // 보내기 전에 지금 내용을 저장한다 (고객은 저장된 내용을 본다)
+              if (!dirty) return true;
+              const result = await saveEstimate(estimate.id, header, allLines);
+              if ("error" in result) {
+                setMessage(result.error ?? "저장하지 못했습니다.");
+                return false;
               }
+              setDirty(false);
+              return true;
             }}
           />
           <button
@@ -400,7 +401,7 @@ export default function EstimateEditor({
             <input value={header.customer_name ?? ""} onChange={(e) => setH("customer_name", e.target.value || null)} className={headerInput} />
           </label>
           <label>
-            <span className="text-xs text-charcoal/50">연락처</span>
+            <span className="text-xs text-charcoal/50">연락처 (뒤 4자리 = 고객 링크 비밀번호)</span>
             <input value={header.customer_phone ?? ""} onChange={(e) => setH("customer_phone", e.target.value || null)} className={headerInput} />
           </label>
           <label className="lg:col-span-2">

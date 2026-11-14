@@ -83,25 +83,66 @@ create policy "select_estimate_lines" on estimate_lines for select using (curren
 create policy "manage_estimate_lines" on estimate_lines for all using (current_user_status() = 'approved');
 
 -- ── 고객 링크 (/estimate/<share_token>) ──────────────────────────────
--- 고객은 로그인하지 않으므로, 토큰을 아는 사람만 이 함수로 견적서를 읽고 승인한다.
+-- 고객은 로그인하지 않는다. 링크 주소(토큰) + 전화번호 뒤 4자리가 맞고, 보낸 뒤 3일 안일 때만 볼 수 있다.
+-- 모든 확인은 아래 함수(DB) 안에서 한다.
 alter table estimates add column if not exists viewed_at timestamptz;
 alter table estimates add column if not exists view_count integer not null default 0;
 alter table estimates add column if not exists approved_name text;
 alter table estimates add column if not exists approved_at timestamptz;
+alter table estimates add column if not exists share_expires_at timestamptz;   -- 보낸 시각 + 3일
 
-create or replace function public.get_shared_estimate(p_token uuid)
+-- 링크 확인 결과: ok / not_found / not_sent / expired / phone_mismatch
+create or replace function public.check_shared_estimate(p_token uuid, p_phone text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  e estimates%rowtype;
+begin
+  select * into e from estimates where share_token = p_token;
+  if not found then return 'not_found'; end if;
+  if e.share_expires_at is null then return 'not_sent'; end if;
+  if e.share_expires_at < now() then return 'expired'; end if;
+  -- 비밀번호 = 고객 전화번호 뒤 4자리
+  if length(regexp_replace(coalesce(e.customer_phone, ''), '\D', '', 'g')) < 4
+     or right(regexp_replace(e.customer_phone, '\D', '', 'g'), 4) <> regexp_replace(coalesce(p_phone, ''), '\D', '', 'g') then
+    return 'phone_mismatch';
+  end if;
+  return 'ok';
+end;
+$$;
+
+-- 링크가 만료됐을 때 안내할 회사 전화번호 (견적 내용은 주지 않는다)
+create or replace function public.shared_estimate_contact()
 returns json
 language sql
 security definer
 set search_path = public
 as $$
+  select json_build_object('company_name', c.company_name, 'phone', c.phone) from company_settings c order by c.id limit 1;
+$$;
+
+create or replace function public.get_shared_estimate(p_token uuid, p_phone text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result json;
+begin
+  if public.check_shared_estimate(p_token, p_phone) <> 'ok' then
+    return null;
+  end if;
   select json_build_object(
     'estimate', json_build_object(
       'kind', e.kind, 'title', e.title, 'customer_name', e.customer_name, 'site_address', e.site_address,
       'area_py', e.area_py, 'area_m2', e.area_m2, 'quote_date', e.quote_date, 'status', e.status,
       'expense_rate', e.expense_rate, 'misc_rate', e.misc_rate, 'profit_rate', e.profit_rate,
       'vat_rate', e.vat_rate, 'vat_included', e.vat_included, 'round_unit', e.round_unit, 'notes', e.notes,
-      'approved_name', e.approved_name, 'approved_at', e.approved_at
+      'approved_name', e.approved_name, 'approved_at', e.approved_at, 'share_expires_at', e.share_expires_at
     ),
     'lines', coalesce((
       select json_agg(json_build_object(
@@ -115,28 +156,34 @@ as $$
         'representative_name', c.representative_name, 'address', c.address, 'phone', c.phone, 'email', c.email)
       from company_settings c order by c.id limit 1
     )
-  )
+  ) into result
   from estimates e
   where e.share_token = p_token;
+  return result;
+end;
 $$;
 
-create or replace function public.mark_estimate_viewed(p_token uuid)
+create or replace function public.mark_estimate_viewed(p_token uuid, p_phone text)
 returns void
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  update estimates set viewed_at = now(), view_count = view_count + 1 where share_token = p_token;
+begin
+  if public.check_shared_estimate(p_token, p_phone) = 'ok' then
+    update estimates set viewed_at = now(), view_count = view_count + 1 where share_token = p_token;
+  end if;
+end;
 $$;
 
-create or replace function public.approve_shared_estimate(p_token uuid, p_name text)
+create or replace function public.approve_shared_estimate(p_token uuid, p_phone text, p_name text)
 returns boolean
 language plpgsql
 security definer
 set search_path = public
 as $$
 begin
-  if coalesce(trim(p_name), '') = '' then
+  if public.check_shared_estimate(p_token, p_phone) <> 'ok' or coalesce(trim(p_name), '') = '' then
     return false;
   end if;
   update estimates
@@ -146,6 +193,8 @@ begin
 end;
 $$;
 
-grant execute on function public.get_shared_estimate(uuid) to anon, authenticated;
-grant execute on function public.mark_estimate_viewed(uuid) to anon, authenticated;
-grant execute on function public.approve_shared_estimate(uuid, text) to anon, authenticated;
+grant execute on function public.check_shared_estimate(uuid, text) to anon, authenticated;
+grant execute on function public.shared_estimate_contact() to anon, authenticated;
+grant execute on function public.get_shared_estimate(uuid, text) to anon, authenticated;
+grant execute on function public.mark_estimate_viewed(uuid, text) to anon, authenticated;
+grant execute on function public.approve_shared_estimate(uuid, text, text) to anon, authenticated;
