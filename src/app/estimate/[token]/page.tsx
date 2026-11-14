@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
     title: { absolute: title },
     description,
     robots: { index: false, follow: false },
-    openGraph: { title, description, siteName: "REAN DESIGN · 리안디자인", type: "website", images: [{ url: "/estimate-assets/og-estimate.png", width: 1200, height: 630, alt: "REAN 견적서" }] },
-    twitter: { card: "summary_large_image", title, description, images: ["/estimate-assets/og-estimate.png"] },
+    openGraph: { title, description, siteName: "REAN DESIGN · 리안디자인", type: "website", images: [{ url: "https://www.reandesign.co.kr/estimate-assets/og-estimate.png", width: 1200, height: 630, alt: "REAN 견적서" }] },
+    twitter: { card: "summary_large_image", title, description, images: ["https://www.reandesign.co.kr/estimate-assets/og-estimate.png"] },
   };
 }
 
