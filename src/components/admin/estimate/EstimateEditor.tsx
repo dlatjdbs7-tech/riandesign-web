@@ -194,7 +194,16 @@ export default function EstimateEditor({
     key: K,
     value: EstimateHeaderInput[K],
   ) {
-    setHeader((h) => ({ ...h, [key]: value }));
+    setHeader((h) => {
+      const next = { ...h, [key]: value };
+      // 부가세 포함/별도를 바꾸면 비고의 "부가세 포함/별도" 문구도 같이 맞춘다
+      if (key === "vat_included" && typeof next.notes === "string") {
+        next.notes = value
+          ? next.notes.replace(/부가세\s*별도/g, "부가세 포함")
+          : next.notes.replace(/부가세\s*포함/g, "부가세 별도");
+      }
+      return next;
+    });
     touch();
   }
 
